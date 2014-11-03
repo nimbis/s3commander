@@ -1,8 +1,5 @@
-/*
+/**
  * S3 Commander
- *
- * TODO
- *
  */
 
 // configure sha1.js for RFC compliance
@@ -11,62 +8,90 @@ b64pad = "=";
 // define the jQuery plugin
 (function($){
     "use strict";
+    var container = null;
 
-    function sign(sAccessKey, sData){
-        return b64_hmac_sha1(sAccessKey, sData);
+    function sign(sSecretKey, sData) {
+        return b64_hmac_sha1(sSecretKey, sData);
     }
 
-    function signRequest(sAccessKey, iExpires, sBucket, sResource){
-        var canonical = '/' + sBucket + sResource;
-        var req = "GET\n\n\n" + iExpires + "\n" + canonical;
-        return sign(sAccessKey, req);
+    function signRequest(opts, iTimestamp, sResource) {
+        var data = "GET\n\n\n";
+        data += iTimestamp + "\n";
+        data += "/" + opts.sBucket;
+
+        if (sResource.length > 0) {
+            data += "/" + opts.sPrefix + "/" + normalizeUri(sResource);
+        }
+        else {
+            data += "/";
+        }
+
+        return sign(opts.sSecretKey, data);
     }
 
-    function createPolicy(options){
-        return {
-            "expiration": "2020-12-01T12:00:00.000Z",
-            "conditions": [
-                {"acl": "private"},
-                {"bucket": options.sBucket},
-                ["starts-with", "$key", options.sPrefix],
-                ["starts-with", "$Content-Type", ""],
-            ],
-        };
+    /**
+     * Normalize the forward slashes in a URI.
+     */
+    function normalizeUri(sUri) {
+        return sUri.split("/").filter(function(part){
+            return part.length > 0;
+        }).join("/");
+    }
 
-        // b64_policy = rstr2b64(JSON.stringify(policy));
+    /**
+     * TODO
+     * http://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketGET.html
+     */
+    function getContents(sResource) {
+        // retrieve options
+        var opts = container.data("opts");
+
+        // create the request
+        var timestamp = new Date().valueOf();
+        timestamp = parseInt(timestamp / 1000) + 21600;
+
+        return $.ajax({
+            url: "https://" + opts.sBucket + "." + opts.sEndpoint,
+            data: {
+                "prefix": opts.sPrefix + "/" + normalizeUri(sResource),
+                "delimiter": "/",
+                "AWSAccessKeyId": opts.sAccessKey,
+                "Signature": signRequest(opts, timestamp, sResource),
+                "Expires": timestamp,
+            },
+            dataFormat: "xml",
+            cache: false,
+            success: function(data){
+                //var path = $(data).find("ListBucketResult > Prefix")[0];
+                //var files = $(data).find("ListBucketResult > Contents > Key");
+                //var folders = $(data).find("ListBucketResult > CommonPrefixes > Prefix");
+                container.data("raw", data);
+                console.log(data);
+            },
+            error: function(data){
+                console.log("Error:" + data.responseText);
+            }
+        });
     }
 
     // create an s3commander window
     $.fn.s3commander = function(options){
-        var opts = $.extend({}, $.fn.s3commander.defaults, options);
-        console.log(opts);
+        // create the container
+        container = $(this);
 
-        var url = "/" + opts.sPrefix;
-        var expires = new Date().valueOf();
-        expires = parseInt(expires / 1000);
-        expires += 21600;
+        // determine plugin options
+        container.data("opts", $.extend({},
+            $.fn.s3commander.defaults,
+            options));
 
-        $.ajax({
-            url: "http://" + opts.sBucket + ".s3.amazonaws.com" + url,
-            data: {
-                'AWSAccessKeyId': opts.sAccessKey,
-                'Signature': signRequest(opts.sAccessKey, expires, opts.sBucket, url),
-                'Expires': expires,
-            },
-            dataFormat: 'xml',
-            cache: false,
-            success: function(data){
-                console.log("success");
-                console.log(data);
-            },
-            error: function(data){
-                console.log("error");
-                console.log(data);
-            },
-        });
+        var opts = container.data("opts");
+        opts.sPrefix = normalizeUri(opts.sPrefix);
 
-        //var container = $("<div />").attr(opts.containerAttrs).appendTo(this);
-        //container.append($("<h2>TODO</h2>"));
+        // get the contents of the root prefix
+        getContents("");
+
+        // return the container
+        return container;
     };
 
     // default settings
@@ -75,8 +100,6 @@ b64pad = "=";
         "sSecretKey": "",
         "sBucket": "",
         "sPrefix": "",
-        "containerAttrs": {
-            "class": "well well-sm"
-        },
+        "sEndpoint": "s3.amazonaws.com",
     };
 }(jQuery));
