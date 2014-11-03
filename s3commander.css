@@ -3,6 +3,13 @@ div.s3contents {
     padding: 4px;
 }
 
+div.s3crumbs {
+    padding: 4px;
+    background-color: #eee;
+    border-bottom: 1px dashed black;
+    margin-bottom: 8px;
+}
+
 div.s3entry {
     padding: 4px;
     background-color: #eee;

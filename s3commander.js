@@ -44,35 +44,36 @@ b64pad = "=";
     }
 
     /**
-     * TODO
+     * Retrieve the contents
      * http://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketGET.html
      */
-    function getContents(sResource) {
+    function getContents(sPath) {
         // retrieve options
         var opts = container.data("opts");
+
+        // determine the current prefix
+        var currentPrefix = normalizeUri(opts.sPrefix + "/" + sPath) + "/";
 
         // create the request
         var timestamp = new Date();
         return $.ajax({
             url: "https://" + opts.sBucket + "." + opts.sEndpoint,
             data: {
-                "prefix": opts.sPrefix + "/" + normalizeUri(sResource),
+                "prefix": currentPrefix,
                 "delimiter": "/",
             },
             headers: {
                 "x-amz-date": formatAwsDate(timestamp),
-                "Authorization": signRequest(opts, timestamp, sResource),
+                "Authorization": signRequest(opts, timestamp, ""),
             },
             dataFormat: "xml",
             cache: false,
             success: function(data){
-                var path = $(data).find("ListBucketResult > Prefix")[0];
                 var files = $(data).find("ListBucketResult > Contents > Key");
                 var folders = $(data).find("ListBucketResult > CommonPrefixes > Prefix");
 
                 function extract(e){
-                    var uri = e.innerHTML.substr(opts.sPrefix.length);
-                    return normalizeUri(uri);
+                    return e.innerHTML.substr(currentPrefix.length);
                 }
 
                 function keep(e){
@@ -80,7 +81,7 @@ b64pad = "=";
                 }
 
                 container.data("contents", {
-                    "path": extract(path),
+                    "path": normalizeUri(sPath),
                     "files": $.map(files, extract).filter(keep),
                     "folders": $.map(folders, extract).filter(keep),
                 });
@@ -93,19 +94,36 @@ b64pad = "=";
     }
 
     function updateDisplay() {
+        // retrieve options and contents
         var opts = container.data("opts");
         var contents = container.data("contents");
 
+        // empty the container
         container.empty();
 
+        // create the breadcrumbs
+        var breadcrumbs = $("<div />").appendTo(container);
+        breadcrumbs.addClass(opts.breadcrumbsClasses.join(" "));
+        $.each(contents.path.split("/"), function(i, part){
+            $("<a />").html(part).appendTo(breadcrumbs);
+            $("<span />").html("/").appendTo(breadcrumbs);
+        });
+
+        // create folder entries
         $.each(contents.folders, function(i, folder){
             var entry = $("<div />").addClass(opts.entryClasses.join(" "));
             $("<span />").addClass("glyphicon glyphicon-folder-open").appendTo(entry);
-            $("<a />").html(folder).appendTo(entry);
+
+            $("<a />").html(folder).click(function(){
+                var path = contents.path + "/" + folder;
+                getContents(path).then(updateDisplay);
+            }).appendTo(entry);
+
             $("<button />").addClass(opts.buttonClasses.join(" ")).html("Delete").appendTo(entry);
             entry.appendTo(container);
         });
 
+        // create file entries
         $.each(contents.files, function(i, file){
             var entry = $("<div />").addClass(opts.entryClasses.join(" "));
             $("<span />").addClass("glyphicon glyphicon-file").appendTo(entry);
@@ -146,6 +164,7 @@ b64pad = "=";
         "sPrefix": "",
         "sEndpoint": "s3.amazonaws.com",
         "contentClasses": ["s3contents"],
+        "breadcrumbsClasses": ["s3crumbs"],
         "entryClasses": ["s3entry", "clearfix"],
         "buttonClasses": ["btn", "btn-xs", "btn-primary", "pull-right"],
     };
