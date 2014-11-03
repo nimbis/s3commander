@@ -14,9 +14,14 @@ b64pad = "=";
         return b64_hmac_sha1(sSecretKey, sData);
     }
 
-    function signRequest(opts, iTimestamp, sResource) {
-        var data = "GET\n\n\n";
-        data += iTimestamp + "\n";
+    function formatAwsDate(dWhen) {
+        var iso = dWhen.toISOString();
+        return iso.replace(/[:\-]|\.\d{3}/g, '');
+    }
+
+    function signRequest(opts, dStamp, sResource) {
+        var data = "GET\n\n\n\n";
+        data += "x-amz-date:" + formatAwsDate(dStamp) + "\n";
         data += "/" + opts.sBucket;
 
         if (sResource.length > 0) {
@@ -26,7 +31,7 @@ b64pad = "=";
             data += "/";
         }
 
-        return sign(opts.sSecretKey, data);
+        return "AWS " + opts.sAccessKey + ":" + sign(opts.sSecretKey, data);
     }
 
     /**
@@ -47,29 +52,42 @@ b64pad = "=";
         var opts = container.data("opts");
 
         // create the request
-        var timestamp = new Date().valueOf();
-        timestamp = parseInt(timestamp / 1000) + 21600;
-
+        var timestamp = new Date();
         return $.ajax({
             url: "https://" + opts.sBucket + "." + opts.sEndpoint,
             data: {
                 "prefix": opts.sPrefix + "/" + normalizeUri(sResource),
                 "delimiter": "/",
-                "AWSAccessKeyId": opts.sAccessKey,
-                "Signature": signRequest(opts, timestamp, sResource),
-                "Expires": timestamp,
+            },
+            headers: {
+                "x-amz-date": formatAwsDate(timestamp),
+                "Authorization": signRequest(opts, timestamp, sResource),
             },
             dataFormat: "xml",
             cache: false,
             success: function(data){
-                //var path = $(data).find("ListBucketResult > Prefix")[0];
-                //var files = $(data).find("ListBucketResult > Contents > Key");
-                //var folders = $(data).find("ListBucketResult > CommonPrefixes > Prefix");
-                container.data("raw", data);
-                console.log(data);
+                var path = $(data).find("ListBucketResult > Prefix")[0];
+                var files = $(data).find("ListBucketResult > Contents > Key");
+                var folders = $(data).find("ListBucketResult > CommonPrefixes > Prefix");
+
+                function extract(e){
+                    var uri = e.innerHTML.substr(opts.sPrefix.length);
+                    return normalizeUri(uri);
+                }
+
+                function keep(e){
+                    return e.length > 0;
+                }
+
+                container.data("contents", {
+                    "path": extract(path),
+                    "files": $.map(files, extract).filter(keep),
+                    "folders": $.map(folders, extract).filter(keep),
+                });
             },
             error: function(data){
                 console.log("Error:" + data.responseText);
+                container.data("contents", {});
             }
         });
     }
