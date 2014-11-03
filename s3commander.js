@@ -104,9 +104,11 @@ b64pad = "=";
         // create the breadcrumbs
         var breadcrumbs = $("<div />").appendTo(container);
         breadcrumbs.addClass(opts.breadcrumbsClasses.join(" "));
+        $("<span />").addClass("glyphicon glyphicon-hdd").appendTo(breadcrumbs);
+
         $.each(contents.path.split("/"), function(i, part){
-            $("<a />").html(part).appendTo(breadcrumbs);
             $("<span />").html("/").appendTo(breadcrumbs);
+            $("<a />").html(part).appendTo(breadcrumbs);
         });
 
         // create folder entries

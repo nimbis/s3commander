@@ -10,6 +10,14 @@ div.s3crumbs {
     margin-bottom: 8px;
 }
 
+div.s3crumbs > span {
+    margin-right: 6px;
+}
+
+div.s3crumbs > a {
+    margin-right: 6px;
+}
+
 div.s3entry {
     padding: 4px;
     background-color: #eee;
