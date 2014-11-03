@@ -14,6 +14,7 @@
         <!-- S3 Commander -->
         <script src="sha1.js"></script>
         <script src="s3commander.js"></script>
+        <link rel="stylesheet" href="s3commander.css" />
     </head>
     <body>
         <div class="container-fluid">
@@ -41,25 +42,28 @@
                     </form>
                 </div>
 
-                <div class="col-md-8" id="s3commander">
-                    <h2>Loading...</h2>
+                <div class="col-md-8">
+                    <h2>Contents</h2>
+                    <div id="s3commander">
+                        <h3>Loading...</h3>
+                    </div>
                 </div>
             </div>
         </div>
 
         <script type="text/javascript">
-        $(document).ready(function(){
-            $("form").submit(function(){
-                $("#s3commander").s3commander({
-                    sAccessKey: $("#txtAccessKey").value(),
-                    sSecretKey: $("#txtSecretKey").value(),
-                    sBucket: $("#txtBucket").value(),
-                    sPrefix: $("#txtPrefix").value(),
-                });
+            $(document).ready(function(){
+                $("form").submit(function(){
+                    $("#s3commander").s3commander({
+                        sAccessKey: $("#txtAccessKey").val(),
+                        sSecretKey: $("#txtSecretKey").val(),
+                        sBucket: $("#txtBucket").val(),
+                        sPrefix: $("#txtPrefix").val(),
+                    });
 
-                return false;
-            });
-        })
+                    return false;
+                });
+            })
         </script>
     </body>
 </html>

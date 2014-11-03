@@ -92,6 +92,29 @@ b64pad = "=";
         });
     }
 
+    function updateDisplay() {
+        var opts = container.data("opts");
+        var contents = container.data("contents");
+
+        container.empty();
+
+        $.each(contents.folders, function(i, folder){
+            var entry = $("<div />").addClass(opts.entryClasses.join(" "));
+            $("<span />").addClass("glyphicon glyphicon-folder-open").appendTo(entry);
+            $("<a />").html(folder).appendTo(entry);
+            $("<button />").addClass(opts.buttonClasses.join(" ")).html("Delete").appendTo(entry);
+            entry.appendTo(container);
+        });
+
+        $.each(contents.files, function(i, file){
+            var entry = $("<div />").addClass(opts.entryClasses.join(" "));
+            $("<span />").addClass("glyphicon glyphicon-file").appendTo(entry);
+            $("<a />").html(file).appendTo(entry);
+            $("<button />").addClass(opts.buttonClasses.join(" ")).html("Delete").appendTo(entry);
+            entry.appendTo(container);
+        });
+    }
+
     // create an s3commander window
     $.fn.s3commander = function(options){
         // create the container
@@ -105,8 +128,11 @@ b64pad = "=";
         var opts = container.data("opts");
         opts.sPrefix = normalizeUri(opts.sPrefix);
 
+        // style the container
+        container.addClass(opts.contentClasses.join(" "));
+
         // get the contents of the root prefix
-        getContents("");
+        getContents("").then(updateDisplay);
 
         // return the container
         return container;
@@ -119,5 +145,8 @@ b64pad = "=";
         "sBucket": "",
         "sPrefix": "",
         "sEndpoint": "s3.amazonaws.com",
+        "contentClasses": ["s3contents"],
+        "entryClasses": ["s3entry", "clearfix"],
+        "buttonClasses": ["btn", "btn-xs", "btn-primary", "pull-right"],
     };
 }(jQuery));
