@@ -8,64 +8,131 @@ b64pad = "=";
 // define the jQuery plugin
 (function($){
     "use strict";
+
+    /**
+     * TODO
+     */
     var container = null;
 
+    /**
+     * TODO
+     */
+    function normURI(sUri, bAbsolute) {
+        // default parameter values
+        bAbsolute = typeof bAbsolute !== 'undefined' ? bAbsolute : false;
+
+        // split the uri and filter out empty components
+        var parts = sUri.split("/").filter(function(part){
+            return part.length > 0;
+        });
+
+        // create the uri from it's components
+        var uri = parts.join("/");
+        if (bAbsolute == true) {
+            return "/" + uri;
+        }
+
+        return uri;
+    }
+
+    /**
+     * TODO
+     */
+    function popURI(sUri) {
+        // corner case: empty uri
+        if (sUri.length == 0) {
+            return sUri;
+        }
+
+        // remove everything starting from the last '/'
+        return sUri.substr(0, sUri.lastIndexOf("/"));
+    }
+
+    /**
+     * Sign a string using an AWS secret key.
+     */
     function sign(sSecretKey, sData) {
         return b64_hmac_sha1(sSecretKey, sData);
     }
 
-    function formatAwsDate(dWhen) {
-        var iso = dWhen.toISOString();
-        return iso.replace(/[:\-]|\.\d{3}/g, '');
-    }
+    /**
+     * TODO
+     *
+     * http://docs.aws.amazon.com/AmazonS3/latest/dev/RESTAuthentication.html
+     */
+    function signRequest(opts, sMethod, sResource, oParams) {
+        // default parameter values
+        sMethod = typeof sMethod !== 'undefined' ? sMethod : "GET";
+        sResource = typeof sResource !== 'undefined' ? sResource : "";
+        oParams = typeof oParams !== 'undefined' ? oParams : new Object();
 
-    function signRequest(opts, dStamp, sResource) {
-        var data = "GET\n\n\n\n";
-        data += "x-amz-date:" + formatAwsDate(dStamp) + "\n";
-        data += "/" + opts.sBucket;
+        // normalize the resource
+        sResource = normURI(sResource);
+
+        // this is used as the request and signature expiration timestamp
+        // for convenince. the request timestamp must be within 15
+        // minutes of the time on amazon's aws servers and the expiration
+        // timestamp must be in the future so we add (XXX 6 hours ???)
+        var timestamp = parseInt(new Date().valueOf() / 1000) + 21600;
+
+        // create the signature plaintext
+        var secure = sMethod + "\n\n\n";
+        secure += timestamp + "\n";
+        secure += "/" + opts.sBucket + "/";
 
         if (sResource.length > 0) {
-            data += "/" + opts.sPrefix + "/" + normalizeUri(sResource);
-        }
-        else {
-            data += "/";
+            secure += opts.sPrefix + "/" + sResource;
         }
 
-        return "AWS " + opts.sAccessKey + ":" + sign(opts.sSecretKey, data);
+        var params = $.param(oParams);
+        if (params.length > 0) {
+            secure += "?" + params;
+        }
+
+        // return the query parameters required for this request
+        return $.extend(oParams, {
+            'AWSAccessKeyId': opts.sAccessKey,
+            'Signature': sign(opts.sSecretKey, secure),
+            'Expires': timestamp,
+        });
     }
 
     /**
-     * Normalize the forward slashes in a URI.
+     * TODO
      */
-    function normalizeUri(sUri) {
-        return sUri.split("/").filter(function(part){
-            return part.length > 0;
-        }).join("/");
+    function getAPIUrl(opts) {
+        // TODO we can't use https:// if the bucket name contains a '.' (dot)
+        return "https://" + opts.sBucket + "." + opts.sEndpoint;
     }
 
     /**
-     * Retrieve the contents
+     * TODO
+     */
+    function getResourceUrl(opts, sResource) {
+        var url = getAPIUrl(opts);
+        url += normURI(opts.sPrefix, true);
+        url += normURI(sResource, true);
+
+        return url;
+    }
+
+    /**
+     * TODO
+     *
      * http://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketGET.html
      */
     function getContents(sPath) {
-        // retrieve options
         var opts = container.data("opts");
 
-        // determine the current prefix
-        var currentPrefix = normalizeUri(opts.sPrefix + "/" + sPath) + "/";
+        var fullpath = normURI(opts.sPrefix + "/" + sPath) + "/";
+        var signdata = signRequest(opts, "GET", "/");
 
-        // create the request
-        var timestamp = new Date();
         return $.ajax({
-            url: "https://" + opts.sBucket + "." + opts.sEndpoint,
-            data: {
-                "prefix": currentPrefix,
+            url: getAPIUrl(opts),
+            data: $.extend(signdata, {
+                "prefix": fullpath,
                 "delimiter": "/",
-            },
-            headers: {
-                "x-amz-date": formatAwsDate(timestamp),
-                "Authorization": signRequest(opts, timestamp, ""),
-            },
+            }),
             dataFormat: "xml",
             cache: false,
             success: function(data){
@@ -73,7 +140,7 @@ b64pad = "=";
                 var folders = $(data).find("ListBucketResult > CommonPrefixes > Prefix");
 
                 function extract(e){
-                    return e.innerHTML.substr(currentPrefix.length);
+                    return e.innerHTML.substr(fullpath.length);
                 }
 
                 function keep(e){
@@ -81,61 +148,49 @@ b64pad = "=";
                 }
 
                 container.data("contents", {
-                    "path": normalizeUri(sPath),
+                    "path": normURI(sPath),
                     "files": $.map(files, extract).filter(keep),
                     "folders": $.map(folders, extract).filter(keep),
                 });
+
+                container.data("error", "");
             },
             error: function(data){
                 console.log("Error:" + data.responseText);
                 container.data("contents", {});
+                container.data("error", data.responseText);
             }
         });
     }
 
+    /**
+     * TODO
+     *
+     * http://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectGET.html
+     */
     function getObject(sPath) {
         var opts = container.data("opts");
 
-        var canonical = "/" + opts.sPrefix;
-        canonical += "/" + normalizeUri(sPath);
-        canonical += "?" + $.param({
+        var signdata = signRequest(opts, "GET", sPath, {
             'response-cache-control': 'No-cache',
-            'response-content-disposition': 'attachment',
+            'response-content-disposition': 'attachment'
         });
 
-        var timestamp = new Date();
-        timestamp = parseInt(timestamp.valueOf() / 1000) + 21600;
-
-        var secure = "GET\n\n\n" + timestamp + "\n";
-        secure += "/" + opts.sBucket + canonical;
-        canonical += "&" + $.param({
-            'AWSAccessKeyId': opts.sAccessKey,
-            'Signature': sign(opts.sSecretKey, secure),
-            'Expires': timestamp,
-        });
-
-        var url = "https://" + opts.sBucket + "." + opts.sEndpoint + canonical;
+        var url = getResourceUrl(opts, sPath) + "?" + $.param(signdata);
         window.open(url, "_blank");
     }
 
+    /**
+     * TODO
+     *
+     * http://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectDELETE.html
+     */
     function deleteObject(sPath) {
         var opts = container.data("opts");
 
-        var canonical = "/" + opts.sPrefix;
-        canonical += "/" + normalizeUri(sPath);
+        var signdata = signRequest(opts, "DELETE", sPath);
+        var url = getResourceUrl(opts, sPath) + "?" + $.param(signdata);
 
-        var timestamp = new Date();
-        timestamp = parseInt(timestamp.valueOf() / 1000) + 21600;
-
-        var secure = "DELETE\n\n\n" + timestamp + "\n";
-        secure += "/" + opts.sBucket + canonical;
-        canonical += "?" + $.param({
-            'AWSAccessKeyId': opts.sAccessKey,
-            'Signature': sign(opts.sSecretKey, secure),
-            'Expires': timestamp,
-        });
-
-        var url = "https://" + opts.sBucket + "." + opts.sEndpoint + canonical;
         return $.ajax({
             url: url,
             type: "DELETE",
@@ -145,6 +200,9 @@ b64pad = "=";
         });
     }
 
+    /**
+     * TODO
+     */
     function updateDisplay() {
         // retrieve options and contents
         var opts = container.data("opts");
@@ -235,7 +293,7 @@ b64pad = "=";
 
         // create the upload form
         var form = $("<form />").addClass("s3upload form-inline").appendTo(container);
-        form.attr("action", "https://" + opts.sBucket + "." + opts.sEndpoint + "/");
+        form.attr("action", getAPIUrl(opts));
         form.attr("method", "POST");
         form.attr("enctype", "multipart/form-data");
 
@@ -301,7 +359,7 @@ b64pad = "=";
     }
 
     // create an s3commander window
-    $.fn.s3commander = function(options){
+    $.fn.s3commander = function(options) {
         // create the container
         container = $(this);
 
@@ -311,13 +369,13 @@ b64pad = "=";
             options));
 
         var opts = container.data("opts");
-        opts.sPrefix = normalizeUri(opts.sPrefix);
+        opts.sPrefix = normURI(opts.sPrefix);
 
         // style the container
-        container.addClass(opts.contentClasses.join(" "));
+        container.addClass(opts.containerClasses.join(" "));
 
         // get the contents of the root prefix
-        getContents("").then(updateDisplay);
+        getContents("/").then(updateDisplay);
 
         // return the container
         return container;
@@ -328,11 +386,11 @@ b64pad = "=";
         "sAccessKey": "",
         "sSecretKey": "",
         "sBucket": "",
-        "sPrefix": "",
+        "sPrefix": "/",
         "sEndpoint": "s3.amazonaws.com",
-        "contentClasses": ["s3contents"],
-        "breadcrumbsClasses": ["s3crumbs", "clearfix"],
-        "entryClasses": ["s3entry", "clearfix"],
+        "containerClasses": ["s3contents"],
+        "breadcrumbsClasses": ["s3crumbs"],
+        "entryClasses": ["s3entry"],
         "buttonClasses": ["btn", "btn-xs", "btn-primary", "pull-right"],
     };
 }(jQuery));
