@@ -9,17 +9,30 @@ b64pad = "=";
 (function($){
     "use strict";
 
+    /************************************************************************
+     * General / Utility                                                    *
+     ************************************************************************/
+
     /**
-     * TODO
+     * The plugin stores the top-level HTML DOM container element in this
+     * variable. This is also used to store plugin state using jQuery's
+     * .data() method. See getContents() for more information.
      */
     var container = null;
 
     /**
-     * TODO
+     * Normalize a URI by removing empty components ('//'), leading,
+     * and trailing slashes. If bAbsolute is true then a leading slash is
+     * always present in the returned URI.
      */
     function normURI(sUri, bAbsolute) {
         // default parameter values
         bAbsolute = typeof bAbsolute !== 'undefined' ? bAbsolute : false;
+
+        // corner case: empty uri
+        if (sUri.length == 0) {
+            return bAbsolute ? "/" : "";
+        }
 
         // split the uri and filter out empty components
         var parts = sUri.split("/").filter(function(part){
@@ -36,7 +49,7 @@ b64pad = "=";
     }
 
     /**
-     * TODO
+     * Pop the last component from the given URI and return the remaining part.
      */
     function popURI(sUri) {
         // corner case: empty uri
@@ -48,6 +61,10 @@ b64pad = "=";
         return sUri.substr(0, sUri.lastIndexOf("/"));
     }
 
+    /************************************************************************
+     * Amazon AWS                                                           *
+     ************************************************************************/
+
     /**
      * Sign a string using an AWS secret key.
      */
@@ -56,7 +73,7 @@ b64pad = "=";
     }
 
     /**
-     * TODO
+     * Sign an Amazon AWS REST request.
      *
      * http://docs.aws.amazon.com/AmazonS3/latest/dev/RESTAuthentication.html
      */
@@ -98,7 +115,7 @@ b64pad = "=";
     }
 
     /**
-     * TODO
+     * Retrieve the url for Amazon AWS REST API calls.
      */
     function getAPIUrl(opts) {
         // TODO we can't use https:// if the bucket name contains a '.' (dot)
@@ -106,7 +123,7 @@ b64pad = "=";
     }
 
     /**
-     * TODO
+     * Retrieve a url for the given resource.
      */
     function getResourceUrl(opts, sResource) {
         var url = getAPIUrl(opts);
@@ -116,8 +133,12 @@ b64pad = "=";
         return url;
     }
 
+    /************************************************************************
+     * Plugin Actions                                                       *
+     ************************************************************************/
+
     /**
-     * TODO
+     * Retrieve the contents at the given path and store them internally.
      *
      * http://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketGET.html
      */
@@ -140,7 +161,7 @@ b64pad = "=";
                 var folders = $(data).find("ListBucketResult > CommonPrefixes > Prefix");
 
                 function extract(e){
-                    return e.innerHTML.substr(fullpath.length);
+                    return normURI(e.innerHTML.substr(fullpath.length));
                 }
 
                 function keep(e){
@@ -164,7 +185,7 @@ b64pad = "=";
     }
 
     /**
-     * TODO
+     * Download the resource at the given path.
      *
      * http://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectGET.html
      */
@@ -181,7 +202,7 @@ b64pad = "=";
     }
 
     /**
-     * TODO
+     * Delete the resource at the given path.
      *
      * http://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectDELETE.html
      */
@@ -200,27 +221,35 @@ b64pad = "=";
         });
     }
 
+    /************************************************************************
+     * User Interface                                                       *
+     ************************************************************************/
+
     /**
      * TODO
      */
-    function updateDisplay() {
+    function createBreadcrumbs() {
         // retrieve options and contents
         var opts = container.data("opts");
         var contents = container.data("contents");
 
-        // empty the container
-        container.empty();
+        // create the breadcrumbs container
+        var breadcrumbs = $("<div />")
+            .addClass(opts.breadcrumbsClasses.join(" "))
+            .appendTo(container);
 
-        // create the breadcrumbs
-        var breadcrumbs = $("<div />").appendTo(container);
-        breadcrumbs.addClass(opts.breadcrumbsClasses.join(" "));
-        $("<span />").addClass("glyphicon glyphicon-hdd").appendTo(breadcrumbs);
+        // disk icon
+        $("<span />")
+            .addClass("glyphicon glyphicon-hdd")
+            .appendTo(breadcrumbs);
 
-        $.each(contents.path.split("/"), function(i, part){
+        // path crumbs
+        $.each(contents.path.split("/"), function(i, crumb){
             $("<span />").html("/").appendTo(breadcrumbs);
-            $("<a />").html(part).appendTo(breadcrumbs);
+            $("<span />").html(crumb).appendTo(breadcrumbs);
         });
 
+        // refresh button
         $("<button />")
             .addClass(opts.buttonClasses.join(" "))
             .html("Refresh")
@@ -228,6 +257,95 @@ b64pad = "=";
                 getContents(contents.path).then(updateDisplay);
             })
             .appendTo(breadcrumbs);
+
+        // parent folder button
+        $("<button />")
+            .addClass(opts.buttonClasses.join(" "))
+            .html("Back")
+            .click(function(){
+                var path = popURI(contents.path);
+                getContents(path).then(updateDisplay);
+            })
+            .appendTo(breadcrumbs);
+    }
+
+    /**
+     * TODO
+     */
+    function createUploadControl() {
+        // retrieve options and contents
+        var opts = container.data("opts");
+        var contents = container.data("contents");
+
+        // create the upload form
+        var form = $("<form />")
+            .addClass(opts.uploadClasses.join(" "))
+            .appendTo(container);
+
+        form.attr("action", getAPIUrl(opts));
+        form.attr("method", "POST");
+        form.attr("enctype", "multipart/form-data");
+
+        // store amazon parameters in hidden input fields
+        function createHidden(name, value) {
+            $("<input />")
+                .attr("type", "hidden")
+                .attr("name", name)
+                .attr("value", value)
+                .appendTo(form);
+        }
+
+        var key = normURI(opts.sPrefix + "/" + contents.path + "/${filename}");
+        var policy = {
+            "expiration": "2020-12-01T12:00:00.000Z",
+            "conditions": [
+                {"acl": "private"},
+                {"bucket": opts.sBucket},
+                ["starts-with", "$key", opts.sPrefix],
+                ["starts-with", "$Content-Type", ""],
+            ],
+        };
+
+        var policy_b64 = rstr2b64(JSON.stringify(policy));
+
+        createHidden("key", key);
+        createHidden("AWSAccessKeyId", opts.sAccessKey);
+        createHidden("Content-Type", "application/octet-stream");
+        createHidden("policy", policy_b64);
+        createHidden("acl", "private");
+        createHidden("signature", sign(opts.sSecretKey, policy_b64));
+
+        // create the file upload field
+        var inputs = $("<div />").addClass("form-group").appendTo(form);
+        $("<input />")
+            .attr("type", "file")
+            .attr("name", "file")
+            .appendTo(inputs);
+
+        // create the submit button
+        $("<button />")
+            .attr("type", "submit")
+            .addClass(opts.buttonClasses.join(" "))
+            .html("Upload")
+            .appendTo(form);
+    }
+
+    /**
+     * TODO
+     *
+     * http://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-UsingHTTPPOST.html
+     * http://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-post-example.html
+     */
+    function updateDisplay() {
+        // retrieve options and contents
+        var opts = container.data("opts");
+        var contents = container.data("contents");
+
+        // clear the container
+        container.empty();
+
+        // create controls
+        createBreadcrumbs();
 
         // create folder entries
         $.each(contents.folders, function(i, folder){
@@ -291,72 +409,13 @@ b64pad = "=";
             entry.appendTo(container);
         });
 
-        // create the upload form
-        var form = $("<form />").addClass("s3upload form-inline").appendTo(container);
-        form.attr("action", getAPIUrl(opts));
-        form.attr("method", "POST");
-        form.attr("enctype", "multipart/form-data");
-
-        $("<input />")
-            .attr("type", "hidden")
-            .attr("name", "key")
-            .attr("value", opts.sPrefix + "/" + contents.path + "/${filename}")
-            .appendTo(form);
-
-        $("<input />")
-            .attr("type", "hidden")
-            .attr("name", "AWSAccessKeyId")
-            .attr("value", opts.sAccessKey)
-            .appendTo(form);
-
-        $("<input />")
-            .attr("type", "hidden")
-            .attr("name", "Content-Type")
-            .attr("value", "application/octet-stream")
-            .appendTo(form);
-
-        var policy = {
-            "expiration": "2020-12-01T12:00:00.000Z",
-            "conditions": [
-                {"acl": "private"},
-                {"bucket": opts.sBucket},
-                ["starts-with", "$key", opts.sPrefix],
-                ["starts-with", "$Content-Type", ""],
-            ],
-        };
-
-        var policy_b64 = rstr2b64(JSON.stringify(policy));
-
-        $("<input />")
-            .attr("type", "hidden")
-            .attr("name", "policy")
-            .attr("value", policy_b64)
-            .appendTo(form);
-
-        $("<input />")
-            .attr("type", "hidden")
-            .attr("name", "acl")
-            .attr("value", "private")
-            .appendTo(form);
-
-        $("<input />")
-            .attr("type", "hidden")
-            .attr("name", "signature")
-            .attr("value", sign(opts.sSecretKey, policy_b64))
-            .appendTo(form);
-
-        var inputs = $("<div />").addClass("form-group").appendTo(form);
-        $("<input />")
-            .attr("type", "file")
-            .attr("name", "file")
-            .appendTo(inputs);
-
-        $("<button />")
-            .attr("type", "submit")
-            .addClass(opts.buttonClasses.join(" "))
-            .html("Upload")
-            .appendTo(form);
+        // create controls
+        createUploadControl();
     }
+
+    /************************************************************************
+     * jQuery                                                               *
+     ************************************************************************/
 
     // create an s3commander window
     $.fn.s3commander = function(options) {
@@ -386,11 +445,12 @@ b64pad = "=";
         "sAccessKey": "",
         "sSecretKey": "",
         "sBucket": "",
-        "sPrefix": "/",
+        "sPrefix": "",
         "sEndpoint": "s3.amazonaws.com",
         "containerClasses": ["s3contents"],
         "breadcrumbsClasses": ["s3crumbs"],
         "entryClasses": ["s3entry"],
+        "uploadClasses": ["s3upload", "form-inline"],
         "buttonClasses": ["btn", "btn-xs", "btn-primary", "pull-right"],
     };
 }(jQuery));
