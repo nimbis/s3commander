@@ -118,6 +118,33 @@ b64pad = "=";
         window.open(url, "_blank");
     }
 
+    function deleteObject(sPath) {
+        var opts = container.data("opts");
+
+        var canonical = "/" + opts.sPrefix;
+        canonical += "/" + normalizeUri(sPath);
+
+        var timestamp = new Date();
+        timestamp = parseInt(timestamp.valueOf() / 1000) + 21600;
+
+        var secure = "DELETE\n\n\n" + timestamp + "\n";
+        secure += "/" + opts.sBucket + canonical;
+        canonical += "?" + $.param({
+            'AWSAccessKeyId': opts.sAccessKey,
+            'Signature': sign(opts.sSecretKey, secure),
+            'Expires': timestamp,
+        });
+
+        var url = "https://" + opts.sBucket + "." + opts.sEndpoint + canonical;
+        return $.ajax({
+            url: url,
+            type: "DELETE",
+            error: function(data){
+                console.log("Error: " + data.responseText);
+            },
+        });
+    }
+
     function updateDisplay() {
         // retrieve options and contents
         var opts = container.data("opts");
@@ -138,31 +165,130 @@ b64pad = "=";
 
         // create folder entries
         $.each(contents.folders, function(i, folder){
+            var path = contents.path + "/" + folder;
             var entry = $("<div />").addClass(opts.entryClasses.join(" "));
-            $("<span />").addClass("glyphicon glyphicon-folder-open").appendTo(entry);
 
-            $("<a />").html(folder).click(function(){
-                var path = contents.path + "/" + folder;
-                getContents(path).then(updateDisplay);
-            }).appendTo(entry);
+            $("<span />")
+                .addClass("glyphicon glyphicon-folder-open")
+                .appendTo(entry);
 
-            $("<button />").addClass(opts.buttonClasses.join(" ")).html("Delete").appendTo(entry);
+            $("<a />")
+                .html(folder)
+                .click(function(){
+                    getContents(path).then(updateDisplay);
+                })
+                .appendTo(entry);
+
+            $("<button />")
+                .addClass(opts.buttonClasses.join(" "))
+                .html("Delete")
+                .click(function(){
+                    deleteObject(path)
+                        .then(function(){
+                            return getContents(contents.path);
+                        })
+                        .then(updateDisplay);
+                })
+                .appendTo(entry);
+
             entry.appendTo(container);
         });
 
         // create file entries
         $.each(contents.files, function(i, file){
+            var path = contents.path + "/" + file;
             var entry = $("<div />").addClass(opts.entryClasses.join(" "));
-            $("<span />").addClass("glyphicon glyphicon-file").appendTo(entry);
 
-            $("<a />").html(file).click(function(){
-                var path = contents.path + "/" + file;
-                getObject(path);
-            }).appendTo(entry);
+            $("<span />")
+                .addClass("glyphicon glyphicon-file")
+                .appendTo(entry);
 
-            $("<button />").addClass(opts.buttonClasses.join(" ")).html("Delete").appendTo(entry);
+            $("<a />")
+                .html(file)
+                .click(function(){
+                    getObject(path);
+                })
+                .appendTo(entry);
+
+            $("<button />")
+                .addClass(opts.buttonClasses.join(" "))
+                .html("Delete")
+                .click(function(){
+                    deleteObject(path)
+                        .then(function(){
+                            return getContents(contents.path);
+                        })
+                        .then(updateDisplay);
+                })
+                .appendTo(entry);
+
             entry.appendTo(container);
         });
+
+        // create the upload form
+        var form = $("<form />").addClass("s3upload").appendTo(container);
+        form.attr("action", "https://" + opts.sBucket + "." + opts.sEndpoint + "/");
+        form.attr("method", "POST");
+        form.attr("enctype", "multipart/form-data");
+
+        $("<input />")
+            .attr("type", "hidden")
+            .attr("name", "key")
+            .attr("value", opts.sPrefix + "/" + contents.path + "/${filename}")
+            .appendTo(form);
+
+        $("<input />")
+            .attr("type", "hidden")
+            .attr("name", "AWSAccessKeyId")
+            .attr("value", opts.sAccessKey)
+            .appendTo(form);
+
+        $("<input />")
+            .attr("type", "hidden")
+            .attr("name", "Content-Type")
+            .attr("value", "application/octet-stream")
+            .appendTo(form);
+
+        var policy = {
+            "expiration": "2020-12-01T12:00:00.000Z",
+            "conditions": [
+                {"acl": "private"},
+                {"bucket": opts.sBucket},
+                ["starts-with", "$key", opts.sPrefix],
+                ["starts-with", "$Content-Type", ""],
+            ],
+        };
+
+        var policy_b64 = rstr2b64(JSON.stringify(policy));
+
+        $("<input />")
+            .attr("type", "hidden")
+            .attr("name", "policy")
+            .attr("value", policy_b64)
+            .appendTo(form);
+
+        $("<input />")
+            .attr("type", "hidden")
+            .attr("name", "acl")
+            .attr("value", "private")
+            .appendTo(form);
+
+        $("<input />")
+            .attr("type", "hidden")
+            .attr("name", "signature")
+            .attr("value", sign(opts.sSecretKey, policy_b64))
+            .appendTo(form);
+
+        $("<input />")
+            .attr("type", "file")
+            .attr("name", "file")
+            .appendTo(form);
+
+        $("<button />")
+            .attr("type", "submit")
+            .addClass(opts.buttonClasses.join(" "))
+            .val("Upload")
+            .appendTo(form);
     }
 
     // create an s3commander window
