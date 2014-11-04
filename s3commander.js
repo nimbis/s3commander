@@ -93,6 +93,31 @@ b64pad = "=";
         });
     }
 
+    function getObject(sPath) {
+        var opts = container.data("opts");
+
+        var canonical = "/" + opts.sPrefix;
+        canonical += "/" + normalizeUri(sPath);
+        canonical += "?" + $.param({
+            'response-cache-control': 'No-cache',
+            'response-content-disposition': 'attachment',
+        });
+
+        var timestamp = new Date();
+        timestamp = parseInt(timestamp.valueOf() / 1000) + 21600;
+
+        var secure = "GET\n\n\n" + timestamp + "\n";
+        secure += "/" + opts.sBucket + canonical;
+        canonical += "&" + $.param({
+            'AWSAccessKeyId': opts.sAccessKey,
+            'Signature': sign(opts.sSecretKey, secure),
+            'Expires': timestamp,
+        });
+
+        var url = "https://" + opts.sBucket + "." + opts.sEndpoint + canonical;
+        window.open(url, "_blank");
+    }
+
     function updateDisplay() {
         // retrieve options and contents
         var opts = container.data("opts");
@@ -129,7 +154,12 @@ b64pad = "=";
         $.each(contents.files, function(i, file){
             var entry = $("<div />").addClass(opts.entryClasses.join(" "));
             $("<span />").addClass("glyphicon glyphicon-file").appendTo(entry);
-            $("<a />").html(file).appendTo(entry);
+
+            $("<a />").html(file).click(function(){
+                var path = contents.path + "/" + file;
+                getObject(path);
+            }).appendTo(entry);
+
             $("<button />").addClass(opts.buttonClasses.join(" ")).html("Delete").appendTo(entry);
             entry.appendTo(container);
         });
