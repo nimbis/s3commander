@@ -163,6 +163,14 @@ b64pad = "=";
             $("<a />").html(part).appendTo(breadcrumbs);
         });
 
+        $("<button />")
+            .addClass(opts.buttonClasses.join(" "))
+            .html("Refresh")
+            .click(function(){
+                getContents(contents.path).then(updateDisplay);
+            })
+            .appendTo(breadcrumbs);
+
         // create folder entries
         $.each(contents.folders, function(i, folder){
             var path = contents.path + "/" + folder;
@@ -226,7 +234,7 @@ b64pad = "=";
         });
 
         // create the upload form
-        var form = $("<form />").addClass("s3upload").appendTo(container);
+        var form = $("<form />").addClass("s3upload form-inline").appendTo(container);
         form.attr("action", "https://" + opts.sBucket + "." + opts.sEndpoint + "/");
         form.attr("method", "POST");
         form.attr("enctype", "multipart/form-data");
@@ -279,15 +287,16 @@ b64pad = "=";
             .attr("value", sign(opts.sSecretKey, policy_b64))
             .appendTo(form);
 
+        var inputs = $("<div />").addClass("form-group").appendTo(form);
         $("<input />")
             .attr("type", "file")
             .attr("name", "file")
-            .appendTo(form);
+            .appendTo(inputs);
 
         $("<button />")
             .attr("type", "submit")
             .addClass(opts.buttonClasses.join(" "))
-            .val("Upload")
+            .html("Upload")
             .appendTo(form);
     }
 
@@ -322,7 +331,7 @@ b64pad = "=";
         "sPrefix": "",
         "sEndpoint": "s3.amazonaws.com",
         "contentClasses": ["s3contents"],
-        "breadcrumbsClasses": ["s3crumbs"],
+        "breadcrumbsClasses": ["s3crumbs", "clearfix"],
         "entryClasses": ["s3entry", "clearfix"],
         "buttonClasses": ["btn", "btn-xs", "btn-primary", "pull-right"],
     };

@@ -18,6 +18,10 @@ div.s3crumbs > a {
     margin-right: 6px;
 }
 
+div.s3crumbs > button {
+    margin-left: 6px;
+}
+
 div.s3entry {
     padding: 4px;
     background-color: #eee;
@@ -35,4 +39,11 @@ div.s3entry > span {
 
 div.s3entry > button {
     margin-left: 6px;
+}
+
+form.s3upload {
+    padding: 4px;
+    background-color: #eee;
+    border-top: 1px dashed black;
+    margin-top: 8px;
 }
