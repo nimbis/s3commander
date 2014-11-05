@@ -22,6 +22,8 @@ b64pad = "=";
 
     /**
      * Normalize a URI by removing empty components ('//') and leading slashes.
+     * If bTrim is true then it will also remove trailing slashes otherwise it
+     * keeps a single trailing slash if the original URI had one.
      */
     function normURI(sURI, bTrim) {
         // default parameter values
@@ -48,7 +50,7 @@ b64pad = "=";
     }
 
     /**
-     * TODO
+     * Create a normalized URI from components.
      */
     function joinURI(aParts, bTrim) {
         // default parameter values
@@ -139,6 +141,33 @@ b64pad = "=";
         return getAPIUrl(opts) + "/" + joinURI([opts.sPrefix, sResource]);
     }
 
+    /**
+     * Get the encoded policy and it's signature required to upload files.
+     */
+    function getPolicyData(opts) {
+        // create the policy
+        var policy = {
+            "expiration": "2020-12-01T12:00:00.000Z",
+            "conditions": [
+                {"acl": "private"},
+                {"bucket": opts.sBucket},
+                ["starts-with", "$key", opts.sPrefix],
+                ["starts-with", "$Content-Type", ""],
+            ],
+        };
+
+        // encode the policy as Base64 and sign it
+        var policy_b64 = rstr2b64(JSON.stringify(policy));
+        var signature = sign(opts.sSecretKey, policy_b64);
+
+        // return the policy and signature
+        return {
+            "acl": "private",
+            "policy": policy_b64,
+            "signature": signature,
+        };
+    }
+
     /************************************************************************
      * Plugin Actions                                                       *
      ************************************************************************/
@@ -191,9 +220,8 @@ b64pad = "=";
     }
 
     /**
-     * TODO
-     *
-     *
+     * Create a folder with the given path. Folders are just S3 objects where
+     * the key ends in a trailing slash.
      */
     function createFolder(sPath) {
         var opts = container.data("opts");
@@ -252,7 +280,7 @@ b64pad = "=";
      ************************************************************************/
 
     /**
-     * TODO
+     * Create the breadcrumbs control.
      */
     function createBreadcrumbs() {
         // retrieve options and contents
@@ -295,6 +323,9 @@ b64pad = "=";
             .appendTo(breadcrumbs);
     }
 
+    /**
+     * Create the new folder control.
+     */
     function createFolderControl() {
         // retrieve options and contents
         var opts = container.data("opts");
@@ -342,7 +373,7 @@ b64pad = "=";
     }
 
     /**
-     * TODO
+     * Create the file upload control.
      */
     function createUploadControl() {
         // retrieve options and contents
@@ -359,40 +390,26 @@ b64pad = "=";
         form.attr("enctype", "multipart/form-data");
 
         // store amazon parameters in hidden input fields
-        function createHidden(name, value) {
+        var amazondata = $.extend(getPolicyData(opts), {
+            "AWSAccessKeyId": opts.sAccessKey,
+            "Content-Type": "application/octet-stream",
+            "key": joinURI([opts.sPrefix, contents.path, "${filename}"], true),
+        });
+
+        $.each(amazondata, function(name, value){
             $("<input />")
                 .attr("type", "hidden")
                 .attr("name", name)
                 .attr("value", value)
                 .appendTo(form);
-        }
-
-        var key = joinURI([opts.sPrefix, contents.path, "${filename}"], true);
-        var policy = {
-            "expiration": "2020-12-01T12:00:00.000Z",
-            "conditions": [
-                {"acl": "private"},
-                {"bucket": opts.sBucket},
-                ["starts-with", "$key", opts.sPrefix],
-                ["starts-with", "$Content-Type", ""],
-            ],
-        };
-
-        var policy_b64 = rstr2b64(JSON.stringify(policy));
-
-        createHidden("key", key);
-        createHidden("AWSAccessKeyId", opts.sAccessKey);
-        createHidden("Content-Type", "application/octet-stream");
-        createHidden("policy", policy_b64);
-        createHidden("acl", "private");
-        createHidden("signature", sign(opts.sSecretKey, policy_b64));
+        });
 
         // create the file upload field
-        var inputs = $("<div />").addClass("form-group").appendTo(form);
+        var controls = $("<div />").addClass("form-group").appendTo(form);
         $("<input />")
             .attr("type", "file")
             .attr("name", "file")
-            .appendTo(inputs);
+            .appendTo(controls);
 
         // create the submit button
         $("<button />")
@@ -403,7 +420,7 @@ b64pad = "=";
     }
 
     /**
-     * TODO
+     * Update the display with the internal contents.
      *
      * http://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-UsingHTTPPOST.html
      * http://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-post-example.html
