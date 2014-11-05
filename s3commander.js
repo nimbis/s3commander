@@ -179,17 +179,9 @@ b64pad = "=";
      */
     function listContents(sPath) {
         var opts = container.data("opts");
-        var contents = container.data("contents");
 
         // default parameter values
-        sPath = typeof sPath !== 'undefined' ? sPath : contents.path;
-
-        // clear the contents
-        container.data("contents", {
-            "path": "",
-            "files": [],
-            "folders": []
-        });
+        sPath = typeof sPath !== 'undefined' ? sPath : "";
 
         // determine the full path and sign the request
         var fullpath = joinURI([opts.sPrefix, sPath], true) + "/";
@@ -225,6 +217,7 @@ b64pad = "=";
                 });
             },
             error: function(data){
+                container.data("contents", {});
                 console.log("Error:" + data.responseText);
                 createAlert("danger", "Failed to get directory contents!");
             }
@@ -341,7 +334,7 @@ b64pad = "=";
             .addClass(opts.buttonClasses.join(" "))
             .html("Refresh")
             .click(function(){
-                listContents().then(updateDisplay);
+                listContents(contents.path).then(updateDisplay);
             })
             .appendTo(breadcrumbs);
 
@@ -423,7 +416,7 @@ b64pad = "=";
 
                 // create the folder
                 createFolder(joinURI([contents.path, name]))
-                    .then(listContents)
+                    .then(function(){ return listContents(contents.path); })
                     .then(updateDisplay);
 
                 // don't submit the form
@@ -517,9 +510,7 @@ b64pad = "=";
                 .html("Delete")
                 .click(function(){
                     deleteFolder(path)
-                        .then(function(){
-                            return listContents(contents.path);
-                        })
+                        .then(function(){ return listContents(contents.path); })
                         .then(updateDisplay);
                 })
                 .appendTo(entry);
@@ -548,9 +539,7 @@ b64pad = "=";
                 .html("Delete")
                 .click(function(){
                     deleteFile(path)
-                        .then(function(){
-                            return listContents(contents.path);
-                        })
+                        .then(function(){ return listContents(contents.path); })
                         .then(updateDisplay);
                 })
                 .appendTo(entry);
@@ -583,8 +572,9 @@ b64pad = "=";
         // style the container
         container.addClass(opts.containerClasses.join(" "));
 
-        // get the contents of the root prefix
-        listContents("/").then(updateDisplay);
+        // get the contents of the top-level folder
+        container.data("contents", {"path": ""});
+        listContents().then(updateDisplay);
 
         // return the container
         return container;
