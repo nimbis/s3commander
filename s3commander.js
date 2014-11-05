@@ -16,7 +16,7 @@ b64pad = "=";
     /**
      * The plugin stores the top-level HTML DOM container element in this
      * variable. This is also used to store plugin state using jQuery's
-     * .data() method. See getContents() for more information.
+     * .data() method. See listContents() for more information.
      */
     var container = null;
 
@@ -177,12 +177,26 @@ b64pad = "=";
      *
      * http://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketGET.html
      */
-    function getContents(sPath) {
+    function listContents(sPath) {
         var opts = container.data("opts");
+        var contents = container.data("contents");
 
+        // default parameter values
+        sPath = typeof sPath !== 'undefined' ? sPath : contents.path;
+
+        // clear the contents
+        container.data("contents", {
+            "path": "",
+            "files": [],
+            "folders": []
+        });
+
+        // determine the full path and sign the request
         var fullpath = joinURI([opts.sPrefix, sPath], true) + "/";
         var signdata = signRequest(opts, "GET", "");
 
+        // request bucket contents with the given prefix and group results
+        // into common prefixes using a delimiter
         return $.ajax({
             url: getAPIUrl(opts),
             data: $.extend(signdata, {
@@ -192,6 +206,7 @@ b64pad = "=";
             dataFormat: "xml",
             cache: false,
             success: function(data){
+                // XXX ugh, how can we make this cleaner?
                 var files = $(data).find("ListBucketResult > Contents > Key");
                 var folders = $(data).find("ListBucketResult > CommonPrefixes > Prefix");
 
@@ -208,23 +223,21 @@ b64pad = "=";
                     "files": $.map(files, extract).filter(keep),
                     "folders": $.map(folders, extract).filter(keep),
                 });
-
-                container.data("error", "");
             },
             error: function(data){
                 console.log("Error:" + data.responseText);
-                container.data("contents", {});
-                container.data("error", data.responseText);
+                createAlert("danger", "Failed to get directory contents!");
             }
         });
     }
 
     /**
-     * Create a folder with the given path. Folders are just S3 objects where
+     * Create a folder with the given path. Folders are S3 objects where
      * the key ends in a trailing slash.
      */
     function createFolder(sPath) {
         var opts = container.data("opts");
+        sPath = normURI(sPath, true) + "/";
         var signdata = signRequest(opts, "PUT", sPath);
 
         return $.ajax({
@@ -233,18 +246,37 @@ b64pad = "=";
             data: "",
             error: function(data){
                 console.log("Error: " + data.responseText);
+                createAlert("danger", "Failed to create the folder!");
             }
         });
     }
 
-    $.fn.createFolder = createFolder;
+    /**
+     * Delete the folder at the given path. Folders are S3 objects where
+     * the key ends in a trailing slash.
+     */
+     function deleteFolder(sPath) {
+         var opts = container.data("opts");
+         sPath = normURI(sPath, true) + "/";
+         var signdata = signRequest(opts, "DELETE", sPath);
+
+         return $.ajax({
+             url: getResourceUrl(opts, sPath) + "?" + $.param(signdata),
+             type: "DELETE",
+             error: function(data){
+                 console.log("Error: " + data.responseText);
+                 createAlert("danger", "Failed to delete the folder!");
+             },
+         });
+     }
 
     /**
-     * Download the resource at the given path.
+     * Download the file at the given path. This creates a link to download
+     * the file using the user's AWS credentials then opens it in a new window.
      *
      * http://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectGET.html
      */
-    function downloadResource(sPath) {
+    function downloadFile(sPath) {
         var opts = container.data("opts");
         var signdata = signRequest(opts, "GET", sPath, {
             'response-cache-control': 'No-cache',
@@ -256,11 +288,11 @@ b64pad = "=";
     }
 
     /**
-     * Delete the resource at the given path.
+     * Delete the file at the given path.
      *
      * http://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectDELETE.html
      */
-    function deleteResource(sPath) {
+    function deleteFile(sPath) {
         var opts = container.data("opts");
 
         var signdata = signRequest(opts, "DELETE", sPath);
@@ -271,6 +303,7 @@ b64pad = "=";
             type: "DELETE",
             error: function(data){
                 console.log("Error: " + data.responseText);
+                createAlert("danger", "Failed to delete the file!");
             },
         });
     }
@@ -308,19 +341,42 @@ b64pad = "=";
             .addClass(opts.buttonClasses.join(" "))
             .html("Refresh")
             .click(function(){
-                getContents(contents.path).then(updateDisplay);
+                listContents().then(updateDisplay);
             })
             .appendTo(breadcrumbs);
 
         // parent folder button
         $("<button />")
             .addClass(opts.buttonClasses.join(" "))
-            .html("Back")
+            .html("Up")
             .click(function(){
                 var path = popURI(contents.path);
-                getContents(path).then(updateDisplay);
+                listContents(path).then(updateDisplay);
             })
             .appendTo(breadcrumbs);
+    }
+
+    /**
+     * Create an alert and display it to the user.
+     */
+    function createAlert(sType, sMessage) {
+        var alert = $("<div />")
+            .attr("role", "alert")
+            .addClass("alert alert-dismissable")
+            .addClass("alert-" + sType)
+            .insertBefore(container.find(".s3crumbs"));
+
+        $("<button />")
+            .attr("type", "button")
+            .attr("data-dismiss", "alert")
+            .addClass("close")
+            .append($("<span />").attr("aria-hidden", "true").html("&times;"))
+            .append($("<span />").addClass("sr-only").html("Close"))
+            .appendTo(alert);
+
+        $("<p />")
+            .html(sMessage)
+            .appendTo(alert);
     }
 
     /**
@@ -354,19 +410,23 @@ b64pad = "=";
             .attr("type", "submit")
             .html("Create")
             .click(function(){
+                // don't do anything if the name contains forward slashes
                 var name = $("#txtFolderName").val();
                 if (name.indexOf("/") > -1) {
-                    // TODO
-                    console.log("error: folder name contains a forward slash");
+                    createAlert(
+                        "warning",
+                        "Folder name must not contain forward slashes!");
+
+                    // don't submit the form
                     return false;
                 }
 
-                //var path = contents.path + "/" + $("#txtFolderName").val();
-                var path = joinURI([contents.path, name + "/"]);
-                createFolder(path).then(function(){
-                    getContents(contents.path).then(updateDisplay);
-                });
+                // create the folder
+                createFolder(joinURI([contents.path, name]))
+                    .then(listContents)
+                    .then(updateDisplay);
 
+                // don't submit the form
                 return false;
             })
             .appendTo(form);
@@ -448,7 +508,7 @@ b64pad = "=";
             $("<a />")
                 .html(folder)
                 .click(function(){
-                    getContents(path).then(updateDisplay);
+                    listContents(path).then(updateDisplay);
                 })
                 .appendTo(entry);
 
@@ -456,9 +516,9 @@ b64pad = "=";
                 .addClass(opts.buttonClasses.join(" "))
                 .html("Delete")
                 .click(function(){
-                    deleteResource(path + "/")
+                    deleteFolder(path)
                         .then(function(){
-                            return getContents(contents.path);
+                            return listContents(contents.path);
                         })
                         .then(updateDisplay);
                 })
@@ -479,7 +539,7 @@ b64pad = "=";
             $("<a />")
                 .html(file)
                 .click(function(){
-                    downloadResource(path);
+                    downloadFile(path);
                 })
                 .appendTo(entry);
 
@@ -487,9 +547,9 @@ b64pad = "=";
                 .addClass(opts.buttonClasses.join(" "))
                 .html("Delete")
                 .click(function(){
-                    deleteResource(path)
+                    deleteFile(path)
                         .then(function(){
-                            return getContents(contents.path);
+                            return listContents(contents.path);
                         })
                         .then(updateDisplay);
                 })
@@ -524,7 +584,7 @@ b64pad = "=";
         container.addClass(opts.containerClasses.join(" "));
 
         // get the contents of the root prefix
-        getContents("/").then(updateDisplay);
+        listContents("/").then(updateDisplay);
 
         // return the container
         return container;
