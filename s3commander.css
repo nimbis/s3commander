@@ -8,6 +8,7 @@ div.s3crumbs {
     background-color: #eee;
     border-bottom: 1px dashed black;
     margin-bottom: 8px;
+    font-weight: bold;
 }
 
 div.s3crumbs > span {
