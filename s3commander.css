@@ -37,9 +37,15 @@ div.s3entry > button {
     margin-left: 6px;
 }
 
-form.s3upload {
+form.s3form {
     padding: 4px;
     background-color: #eee;
     border-top: 1px dashed black;
     margin-top: 8px;
+}
+
+form.s3form input[type=text] {
+    padding: 2px 4px;
+    line-height: 1.0;
+    height: 22px;
 }

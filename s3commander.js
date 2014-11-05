@@ -21,44 +21,54 @@ b64pad = "=";
     var container = null;
 
     /**
-     * Normalize a URI by removing empty components ('//'), leading,
-     * and trailing slashes. If bAbsolute is true then a leading slash is
-     * always present in the returned URI.
+     * Normalize a URI by removing empty components ('//') and leading slashes.
      */
-    function normURI(sUri, bAbsolute) {
+    function normURI(sURI, bTrim) {
         // default parameter values
-        bAbsolute = typeof bAbsolute !== 'undefined' ? bAbsolute : false;
+        bTrim = typeof bTrim !== 'undefined' ? bTrim : false;
 
         // corner case: empty uri
-        if (sUri.length == 0) {
-            return bAbsolute ? "/" : "";
+        if (sURI.length == 0) {
+            return "";
         }
 
         // split the uri and filter out empty components
-        var parts = sUri.split("/").filter(function(part){
+        var folder = (sURI.substr(-1) == "/");
+        var parts = sURI.split("/").filter(function(part){
             return part.length > 0;
         });
 
         // create the uri from it's components
         var uri = parts.join("/");
-        if (bAbsolute == true) {
-            return "/" + uri;
+        if (folder && !bTrim) {
+            return uri + "/";
         }
 
         return uri;
     }
 
     /**
+     * TODO
+     */
+    function joinURI(aParts, bTrim) {
+        // default parameter values
+        bTrim = typeof bTrim !== 'undefined' ? bTrim : false;
+
+        // join the parts and normalize the result
+        return normURI(aParts.join("/"), bTrim);
+    }
+
+    /**
      * Pop the last component from the given URI and return the remaining part.
      */
-    function popURI(sUri) {
+    function popURI(sURI) {
         // corner case: empty uri
-        if (sUri.length == 0) {
-            return sUri;
+        if (sURI.length == 0) {
+            return sURI;
         }
 
         // remove everything starting from the last '/'
-        return sUri.substr(0, sUri.lastIndexOf("/"));
+        return sURI.substr(0, sURI.lastIndexOf("/"));
     }
 
     /************************************************************************
@@ -126,11 +136,7 @@ b64pad = "=";
      * Retrieve a url for the given resource.
      */
     function getResourceUrl(opts, sResource) {
-        var url = getAPIUrl(opts);
-        url += normURI(opts.sPrefix, true);
-        url += normURI(sResource, true);
-
-        return url;
+        return getAPIUrl(opts) + "/" + joinURI([opts.sPrefix, sResource]);
     }
 
     /************************************************************************
@@ -145,8 +151,8 @@ b64pad = "=";
     function getContents(sPath) {
         var opts = container.data("opts");
 
-        var fullpath = normURI(opts.sPrefix + "/" + sPath) + "/";
-        var signdata = signRequest(opts, "GET", "/");
+        var fullpath = joinURI([opts.sPrefix, sPath], true) + "/";
+        var signdata = signRequest(opts, "GET", "");
 
         return $.ajax({
             url: getAPIUrl(opts),
@@ -161,7 +167,7 @@ b64pad = "=";
                 var folders = $(data).find("ListBucketResult > CommonPrefixes > Prefix");
 
                 function extract(e){
-                    return normURI(e.innerHTML.substr(fullpath.length));
+                    return normURI(e.innerHTML.substr(fullpath.length), true);
                 }
 
                 function keep(e){
@@ -169,7 +175,7 @@ b64pad = "=";
                 }
 
                 container.data("contents", {
-                    "path": normURI(sPath),
+                    "path": normURI(sPath, true),
                     "files": $.map(files, extract).filter(keep),
                     "folders": $.map(folders, extract).filter(keep),
                 });
@@ -185,13 +191,33 @@ b64pad = "=";
     }
 
     /**
+     * TODO
+     *
+     *
+     */
+    function createFolder(sPath) {
+        var opts = container.data("opts");
+        var signdata = signRequest(opts, "PUT", sPath);
+
+        return $.ajax({
+            url: getResourceUrl(opts, sPath) + "?" + $.param(signdata),
+            type: "PUT",
+            data: "",
+            error: function(data){
+                console.log("Error: " + data.responseText);
+            }
+        });
+    }
+
+    $.fn.createFolder = createFolder;
+
+    /**
      * Download the resource at the given path.
      *
      * http://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectGET.html
      */
-    function getObject(sPath) {
+    function downloadResource(sPath) {
         var opts = container.data("opts");
-
         var signdata = signRequest(opts, "GET", sPath, {
             'response-cache-control': 'No-cache',
             'response-content-disposition': 'attachment'
@@ -206,7 +232,7 @@ b64pad = "=";
      *
      * http://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectDELETE.html
      */
-    function deleteObject(sPath) {
+    function deleteResource(sPath) {
         var opts = container.data("opts");
 
         var signdata = signRequest(opts, "DELETE", sPath);
@@ -269,6 +295,52 @@ b64pad = "=";
             .appendTo(breadcrumbs);
     }
 
+    function createFolderControl() {
+        // retrieve options and contents
+        var opts = container.data("opts");
+        var contents = container.data("contents");
+
+        // create the form
+        var form = $("<form />")
+            .addClass(opts.formClasses.join(" "))
+            .appendTo(container);
+
+        var controls = $("<div />")
+            .addClass("form-group")
+            .appendTo(form);
+
+        // folder name textbox
+        $("<input />")
+            .addClass("form-control")
+            .attr("type", "text")
+            .attr("id", "txtFolderName")
+            .attr("placeholder", "Folder Name")
+            .appendTo(controls);
+
+        // button
+        $("<button />")
+            .addClass(opts.buttonClasses.join(" "))
+            .attr("type", "submit")
+            .html("Create")
+            .click(function(){
+                var name = $("#txtFolderName").val();
+                if (name.indexOf("/") > -1) {
+                    // TODO
+                    console.log("error: folder name contains a forward slash");
+                    return false;
+                }
+
+                //var path = contents.path + "/" + $("#txtFolderName").val();
+                var path = joinURI([contents.path, name + "/"]);
+                createFolder(path).then(function(){
+                    getContents(contents.path).then(updateDisplay);
+                });
+
+                return false;
+            })
+            .appendTo(form);
+    }
+
     /**
      * TODO
      */
@@ -279,7 +351,7 @@ b64pad = "=";
 
         // create the upload form
         var form = $("<form />")
-            .addClass(opts.uploadClasses.join(" "))
+            .addClass(opts.formClasses.join(" "))
             .appendTo(container);
 
         form.attr("action", getAPIUrl(opts));
@@ -295,7 +367,7 @@ b64pad = "=";
                 .appendTo(form);
         }
 
-        var key = normURI(opts.sPrefix + "/" + contents.path + "/${filename}");
+        var key = joinURI([opts.sPrefix, contents.path, "${filename}"], true);
         var policy = {
             "expiration": "2020-12-01T12:00:00.000Z",
             "conditions": [
@@ -367,7 +439,7 @@ b64pad = "=";
                 .addClass(opts.buttonClasses.join(" "))
                 .html("Delete")
                 .click(function(){
-                    deleteObject(path)
+                    deleteResource(path + "/")
                         .then(function(){
                             return getContents(contents.path);
                         })
@@ -390,7 +462,7 @@ b64pad = "=";
             $("<a />")
                 .html(file)
                 .click(function(){
-                    getObject(path);
+                    downloadResource(path);
                 })
                 .appendTo(entry);
 
@@ -398,7 +470,7 @@ b64pad = "=";
                 .addClass(opts.buttonClasses.join(" "))
                 .html("Delete")
                 .click(function(){
-                    deleteObject(path)
+                    deleteResource(path)
                         .then(function(){
                             return getContents(contents.path);
                         })
@@ -410,6 +482,7 @@ b64pad = "=";
         });
 
         // create controls
+        createFolderControl();
         createUploadControl();
     }
 
@@ -428,7 +501,7 @@ b64pad = "=";
             options));
 
         var opts = container.data("opts");
-        opts.sPrefix = normURI(opts.sPrefix);
+        opts.sPrefix = normURI(opts.sPrefix, true);
 
         // style the container
         container.addClass(opts.containerClasses.join(" "));
@@ -450,7 +523,7 @@ b64pad = "=";
         "containerClasses": ["s3contents"],
         "breadcrumbsClasses": ["s3crumbs"],
         "entryClasses": ["s3entry"],
-        "uploadClasses": ["s3upload", "form-inline"],
+        "formClasses": ["s3form", "form-inline"],
         "buttonClasses": ["btn", "btn-xs", "btn-primary", "pull-right"],
     };
 }(jQuery));
