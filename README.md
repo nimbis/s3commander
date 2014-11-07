@@ -44,9 +44,9 @@ Take a look at the included ```index.html``` file for a more complete example.
 Quirks
 ------
 
-* Folders are just S3 objects where the key end sin a trailing slash.
-* Deleting a folder does not delete it's contents. It will still appear in the
-  browser as a folder until it's contents are deleted.
-* When not using Dropzone for drag-and-drop uploads the directory contents will
+* Folders are just S3 objects where the key ends in a trailing slash.
+* Deleting a folder does not delete its contents. It will still appear in the
+  browser as a folder until its contents are deleted.
+* When not using Dropzone for drag-and-drop uploads, the directory contents will
   not automatically refresh after a file is uploaded. The user needs to click
   the refresh button manually.
