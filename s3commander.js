@@ -427,6 +427,9 @@ b64pad = "=";
 
     /**
      * Create the file upload control.
+     *
+     * http://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-UsingHTTPPOST.html
+     * http://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-post-example.html
      */
     function createUploadControl() {
         // retrieve options and contents
@@ -435,12 +438,11 @@ b64pad = "=";
 
         // create the upload form
         var form = $("<form />")
+            .attr("method", "POST")
+            .attr("action", getAPIUrl(opts))
+            .attr("enctype", "multipart/form-data")
             .addClass(opts.formClasses.join(" "))
             .appendTo(container);
-
-        form.attr("action", getAPIUrl(opts));
-        form.attr("method", "POST");
-        form.attr("enctype", "multipart/form-data");
 
         // store amazon parameters in hidden input fields
         var amazondata = $.extend(getPolicyData(opts), {
@@ -474,9 +476,6 @@ b64pad = "=";
 
     /**
      * Update the display with the internal contents.
-     *
-     * http://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-UsingHTTPPOST.html
-     * http://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-post-example.html
      */
     function updateDisplay() {
         // retrieve options and contents
