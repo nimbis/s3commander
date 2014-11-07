@@ -460,18 +460,44 @@ b64pad = "=";
         });
 
         // create the file upload field
-        var controls = $("<div />").addClass("form-group").appendTo(form);
+        var inputs = $("<div />")
+            .addClass("form-group fallback")
+            .appendTo(form);
+
         $("<input />")
             .attr("type", "file")
             .attr("name", "file")
-            .appendTo(controls);
+            .appendTo(inputs);
 
         // create the submit button
         $("<button />")
             .attr("type", "submit")
-            .addClass(opts.buttonClasses.join(" "))
             .html("Upload")
+            .addClass(opts.buttonClasses.join(" "))
             .appendTo(form);
+
+        // enable drag-and-drop uploads if Dropzone is available
+        if(typeof window.Dropzone !== 'undefined') {
+            // style the form and remove the submit button
+            form.addClass("dropzone");
+            $(form).find("button").remove();
+
+            // create the dropzone object
+            form.dropzone({
+                'error': function(file, error) {
+                    // uh oh
+                    console.log("dropzone error: " + error);
+                    createAlert("danger", "Failed to upload the file!")
+                },
+                'complete': function(file) {
+                    // remove the file from the dropzone
+                    this.removeFile(file);
+
+                    // refresh the screen
+                    listContents(contents.path).then(updateDisplay);
+                },
+            });
+        }
     }
 
     /**
