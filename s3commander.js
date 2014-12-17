@@ -113,7 +113,7 @@ b64pad = "=";
         secure += "/" + opts.sBucket + "/";
 
         if (sResource.length > 0) {
-            secure += opts.sPrefix + "/" + sResource;
+            secure += normURI(opts.sPrefix + "/" + sResource);
         }
 
         var params = $.param(oParams);
@@ -187,7 +187,11 @@ b64pad = "=";
         sPath = typeof sPath !== 'undefined' ? sPath : "";
 
         // determine the full path and sign the request
-        var fullpath = joinURI([opts.sPrefix, sPath], true) + "/";
+        var fullpath = joinURI([opts.sPrefix, sPath], true);
+        if (fullpath.length > 0) {
+            fullpath += "/";
+        }
+
         var signdata = signRequest(opts, "GET", "");
 
         // request bucket contents with the given prefix and group results
