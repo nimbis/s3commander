@@ -1,7 +1,7 @@
 /**
  * S3 Commander
  *
- * Version: 0.1.0
+ * Version: 0.2.0
  * Author: Alexandru Barbur
  */
 
@@ -22,6 +22,21 @@ b64pad = "=";
      * .data() method. See listContents() for more information.
      */
     var container = null;
+
+    /**
+     * Breadcrumbs control.
+     */
+    var uiBreadcrumbs = null;
+
+    /**
+    * Create folder control.
+    */
+    var uiFolderControl = null;
+
+    /**
+    * Upload control.
+    */
+    var uiUploadControl = null;
 
     /**
      * Normalize a URI by removing empty components ('//') and leading slashes.
@@ -113,7 +128,7 @@ b64pad = "=";
         secure += "/" + opts.sBucket + "/";
 
         if (sResource.length > 0) {
-            secure += opts.sPrefix + "/" + sResource;
+            secure += normURI(opts.sPrefix + "/" + sResource);
         }
 
         var params = $.param(oParams);
@@ -187,7 +202,11 @@ b64pad = "=";
         sPath = typeof sPath !== 'undefined' ? sPath : "";
 
         // determine the full path and sign the request
-        var fullpath = joinURI([opts.sPrefix, sPath], true) + "/";
+        var fullpath = joinURI([opts.sPrefix, sPath], true);
+        if (fullpath.length > 0) {
+            fullpath += "/";
+        }
+
         var signdata = signRequest(opts, "GET", "");
 
         // request bucket contents with the given prefix and group results
@@ -312,44 +331,69 @@ b64pad = "=";
      * Create the breadcrumbs control.
      */
     function createBreadcrumbs() {
-        // retrieve options and contents
+        // retrieve options
         var opts = container.data("opts");
-        var contents = container.data("contents");
 
         // create the breadcrumbs container
-        var breadcrumbs = $("<div />")
+        uiBreadcrumbs = $("<div />")
             .addClass(opts.breadcrumbsClasses.join(" "))
             .appendTo(container);
 
         // disk icon
         $("<span />")
+            .attr("role", "s3c-crumb-icon")
             .addClass("glyphicon glyphicon-hdd")
-            .appendTo(breadcrumbs);
-
-        // path crumbs
-        $.each(contents.path.split("/"), function(i, crumb){
-            $("<span />").html("/").appendTo(breadcrumbs);
-            $("<span />").html(crumb).appendTo(breadcrumbs);
-        });
+            .appendTo(uiBreadcrumbs);
 
         // refresh button
         $("<button />")
+            .attr("role", "s3c-crumb-refresh")
             .addClass(opts.buttonClasses.join(" "))
             .html("Refresh")
             .click(function(){
+                var contents = container.data("contents");
                 listContents(contents.path).then(updateDisplay);
             })
-            .appendTo(breadcrumbs);
+            .appendTo(uiBreadcrumbs);
 
         // parent folder button
         $("<button />")
+            .attr("role", "s3c-crumb-up")
             .addClass(opts.buttonClasses.join(" "))
             .html("Up")
             .click(function(){
+                var contents = container.data("contents");
                 var path = popURI(contents.path);
                 listContents(path).then(updateDisplay);
             })
-            .appendTo(breadcrumbs);
+            .appendTo(uiBreadcrumbs);
+    }
+
+    /**
+     * Update the breadcrumbs control.
+     */
+    function updateBreadcrumbs() {
+      // retrieve options and contents
+      var opts = container.data("opts");
+      var contents = container.data("contents");
+
+      // remove existing crumbs
+      uiBreadcrumbs.find("span[role='s3c-crumb']").remove();
+      uiBreadcrumbs.find("span[role='s3c-crumb-sep']").remove();
+
+      // create crumbs
+      var uiButton = uiBreadcrumbs.find("button[role='s3c-crumb-refresh']");
+      $.each(contents.path.split("/"), function(i, crumb){
+          $("<span />")
+              .attr("role", "s3c-crumb-sep")
+              .html("/")
+              .insertBefore(uiButton);
+
+          $("<span />")
+            .attr("role", "s3c-crumb")
+            .html(crumb)
+            .insertBefore(uiButton);
+      });
     }
 
     /**
@@ -360,7 +404,7 @@ b64pad = "=";
             .attr("role", "alert")
             .addClass("alert alert-dismissable")
             .addClass("alert-" + sType)
-            .insertBefore(container.find(".s3crumbs"));
+            .insertBefore(uiBreadcrumbs);
 
         $("<button />")
             .attr("type", "button")
@@ -376,36 +420,16 @@ b64pad = "=";
     }
 
     /**
-     * Create the new folder control.
+     * Create the folder control.
      */
     function createFolderControl() {
-        // retrieve options and contents
+        // retrieve options
         var opts = container.data("opts");
-        var contents = container.data("contents");
 
         // create the form
-        var form = $("<form />")
+        uiFolderControl = $("<form />")
             .addClass(opts.formClasses.join(" "))
-            .appendTo(container);
-
-        var controls = $("<div />")
-            .addClass("form-group")
-            .appendTo(form);
-
-        // folder name textbox
-        $("<input />")
-            .addClass("form-control")
-            .attr("type", "text")
-            .attr("id", "txtFolderName")
-            .attr("placeholder", "Folder Name")
-            .appendTo(controls);
-
-        // button
-        $("<button />")
-            .addClass(opts.buttonClasses.join(" "))
-            .attr("type", "submit")
-            .html("Create")
-            .click(function(){
+            .submit(function(){
                 // don't do anything if the name contains forward slashes
                 var name = $("#txtFolderName").val();
                 if (name.indexOf("/") > -1) {
@@ -417,7 +441,11 @@ b64pad = "=";
                     return false;
                 }
 
+                // clear the inputs
+                $("#txtFolderName").val("");
+
                 // create the folder
+                var contents = container.data("contents");
                 createFolder(joinURI([contents.path, name]))
                     .then(function(){ return listContents(contents.path); })
                     .then(updateDisplay);
@@ -425,7 +453,26 @@ b64pad = "=";
                 // don't submit the form
                 return false;
             })
-            .appendTo(form);
+            .appendTo(container);
+
+        var controls = $("<div />")
+            .addClass("form-group")
+            .appendTo(uiFolderControl);
+
+        // create controls
+        $("<input />")
+            .addClass("form-control")
+            .attr("type", "text")
+            .attr("id", "txtFolderName")
+            .attr("placeholder", "Folder Name")
+            .appendTo(controls);
+
+        // submit button
+        $("<button />")
+            .addClass(opts.buttonClasses.join(" "))
+            .attr("type", "submit")
+            .html("Create")
+            .appendTo(uiFolderControl);
     }
 
     /**
@@ -435,37 +482,20 @@ b64pad = "=";
      * http://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-post-example.html
      */
     function createUploadControl() {
-        // retrieve options and contents
+        // retrieve options
         var opts = container.data("opts");
-        var contents = container.data("contents");
 
         // create the upload form
-        var form = $("<form />")
+        uiUploadControl = $("<form />")
             .attr("method", "POST")
-            .attr("action", getAPIUrl(opts))
             .attr("enctype", "multipart/form-data")
             .addClass(opts.formClasses.join(" "))
             .appendTo(container);
 
-        // store amazon parameters in hidden input fields
-        var amazondata = $.extend(getPolicyData(opts), {
-            "AWSAccessKeyId": opts.sAccessKey,
-            "Content-Type": "application/octet-stream",
-            "key": joinURI([opts.sPrefix, contents.path, "${filename}"], true),
-        });
-
-        $.each(amazondata, function(name, value){
-            $("<input />")
-                .attr("type", "hidden")
-                .attr("name", name)
-                .attr("value", value)
-                .appendTo(form);
-        });
-
         // create the file upload field
         var inputs = $("<div />")
             .addClass("form-group fallback")
-            .appendTo(form);
+            .appendTo(uiUploadControl);
 
         $("<input />")
             .attr("type", "file")
@@ -473,20 +503,27 @@ b64pad = "=";
             .appendTo(inputs);
 
         // create the submit button
-        $("<button />")
+        var btSubmit = $("<button />")
             .attr("type", "submit")
             .html("Upload")
             .addClass(opts.buttonClasses.join(" "))
-            .appendTo(form);
+            .appendTo(uiUploadControl);
 
         // enable drag-and-drop uploads if Dropzone is available
         if(typeof window.Dropzone !== 'undefined') {
             // style the form and remove the submit button
-            form.addClass("dropzone");
-            $(form).find("button").remove();
+            uiUploadControl.addClass("dropzone");
+            btSubmit.remove();
 
             // create the dropzone object
-            form.dropzone({
+            uiUploadControl.dropzone({
+                'url': '/notreal',
+                'init': function() {
+                    this.on('processing', function(file){
+                        // set the post url from the upload control
+                        this.options.url = uiUploadControl.attr("action");
+                    })
+                },
                 'error': function(file, error) {
                     // uh oh
                     console.log("dropzone error: " + error);
@@ -497,6 +534,7 @@ b64pad = "=";
                     this.removeFile(file);
 
                     // refresh the screen
+                    var contents = container.data("contents");
                     listContents(contents.path).then(updateDisplay);
                 },
             });
@@ -504,23 +542,70 @@ b64pad = "=";
     }
 
     /**
-     * Update the display with the internal contents.
+     * Update the file upload control.
+     */
+    function updateUploadControl() {
+      // retrieve options and contents
+      var opts = container.data("opts");
+      var contents = container.data("contents");
+
+      // update the form url
+      uiUploadControl.attr("action", getAPIUrl(opts));
+
+      // update amazon aws upload parameters
+      var amazondata = $.extend(getPolicyData(opts), {
+          "AWSAccessKeyId": opts.sAccessKey,
+          "Content-Type": "application/octet-stream",
+          "key": joinURI([opts.sPrefix, contents.path, "${filename}"], true),
+      });
+
+      uiUploadControl.find("input[role='s3c-upload-setting']").remove();
+      $.each(amazondata, function(name, value){
+          $("<input />")
+              .attr("role", "s3c-upload-setting")
+              .attr("type", "hidden")
+              .attr("name", name)
+              .attr("value", value)
+              .appendTo(uiUploadControl);
+      });
+    }
+
+    /**
+     * Create the display.
+     */
+    function createDisplay() {
+      // style the container
+      var opts = container.data("opts");
+      container.addClass(opts.containerClasses.join(" "));
+
+      // clear the container
+      container.empty();
+
+      // create controls
+      createBreadcrumbs();
+      createFolderControl();
+      createUploadControl();
+    }
+
+    /**
+     * Update the display.
      */
     function updateDisplay() {
         // retrieve options and contents
         var opts = container.data("opts");
         var contents = container.data("contents");
 
-        // clear the container
-        container.empty();
-
-        // create controls
-        createBreadcrumbs();
+        // update controls
+        updateBreadcrumbs();
+        updateUploadControl();
 
         // create folder entries
+        container.find("div[role='s3c-folder']").remove();
         $.each(contents.folders, function(i, folder){
             var path = contents.path + "/" + folder;
-            var entry = $("<div />").addClass(opts.entryClasses.join(" "));
+            var entry = $("<div />")
+                .attr("role", "s3c-folder")
+                .addClass(opts.entryClasses.join(" "));
 
             $("<span />")
                 .addClass("glyphicon glyphicon-folder-open")
@@ -543,13 +628,16 @@ b64pad = "=";
                 })
                 .appendTo(entry);
 
-            entry.appendTo(container);
+            entry.insertBefore(uiFolderControl);
         });
 
         // create file entries
+        container.find("div[role='s3c-file']").remove();
         $.each(contents.files, function(i, file){
             var path = contents.path + "/" + file;
-            var entry = $("<div />").addClass(opts.entryClasses.join(" "));
+            var entry = $("<div />")
+                .attr("role", "s3c-file")
+                .addClass(opts.entryClasses.join(" "));
 
             $("<span />")
                 .addClass("glyphicon glyphicon-file")
@@ -572,12 +660,8 @@ b64pad = "=";
                 })
                 .appendTo(entry);
 
-            entry.appendTo(container);
+            entry.insertBefore(uiFolderControl);
         });
-
-        // create controls
-        createFolderControl();
-        createUploadControl();
     }
 
     /************************************************************************
@@ -597,8 +681,8 @@ b64pad = "=";
         var opts = container.data("opts");
         opts.sPrefix = normURI(opts.sPrefix, true);
 
-        // style the container
-        container.addClass(opts.containerClasses.join(" "));
+        // create the display
+        createDisplay();
 
         // get the contents of the top-level folder
         container.data("contents", {"path": ""});
