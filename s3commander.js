@@ -24,17 +24,17 @@ b64pad = "=";
     var container = null;
 
     /**
-     * TODO
+     * Breadcrumbs control.
      */
     var uiBreadcrumbs = null;
 
     /**
-    * TODO
+    * Create folder control.
     */
     var uiFolderControl = null;
 
     /**
-    * TODO
+    * Upload control.
     */
     var uiUploadControl = null;
 
@@ -370,7 +370,7 @@ b64pad = "=";
     }
 
     /**
-     * TODO
+     * Update the breadcrumbs control.
      */
     function updateBreadcrumbs() {
       // retrieve options and contents
@@ -420,7 +420,7 @@ b64pad = "=";
     }
 
     /**
-     * Create the new folder control.
+     * Create the folder control.
      */
     function createFolderControl() {
         // retrieve options
@@ -542,7 +542,7 @@ b64pad = "=";
     }
 
     /**
-     * TODO
+     * Update the file upload control.
      */
     function updateUploadControl() {
       // retrieve options and contents
@@ -571,7 +571,7 @@ b64pad = "=";
     }
 
     /**
-     * TODO.
+     * Create the display.
      */
     function createDisplay() {
       // style the container
@@ -588,7 +588,7 @@ b64pad = "=";
     }
 
     /**
-     * Update the display with the internal contents.
+     * Update the display.
      */
     function updateDisplay() {
         // retrieve options and contents
