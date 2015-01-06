@@ -29,13 +29,13 @@ b64pad = "=";
     var uiBreadcrumbs = null;
 
     /**
-    * Create folder control.
-    */
+     * Create folder control.
+     */
     var uiFolderControl = null;
 
     /**
-    * Upload control.
-    */
+     * Upload control.
+     */
     var uiUploadControl = null;
 
     /**
