@@ -1,752 +1,498 @@
 /**
- * S3 Commander
- *
- * Version: 0.2.0
- * Author: Alexandru Barbur
- */
+* S3 Commander
+*
+* Version: 0.2.0
+* Author: Alexandru Barbur
+*/
 
 // configure sha1.js for RFC compliance
 b64pad = "=";
 
-// define the jQuery plugin
+// isolate the jQuery API
 (function($){
-    "use strict";
+  "use strict";
 
-    /************************************************************************
-     * Utility                                                              *
-     ************************************************************************/
+  /************************************************************************
+   * Utility                                                              *
+   ************************************************************************/
 
-    function Path(sPath, bFolder) {
-        sPath = typeof sPath !== 'undefined' ? sPath : "";
-        bFolder = typeof bFolder !== 'undefined' ? bFolder : false;
+  // Create a Path object.
+  function Path(sPath, bFolder) {
+    sPath = typeof sPath !== 'undefined' ? sPath : "";
+    bFolder = typeof bFolder !== 'undefined' ? bFolder : false;
 
-        this.parts = sPath.split("/");
-        this.folder = bFolder;
-        this.normalize();
+    this.parts = sPath.split("/");
+    this.folder = bFolder;
+    this.normalize();
+  }
+
+  // Normalize the path components.
+  Path.prototype.normalize = function() {
+    this.parts = this.parts.filter(function(part){
+      return part.length > 0;
+    });
+  };
+
+  // Get the string representation of the path.
+  Path.prototype.toString = function() {
+    var uri = this.parts.join("/");
+    if (this.folder && this.parts.length > 0) {
+      uri += "/";
     }
 
-    Path.prototype.normalize = function() {
-        this.parts = this.parts.filter(function(part){
-          return part.length > 0;
-        });
+    return uri;
+  };
+
+  // Create a deep copy of this object and return it.
+  Path.prototype.clone = function() {
+    var other = new Path();
+    other.parts = new Array(this.parts);
+    other.folder = this.folder;
+
+    return other;
+  };
+
+  // Check if the path has no components.
+  Path.prototype.empty = function() {
+    return this.parts.length == 0;
+  };
+
+  // Push one or more components to the end of the path.
+  Path.prototype.push = function(sPath) {
+    var newparts = sPath.split("/");
+    Array.prototype.push.apply(this.parts, newparts);
+
+    this.folder = (newparts.length > 0 && sPath.substr(-1) == "/");
+    this.normalize();
+
+    return this;
+  };
+
+  // Pop one component from the end of the path.
+  Path.prototype.pop = function() {
+    this.parts.pop();
+
+    return this;
+  };
+
+  // Extend this path with another path.
+  Path.prototype.extend = function(pOther) {
+    this.parts = this.parts.concat(pOther.parts);
+    this.folder = pOther.folder;
+    this.normalize();
+
+    return this;
+  };
+
+  // Get a copy of this path extended with the other path.
+  Path.prototype.concat = function(pOther) {
+    var result = new Path();
+    result.parts = this.parts.concat(pOther.parts);
+    result.folder = pOther.folder;
+
+    return result;
+  };
+
+  /************************************************************************
+   * Amazon S3 Backend                                                    *
+   ************************************************************************/
+
+  function S3Backend(options) {
+    // resolve backend options
+    this.opts = $.extend({
+      "sAccessKey": "",
+      "sSecretKey": "",
+      "sBucket": "",
+      "pPrefix": new Path("", true),
+      "sEndpoint": "s3.amazonaws.com",
+    }, options);
+  }
+
+  // Sign a string using an AWS secret key.
+  S3Backend.prototype.sign = function(sSecretKey, sData) {
+    return b64_hmac_sha1(sSecretKey, sData);
+  };
+
+  // Sign an Amazon AWS REST request.
+  // http://docs.aws.amazon.com/AmazonS3/latest/dev/RESTAuthentication.html
+  S3Backend.prototype.signRequest = function(sMethod, pResource, oParams) {
+    // default parameter values
+    sMethod = typeof sMethod !== 'undefined' ? sMethod : "GET";
+    pResource = typeof pResource !== 'undefined' ? pResource : new Path();
+    oParams = typeof oParams !== 'undefined' ? oParams : new Object();
+
+    // this is used as the request and signature expiration timestamp
+    // for convenince. the request timestamp must be within 15
+    // minutes of the time on amazon's aws servers and the expiration
+    // timestamp must be in the future so we add (XXX 6 hours ???)
+    var timestamp = parseInt(new Date().valueOf() / 1000) + 21600;
+
+    // create the signature plaintext
+    var secure = sMethod + "\n\n\n";
+    secure += timestamp + "\n";
+    secure += "/" + this.opts.sBucket + "/";
+
+    if (!pResource.empty()) {
+      secure += this.opts.pPrefix.concat(pResource).toString();
+    }
+
+    var params = $.param(oParams);
+    if (params.length > 0) {
+      secure += "?" + params;
+    }
+
+    // return the query parameters required for this request
+    return $.extend(oParams, {
+      'AWSAccessKeyId': this.opts.sAccessKey,
+      'Signature': sign(this.opts.sSecretKey, secure),
+      'Expires': timestamp,
+    });
+  };
+
+  // Retrieve the REST API URL for a bucket.
+  S3Backend.prototype.getBucketURL = function() {
+    // TODO we can't use https:// if the bucket name contains a '.' (dot)
+    return "https://" + this.opts.sBucket + "." + this.opts.sEndpoint;
+  };
+
+  // Retrieve the REST API URL for the given resource.
+  function getResourceURL(pResource) {
+    var abspath = this.opts.pPrefix.concat(pResource);
+    return this.getBucketURL() + "/" + abspath.toString();
+  };
+
+  // Get the encoded policy and it's signature required to upload files.
+  S3Backend.prototype.getPolicyData = function() {
+    // create the policy
+    var policy = {
+      "expiration": "2020-12-01T12:00:00.000Z",
+      "conditions": [
+        {"acl": "private"},
+        {"bucket": this.opts.sBucket},
+        ["starts-with", "$key", this.opts.pPrefix.toString()],
+        ["starts-with", "$Content-Type", ""],
+      ],
     };
 
-    Path.prototype.toString = function() {
-        var uri = this.parts.join("/");
-        if (this.folder && this.parts.length > 0) {
-            uri += "/";
-        }
+    // encode the policy as Base64 and sign it
+    var policy_b64 = rstr2b64(JSON.stringify(policy));
+    var signature = this.sign(this.opts.sSecretKey, policy_b64);
 
-        return uri;
+    // return the policy and signature
+    return {
+      "acl": "private",
+      "policy": policy_b64,
+      "signature": signature,
     };
+  };
 
-    Path.prototype.clone = function() {
-        var other = new Path();
-        other.parts = new Array(this.parts);
-        other.folder = this.folder;
+  // Retrieve the contents of the given folder.
+  // http://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketGET.html
+  S3Backend.prototype.list = function(pFolder) {
+    // default parameter values
+    pFolder = typeof pFolder !== 'undefined' ? pFolder : new Path("", true);
 
-        return other;
-    };
-
-    Path.prototype.empty = function() {
-        return this.parts.length == 0;
-    };
-
-    Path.prototype.push = function(sPath) {
-        var newparts = sPath.split("/");
-        Array.prototype.push.apply(this.parts, newparts);
-
-        this.folder = (newparts.length > 0 && sPath.substr(-1) == "/");
-        this.normalize();
-
-        return this;
-    };
-
-    Path.prototype.pop = function() {
-        this.parts.pop();
-
-        return this;
-    };
-
-    Path.prototype.extend = function(pOther) {
-        this.parts = this.parts.concat(pOther.parts);
-        this.folder = pOther.folder;
-        this.normalize();
-
-        return this;
-    };
-
-    Path.prototype.concat = function(pOther) {
-        var result = new Path();
-        result.parts = this.parts.concat(pOther.parts);
-        result.folder = pOther.folder;
-
-        return result;
-    };
-
-    /************************************************************************
-     * Internal State                                                       *
-     ************************************************************************/
-
-    /**
-     * The plugin stores the top-level HTML DOM container element in this
-     * variable. This is also used to store plugin state using jQuery's
-     * .data() method. See listContents() for more information.
-     */
-    var container = null;
-
-    /**
-     * Breadcrumbs control.
-     */
-    var uiBreadcrumbs = null;
-
-    /**
-     * Create folder control.
-     */
-    var uiFolderControl = null;
-
-    /**
-     * Upload control.
-     */
-    var uiUploadControl = null;
-
-    /************************************************************************
-     * Amazon AWS                                                           *
-     ************************************************************************/
-
-    /**
-     * Sign a string using an AWS secret key.
-     */
-    function sign(sSecretKey, sData) {
-        return b64_hmac_sha1(sSecretKey, sData);
+    if (!pFolder.folder) {
+      console.log("listContents(): not a folder: " + pFolder.toString());
+      return;
     }
 
-    /**
-     * Sign an Amazon AWS REST request.
-     *
-     * http://docs.aws.amazon.com/AmazonS3/latest/dev/RESTAuthentication.html
-     */
-    function signRequest(opts, sMethod, pResource, oParams) {
-        // default parameter values
-        sMethod = typeof sMethod !== 'undefined' ? sMethod : "GET";
-        pResource = typeof pResource !== 'undefined' ? pResource : new Path();
-        oParams = typeof oParams !== 'undefined' ? oParams : new Object();
+    // sign the request
+    var signdata = signRequest("GET", new Path("", true));
 
-        // this is used as the request and signature expiration timestamp
-        // for convenince. the request timestamp must be within 15
-        // minutes of the time on amazon's aws servers and the expiration
-        // timestamp must be in the future so we add (XXX 6 hours ???)
-        var timestamp = parseInt(new Date().valueOf() / 1000) + 21600;
+    // determine the absolute folder path
+    var abspath = this.opts.pPrefix.concat(pFolder);
 
-        // create the signature plaintext
-        var secure = sMethod + "\n\n\n";
-        secure += timestamp + "\n";
-        secure += "/" + opts.sBucket + "/";
+    // request bucket contents with the absolute folder path as a prefix
+    // and group results into common prefixes using a delimiter
+    return $.ajax({
+      url: this.getBucketURL(),
+      data: $.extend(signdata, {
+        "prefix": abspath.toString(),
+        "delimiter": "/",
+      }),
+      dataFormat: "xml",
+      cache: false,
+      error: function(data){
+        console.log("S3Backend error:" + data.responseText);
+      },
+    }).then(function(data){
+      // XXX ugh, how can we make this cleaner?
+      var files = $(data).find("ListBucketResult > Contents > Key");
+      var folders = $(data).find("ListBucketResult > CommonPrefixes > Prefix");
 
-        if (!pResource.empty()) {
-            secure += opts.pPrefix.concat(pResource).toString();
-        }
+      function extract(e){
+        var relpath = e.innerHTML.substr(fullpath.length);
+        return new Path(relpath).toString();
+      }
 
-        var params = $.param(oParams);
-        if (params.length > 0) {
-            secure += "?" + params;
-        }
+      function keep(e){
+        return e.length > 0;
+      }
 
-        // return the query parameters required for this request
-        return $.extend(oParams, {
-            'AWSAccessKeyId': opts.sAccessKey,
-            'Signature': sign(opts.sSecretKey, secure),
-            'Expires': timestamp,
-        });
+      return {
+        "path": pLocation,
+        "files": $.map(files, extract).filter(keep),
+        "folders": $.map(folders, extract).filter(keep),
+      };
+    });
+  };
+
+  // Create a folder with the given path. Folders are S3 objects where
+  // the key ends in a trailing slash.
+  S3Backend.prototype.createFolder = function(pResource) {
+    if (!pResource.folder) {
+      console.log("createFolder(): not a folder: " + pResource.toString());
+      return;
     }
 
-    /**
-     * Retrieve the url for Amazon AWS REST API calls.
-     */
-    function getAPIUrl(opts) {
-        // TODO we can't use https:// if the bucket name contains a '.' (dot)
-        return "https://" + opts.sBucket + "." + opts.sEndpoint;
+    var signdata = this.signRequest("PUT", pResource);
+    var url = this.getResourceURL(pResource) + "?" + $.param(signdata);
+
+    return $.ajax({
+      url: url,
+      type: "PUT",
+      data: "",
+      error: function(data){
+        console.log("S3Backend error: " + data.responseText);
+      }
+    });
+  };
+
+  // Delete the folder at the given path. Folders are S3 objects where
+  // the key ends in a trailing slash.
+  S3Backend.prototype.deleteFolder = function(pResource) {
+    if (!pResource.folder) {
+      console.log("deleteFolder(): not a folder: " + pResource.toString());
+      return;
     }
 
-    /**
-     * Retrieve a url for the given resource.
-     */
-    function getResourceUrl(opts, pResource) {
-        return getAPIUrl(opts) + "/" + opts.pPrefix.concat(pResource).toString();
+    var signdata = this.signRequest("DELETE", pResource);
+    var url = this.getResourceURL(pResource) + "?" + $.param(signdata);
+
+    return $.ajax({
+      url: url,
+      type: "DELETE",
+      error: function(data){
+        console.log("S3Backend error: " + data.responseText);
+      },
+    });
+  };
+
+  // Download the file at the given path. This creates a link to download
+  // the file using the user's AWS credentials then opens it in a new window.
+  // http://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectGET.html
+  S3Backend.prototype.downloadFile = function(pResource) {
+    if (pResource.folder) {
+      console.log("downloadFile(): not a file: " + pResource.toString());
+      return;
     }
 
-    /**
-     * Get the encoded policy and it's signature required to upload files.
-     */
-    function getPolicyData(opts) {
-        // create the policy
-        var policy = {
-            "expiration": "2020-12-01T12:00:00.000Z",
-            "conditions": [
-                {"acl": "private"},
-                {"bucket": opts.sBucket},
-                ["starts-with", "$key", opts.pPrefix.toString()],
-                ["starts-with", "$Content-Type", ""],
-            ],
-        };
+    var signdata = this.signRequest("GET", pResource, {
+      'response-cache-control': 'No-cache',
+      'response-content-disposition': 'attachment'
+    });
 
-        // encode the policy as Base64 and sign it
-        var policy_b64 = rstr2b64(JSON.stringify(policy));
-        var signature = sign(opts.sSecretKey, policy_b64);
+    var url = this.getResourceUrl(pResource) + "?" + $.param(signdata);
+    window.open(url, "_blank");
+  };
 
-        // return the policy and signature
-        return {
-            "acl": "private",
-            "policy": policy_b64,
-            "signature": signature,
-        };
+  // Delete the file at the given path.
+  // http://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectDELETE.html
+  S3Backend.prototype.deleteFile = function(pResource) {
+    if (pResource.folder) {
+      console.log("deleteFile(): not a file: " + pResource.toString());
+      return;
     }
 
-    /************************************************************************
-     * S3 Backend                                                           *
-     ************************************************************************/
-
-    /**
-     * Retrieve the contents at the given path and store them internally.
-     *
-     * http://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketGET.html
-     */
-    function listContents(pLocation) {
-        var opts = container.data("opts");
-
-        // default parameter values
-        pLocation = typeof pLocation !== 'undefined' ? pLocation : new Path("", true);
-
-        // determine the full path and sign the request
-        if (!pLocation.folder) {
-            console.log("listContents(): not a folder: " + pLocation.toString());
-            return;
-        }
-
-        var fullpath = opts.pPrefix.concat(pLocation).toString();
-        var signdata = signRequest(opts, "GET", new Path("", true));
-
-        // request bucket contents with the given prefix and group results
-        // into common prefixes using a delimiter
-        return $.ajax({
-            url: getAPIUrl(opts),
-            data: $.extend(signdata, {
-                "prefix": fullpath,
-                "delimiter": "/",
-            }),
-            dataFormat: "xml",
-            cache: false,
-            success: function(data){
-                // XXX ugh, how can we make this cleaner?
-                var files = $(data).find("ListBucketResult > Contents > Key");
-                var folders = $(data).find("ListBucketResult > CommonPrefixes > Prefix");
-
-                function extract(e){
-                    var relpath = e.innerHTML.substr(fullpath.length);
-                    return new Path(relpath).toString();
-                }
-
-                function keep(e){
-                    return e.length > 0;
-                }
-
-                container.data("contents", {
-                    "path": pLocation,
-                    "files": $.map(files, extract).filter(keep),
-                    "folders": $.map(folders, extract).filter(keep),
-                });
-            },
-            error: function(data){
-                container.data("contents", {});
-                console.log("Error:" + data.responseText);
-                createAlert("danger", "Failed to get directory contents!");
-            }
-        });
-    }
-
-    /**
-     * Create a folder with the given path. Folders are S3 objects where
-     * the key ends in a trailing slash.
-     */
-    function createFolder(pResource) {
-        var opts = container.data("opts");
-        if (!pResource.folder) {
-            console.log("createFolder(): not a folder: " + pResource.toString());
-            return;
-        }
-
-        var signdata = signRequest(opts, "PUT", pResource);
-        var url = getResourceUrl(opts, pResource) + "?" + $.param(signdata);
-
-        return $.ajax({
-            url: url,
-            type: "PUT",
-            data: "",
-            error: function(data){
-                console.log("Error: " + data.responseText);
-                createAlert("danger", "Failed to create the folder!");
-            }
-        });
-    }
-
-    /**
-     * Delete the folder at the given path. Folders are S3 objects where
-     * the key ends in a trailing slash.
-     */
-     function deleteFolder(pResource) {
-         var opts = container.data("opts");
-         if (!pResource.folder) {
-           console.log("deleteFolder(): not a folder: " + pResource.toString());
-           return;
-         }
-
-         var signdata = signRequest(opts, "DELETE", pResource);
-         var url = getResourceUrl(opts, pResource) + "?" + $.param(signdata);
-
-         return $.ajax({
-             url: url,
-             type: "DELETE",
-             error: function(data){
-                 console.log("Error: " + data.responseText);
-                 createAlert("danger", "Failed to delete the folder!");
-             },
-         });
-     }
-
-    /**
-     * Download the file at the given path. This creates a link to download
-     * the file using the user's AWS credentials then opens it in a new window.
-     *
-     * http://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectGET.html
-     */
-    function downloadFile(pResource) {
-        var opts = container.data("opts");
-        if (pResource.folder) {
-          console.log("downloadFile(): not a file: " + pResource.toString());
-          return;
-        }
-
-        var signdata = signRequest(opts, "GET", pResource, {
-            'response-cache-control': 'No-cache',
-            'response-content-disposition': 'attachment'
-        });
-
-        var url = getResourceUrl(opts, pResource) + "?" + $.param(signdata);
-        window.open(url, "_blank");
-    }
-
-    /**
-     * Delete the file at the given path.
-     *
-     * http://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectDELETE.html
-     */
-    function deleteFile(pResource) {
-        var opts = container.data("opts");
-        if (pResource.folder) {
-          console.log("deleteFile(): not a file: " + pResource.toString());
-          return;
-        }
-
-        var signdata = signRequest(opts, "DELETE", pResource);
-        var url = getResourceUrl(opts, pResource) + "?" + $.param(signdata);
-
-        return $.ajax({
-            url: url,
-            type: "DELETE",
-            error: function(data){
-                console.log("Error: " + data.responseText);
-                createAlert("danger", "Failed to delete the file!");
-            },
-        });
-    }
-
-    /************************************************************************
-     * User Interface                                                       *
-     ************************************************************************/
-
-    /**
-     * Create the breadcrumbs control.
-     */
-    function createBreadcrumbs() {
-        // retrieve options
-        var opts = container.data("opts");
-
-        // create the breadcrumbs container
-        uiBreadcrumbs = $("<div />")
-            .addClass(opts.breadcrumbsClasses.join(" "))
-            .appendTo(container);
-
-        // disk icon
-        $("<span />")
-            .attr("role", "s3c-crumb-icon")
-            .addClass("glyphicon glyphicon-hdd")
-            .appendTo(uiBreadcrumbs);
-
-        // refresh button
-        $("<button />")
-            .attr("role", "s3c-crumb-refresh")
-            .addClass(opts.buttonClasses.join(" "))
-            .html("Refresh")
-            .click(function(){
-                var contents = container.data("contents");
-                listContents(contents.path).then(updateDisplay);
-            })
-            .appendTo(uiBreadcrumbs);
-
-        // parent folder button
-        $("<button />")
-            .attr("role", "s3c-crumb-up")
-            .addClass(opts.buttonClasses.join(" "))
-            .html("Up")
-            .click(function(){
-                var contents = container.data("contents");
-                listContents(contents.path.pop()).then(updateDisplay);
-            })
-            .appendTo(uiBreadcrumbs);
-    }
-
-    /**
-     * Update the breadcrumbs control.
-     */
-    function updateBreadcrumbs() {
-      // retrieve options and contents
-      var opts = container.data("opts");
-      var contents = container.data("contents");
-
-      // remove existing crumbs
-      uiBreadcrumbs.find("span[role='s3c-crumb']").remove();
-      uiBreadcrumbs.find("span[role='s3c-crumb-sep']").remove();
-
-      // create crumbs
-      var uiButton = uiBreadcrumbs.find("button[role='s3c-crumb-refresh']");
-      $.each(contents.path.parts, function(i, crumb){
-          $("<span />")
-              .attr("role", "s3c-crumb-sep")
-              .html("/")
-              .insertBefore(uiButton);
-
-          $("<span />")
-            .attr("role", "s3c-crumb")
-            .html(crumb)
-            .insertBefore(uiButton);
-      });
-    }
-
-    /**
-     * Create an alert and display it to the user.
-     */
-    function createAlert(sType, sMessage) {
-        var alert = $("<div />")
-            .attr("role", "alert")
-            .addClass("alert alert-dismissable")
-            .addClass("alert-" + sType)
-            .insertBefore(uiBreadcrumbs);
-
-        $("<button />")
-            .attr("type", "button")
-            .attr("data-dismiss", "alert")
-            .addClass("close")
-            .append($("<span />").attr("aria-hidden", "true").html("&times;"))
-            .append($("<span />").addClass("sr-only").html("Close"))
-            .appendTo(alert);
-
-        $("<p />")
-            .html(sMessage)
-            .appendTo(alert);
-    }
-
-    /**
-     * Create the folder control.
-     */
-    function createFolderControl() {
-        // retrieve options
-        var opts = container.data("opts");
-
-        // create the form
-        uiFolderControl = $("<form />")
-            .addClass(opts.formClasses.join(" "))
-            .submit(function(){
-                // don't do anything if the name contains forward slashes
-                var name = $("#txtFolderName").val();
-                if (name.indexOf("/") > -1) {
-                    createAlert(
-                        "warning",
-                        "Folder name must not contain forward slashes!");
-
-                    // don't submit the form
-                    return false;
-                }
-
-                // clear the inputs
-                $("#txtFolderName").val("");
-
-                // create the folder
-                var contents = container.data("contents");
-                createFolder(contents.path.clone().push(name + "/"))
-                    .then(function(){ return listContents(contents.path); })
-                    .then(updateDisplay);
-
-                // don't submit the form
-                return false;
-            })
-            .appendTo(container);
-
-        var controls = $("<div />")
-            .addClass("form-group")
-            .appendTo(uiFolderControl);
-
-        // create controls
-        $("<input />")
-            .addClass("form-control")
-            .attr("type", "text")
-            .attr("id", "txtFolderName")
-            .attr("placeholder", "Folder Name")
-            .appendTo(controls);
-
-        // submit button
-        $("<button />")
-            .addClass(opts.buttonClasses.join(" "))
-            .attr("type", "submit")
-            .html("Create")
-            .appendTo(uiFolderControl);
-    }
-
-    /**
-     * Create the file upload control.
-     *
-     * http://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-UsingHTTPPOST.html
-     * http://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-post-example.html
-     */
-    function createUploadControl() {
-        // retrieve options
-        var opts = container.data("opts");
-
-        // create the upload form
-        uiUploadControl = $("<form />")
-            .attr("method", "POST")
-            .attr("enctype", "multipart/form-data")
-            .addClass(opts.formClasses.join(" "))
-            .appendTo(container);
-
-        // create the file upload field
-        var inputs = $("<div />")
-            .addClass("form-group fallback")
-            .appendTo(uiUploadControl);
-
-        $("<input />")
-            .attr("type", "file")
-            .attr("name", "file")
-            .appendTo(inputs);
-
-        // create the submit button
-        var btSubmit = $("<button />")
-            .attr("type", "submit")
-            .html("Upload")
-            .addClass(opts.buttonClasses.join(" "))
-            .appendTo(uiUploadControl);
-
-        // enable drag-and-drop uploads if Dropzone is available
-        if(typeof window.Dropzone !== 'undefined') {
-            // style the form and remove the submit button
-            uiUploadControl.addClass("dropzone");
-            btSubmit.remove();
-
-            // create the dropzone object
-            uiUploadControl.dropzone({
-                'url': '/notreal',
-                'init': function() {
-                    this.on('processing', function(file){
-                        // set the post url from the upload control
-                        this.options.url = uiUploadControl.attr("action");
-                    })
-                },
-                'error': function(file, error) {
-                    // uh oh
-                    console.log("dropzone error: " + error);
-                    createAlert("danger", "Failed to upload the file!")
-                },
-                'complete': function(file) {
-                    // remove the file from the dropzone
-                    this.removeFile(file);
-
-                    // refresh the screen
-                    var contents = container.data("contents");
-                    listContents(contents.path).then(updateDisplay);
-                },
-            });
-        }
-    }
-
-    /**
-     * Update the file upload control.
-     */
-    function updateUploadControl() {
-      // retrieve options and contents
-      var opts = container.data("opts");
-      var contents = container.data("contents");
-
-      // update the form url
-      uiUploadControl.attr("action", getAPIUrl(opts));
-
-      // update amazon aws upload parameters
-      var amazondata = $.extend(getPolicyData(opts), {
-          "AWSAccessKeyId": opts.sAccessKey,
-          "Content-Type": "application/octet-stream",
-          "key": opts.pPrefix.concat(contents.path).push("${filename}").toString(),
-      });
-
-      uiUploadControl.find("input[role='s3c-upload-setting']").remove();
-      $.each(amazondata, function(name, value){
-          $("<input />")
-              .attr("role", "s3c-upload-setting")
-              .attr("type", "hidden")
-              .attr("name", name)
-              .attr("value", value)
-              .appendTo(uiUploadControl);
-      });
-    }
-
-    /**
-     * Create the display.
-     */
-    function createDisplay() {
-      // style the container
-      var opts = container.data("opts");
-      container.addClass(opts.containerClasses.join(" "));
-
-      // clear the container
-      container.empty();
-
-      // create controls
-      createBreadcrumbs();
-      createFolderControl();
-      createUploadControl();
-    }
-
-    /**
-     * Update the display.
-     */
-    function updateDisplay() {
-        // retrieve options and contents
-        var opts = container.data("opts");
-        var contents = container.data("contents");
-
-        // update controls
-        updateBreadcrumbs();
-        updateUploadControl();
-
-        // create folder entries
-        container.find("div[role='s3c-folder']").remove();
-        $.each(contents.folders, function(i, folder){
-            var path = contents.path.clone().push(folder + "/");
-            var entry = $("<div />")
-                .attr("role", "s3c-folder")
-                .addClass(opts.entryClasses.join(" "));
-
-            $("<span />")
-                .addClass("glyphicon glyphicon-folder-open")
-                .appendTo(entry);
-
-            $("<a />")
-                .html(folder)
-                .click(function(){
-                    listContents(path).then(updateDisplay);
-                })
-                .appendTo(entry);
-
-            $("<button />")
-                .addClass(opts.buttonClasses.join(" "))
-                .html("Delete")
-                .click(function(){
-                    deleteFolder(path)
-                        .then(function(){ return listContents(contents.path); })
-                        .then(updateDisplay);
-                })
-                .appendTo(entry);
-
-            entry.insertBefore(uiFolderControl);
-        });
-
-        // create file entries
-        container.find("div[role='s3c-file']").remove();
-        $.each(contents.files, function(i, file){
-            var path = contents.path.clone().push(file);
-            var entry = $("<div />")
-                .attr("role", "s3c-file")
-                .addClass(opts.entryClasses.join(" "));
-
-            $("<span />")
-                .addClass("glyphicon glyphicon-file")
-                .appendTo(entry);
-
-            $("<a />")
-                .html(file)
-                .click(function(){
-                    downloadFile(path);
-                })
-                .appendTo(entry);
-
-            $("<button />")
-                .addClass(opts.buttonClasses.join(" "))
-                .html("Delete")
-                .click(function(){
-                    deleteFile(path)
-                        .then(function(){ return listContents(contents.path); })
-                        .then(updateDisplay);
-                })
-                .appendTo(entry);
-
-            entry.insertBefore(uiFolderControl);
-        });
-    }
-
-    /************************************************************************
-     * jQuery Plugin                                                        *
-     ************************************************************************/
-
-    // create an s3commander window
-    $.fn.s3commander = function(options) {
-        // create the container
-        container = $(this);
-
-        // determine plugin options
-        container.data("opts", $.extend({},
-            $.fn.s3commander.defaults,
-            options));
-
-        var opts = container.data("opts");
-        opts.pPrefix = new Path(opts.sPrefix, true);
-
-        // create the display
-        createDisplay();
-
-        // get the contents of the top-level folder
-        container.data("contents", {});
-        listContents().then(updateDisplay);
-
-        // return the container
-        return container;
-    };
-
-    // default settings
-    $.fn.s3commander.defaults = {
-        "sAccessKey": "",
-        "sSecretKey": "",
-        "sBucket": "",
-        "sPrefix": "",
-        "sEndpoint": "s3.amazonaws.com",
-        "containerClasses": ["s3contents"],
-        "breadcrumbsClasses": ["s3crumbs"],
-        "entryClasses": ["s3entry"],
-        "formClasses": ["s3form", "form-inline"],
-        "buttonClasses": ["btn", "btn-xs", "btn-primary", "pull-right"],
-    };
-
-    /************************************************************************
-     * Debug                                                                *
-     ************************************************************************/
-
-    // export objects
-    window.Path = Path;
+    var signdata = this.signRequest("DELETE", pResource);
+    var url = this.getResourceUrl(pResource) + "?" + $.param(signdata);
+
+    return $.ajax({
+      url: url,
+      type: "DELETE",
+      error: function(data){
+        console.log("S3Backend error: " + data.responseText);
+      },
+    });
+  };
+
+  /************************************************************************
+   * User Interface                                                       *
+   ************************************************************************/
+
+  var S3CBreadcrumbs = React.createClass({
+    "displayName": "S3CBreadcrumbs",
+    "render": function(){
+      return React.createElement(
+        "div",
+        {"className": this.props.style.crumbs},
+        React.createElement("span", {"className": "glyphicon glyphicon-hdd"}),
+        $.map(this.props.data.parts, function(part, i){
+            return [
+              React.createElement("span", {"key": "sep-" + i}, "/"),
+              React.createElement("span", {"key": "crumb-" + i}, part),
+            ];
+        }),
+        React.createElement(
+          "button",
+          {"className": this.props.style.button},
+          "Refresh"),
+        React.createElement(
+          "button",
+          {"className": this.props.style.button},
+          "Up")
+      );
+    },
+  });
+
+  var S3CFolder = React.createClass({
+    "displayName": "S3CFolder",
+    "render": function(){
+      return React.createElement(
+        "div",
+        {"className": this.props.style.entry},
+        React.createElement(
+          "span",
+          {"className": "glyphicon glyphicon-folder-open"}),
+        React.createElement("a", {}, this.props.data.name),
+        React.createElement(
+          "button",
+          {"className": this.props.style.button},
+          "Delete")
+      );
+    },
+  });
+
+  var S3CFile = React.createClass({
+    "displayName": "S3CFile",
+    "render": function(){
+      return React.createElement(
+        "div",
+        {"className": this.props.style.entry},
+        React.createElement(
+          "span",
+          {"className": "glyphicon glyphicon-file"}),
+        React.createElement("a", {}, this.props.data.name),
+        React.createElement(
+          "button",
+          {"className": this.props.style.button},
+          "Delete")
+      );
+    },
+  });
+
+  var S3CFolderForm = React.createClass({
+    "displayName": "S3CFolderForm",
+    "render": function(){
+      return React.createElement(
+        "form",
+        {
+          "className": this.props.style.form,
+          "method": "post",
+          "encType": "multipart/form-data"
+        },
+        React.createElement(
+          "div",
+          {"className": "form-group"},
+          React.createElement(
+            "input",
+            {"type": "text", "className": "form-control"})),
+        React.createElement(
+          "button",
+          {"type": "submit", "className": this.props.style.button},
+          "Create")
+      );
+    },
+  });
+
+  var S3Commander = React.createClass({
+    "displayName": "S3Commander",
+    "getInitialState": function(){
+      return {
+        "path": new Path("a/b/c", true),
+        "files": new Array({"name": "foo"}, {"name": "bar"}),
+        "folders": new Array({"name": "test"}),
+      };
+    },
+    "render": function(){
+      return React.createElement(
+        "div",
+        {"className": this.props.style.container},
+        React.createElement(
+          S3CBreadcrumbs,
+          {"data": this.state.path, "style": this.props.style}),
+        $.map(this.state.folders, function(folder){
+          return React.createElement(
+            S3CFolder,
+            {"data": folder, "key": folder.name, "style": this.props.style});
+        }.bind(this)),
+        $.map(this.state.files, function(file){
+          return React.createElement(
+            S3CFile,
+            {"data": file, "key": file.name, "style": this.props.style});
+        }.bind(this)),
+        React.createElement(S3CFolderForm, {"style": this.props.style})
+      );
+    },
+  });
+
+  /************************************************************************
+   * jQuery Integration                                                   *
+   ************************************************************************/
+
+  // create an s3commander window
+  $.fn.s3commander = function(options) {
+    // resolve component options
+    var opts = $.extend({}, $.fn.s3commander.defaults, options)
+
+    // create the backend
+    var backend = new S3Backend({
+      "sAccessKey": opts.sAccessKey,
+      "sSecretKey": opts.sSecretKey,
+      "sBucket": opts.sBucket,
+      "pPrefix": new Path(opts.sPrefix, true),
+      "sEndpoint": opts.sEndpoint,
+    });
+
+    // create the react element
+    var container = $(this);
+    React.render(
+      React.createElement(S3Commander, {
+        "backend": backend,
+        "style": {
+          "container": opts.containerClasses.join(" "),
+          "crumbs": opts.breadcrumbClasses.join(" "),
+          "entry": opts.entryClasses.join(" "),
+          "form": opts.formClasses.join(" "),
+          "button": opts.buttonClasses.join(" "),
+        },
+      }),
+      container.get(0));
+
+    // return the container
+    return $(this);
+  };
+
+  // default settings
+  $.fn.s3commander.defaults = {
+    "sAccessKey": "",
+    "sSecretKey": "",
+    "sBucket": "",
+    "sPrefix": "",
+    "sEndpoint": "s3.amazonaws.com",
+    "containerClasses": ["s3contents"],
+    "breadcrumbClasses": ["s3crumbs"],
+    "entryClasses": ["s3entry"],
+    "formClasses": ["s3form", "form-inline"],
+    "buttonClasses": ["btn", "btn-xs", "btn-primary", "pull-right"],
+  };
+
+  /************************************************************************
+  * Debug                                                                *
+  ************************************************************************/
+
+  // export objects
+  window.Path = Path;
 
 }(jQuery));
