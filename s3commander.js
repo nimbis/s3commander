@@ -93,6 +93,23 @@ b64pad = "=";
     return result;
   };
 
+  // Make this path relative to the given one.
+  // Ex: new Path("foo/bar/xyz").rebase(new Path("foo")).toString() -> "bar/xyz"
+  Path.prototype.rebase = function(pOther) {
+    var index = 0;
+    while(index < pOther.parts.length) {
+      if(this.parts[0] == pOther.parts[index]) {
+        this.parts.shift();
+        index++;
+      }
+      else {
+        break;
+      }
+    }
+
+    return this;
+  };
+
   /************************************************************************
    * Amazon S3 Backend                                                    *
    ************************************************************************/
@@ -144,7 +161,7 @@ b64pad = "=";
     // return the query parameters required for this request
     return $.extend(oParams, {
       'AWSAccessKeyId': this.opts.sAccessKey,
-      'Signature': sign(this.opts.sSecretKey, secure),
+      'Signature': this.sign(this.opts.sSecretKey, secure),
       'Expires': timestamp,
     });
   };
@@ -198,7 +215,7 @@ b64pad = "=";
     }
 
     // sign the request
-    var signdata = signRequest("GET", new Path("", true));
+    var signdata = this.signRequest("GET", new Path("", true));
 
     // determine the absolute folder path
     var abspath = this.opts.pPrefix.concat(pFolder);
@@ -222,16 +239,16 @@ b64pad = "=";
       var folders = $(data).find("ListBucketResult > CommonPrefixes > Prefix");
 
       function extract(e){
-        var relpath = e.innerHTML.substr(fullpath.length);
-        return new Path(relpath).toString();
+        var relpath = new Path(e.innerHTML).rebase(pFolder);
+        return {"name": relpath.toString()};
       }
 
       function keep(e){
-        return e.length > 0;
+        return e.name.length > 0;
       }
 
       return {
-        "path": pLocation,
+        "path": pFolder,
         "files": $.map(files, extract).filter(keep),
         "folders": $.map(folders, extract).filter(keep),
       };
@@ -410,10 +427,15 @@ b64pad = "=";
     "displayName": "S3Commander",
     "getInitialState": function(){
       return {
-        "path": new Path("a/b/c", true),
-        "files": new Array({"name": "foo"}, {"name": "bar"}),
-        "folders": new Array({"name": "test"}),
+        "path": new Path("", true),
+        "files": new Array(),
+        "folders": new Array(),
       };
+    },
+    "componentDidMount": function() {
+      this.props.backend.list().done(function(data){
+        this.setState(data);
+      }.bind(this));
     },
     "render": function(){
       return React.createElement(
