@@ -203,7 +203,9 @@ b64pad = "=";
     };
   };
 
-  // TODO
+  // Get form parameters for uploading a file to the given folder.
+  // The paramters returned by this function should be stored in a <form />
+  // element using <input type="hidden" name="..." value="..." /> elements.
   S3Backend.prototype.getUploadParams = function(pFolder) {
     var uploadpath = this.opts.pPrefix.concat(pFolder).push("${filename}");
     return $.extend(this.getPolicyData(), {
