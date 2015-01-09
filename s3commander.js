@@ -159,7 +159,7 @@ b64pad = "=";
     }
 
     // return the query parameters required for this request
-    return $.extend(oParams, {
+    return $.extend({}, oParams, {
       'AWSAccessKeyId': this.opts.sAccessKey,
       'Signature': this.sign(this.opts.sSecretKey, secure),
       'Expires': timestamp,
@@ -203,6 +203,16 @@ b64pad = "=";
     };
   };
 
+  // TODO
+  S3Backend.prototype.getUploadParams = function(pFolder) {
+    var uploadpath = this.opts.pPrefix.concat(pFolder).push("${filename}");
+    return $.extend(this.getPolicyData(), {
+      "AWSAccessKeyId": this.opts.sAccessKey,
+      "Content-Type": "application/octet-stream",
+      "key": uploadpath.toString()
+    });
+  };
+
   // Retrieve the contents of the given folder.
   // http://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketGET.html
   S3Backend.prototype.list = function(pFolder) {
@@ -240,9 +250,7 @@ b64pad = "=";
         function(d){
           // we always treat common prefixes as folders so force it in the path
           var path = new Path(d.innerHTML, true);
-
-          // remove the trailing slash from the name by creating a file path
-          var name = new Path(d.innerHTML, false).rebase(pFolder).toString();
+          var name = path.clone().rebase(pFolder).toString();
           return {"name": name, "path": path};
         });
 
@@ -361,21 +369,28 @@ b64pad = "=";
         React.createElement("span", {"className": "glyphicon glyphicon-hdd"}),
 
         // bread crumbs
+        React.createElement("span", {"key": "sep-root"}, "/"),
         $.map(this.props.data.parts, function(part, i){
             return [
-              React.createElement("span", {"key": "sep-" + i}, "/"),
               React.createElement("span", {"key": "crumb-" + i}, part),
+              React.createElement("span", {"key": "sep-" + i}, "/"),
             ];
         }),
 
         // buttons
         React.createElement(
           "button",
-          {"className": this.props.style.button, "onClick": this.props.onRefresh},
+          {
+            "className": this.props.style.button,
+            "onClick": this.props.onRefresh
+          },
           "Refresh"),
         React.createElement(
           "button",
-          {"className": this.props.style.button, "onClick": this.props.onNavUp},
+          {
+            "className": this.props.style.button,
+            "onClick": this.props.onNavUp
+          },
           "Up")
       );
     },
@@ -402,7 +417,10 @@ b64pad = "=";
           this.props.data.name),
         React.createElement(
           "button",
-          {"className": this.props.style.button, "onClick": this.onDelete},
+          {
+            "className": this.props.style.button,
+            "onClick": this.onDelete
+          },
           "Delete")
       );
     },
@@ -429,7 +447,10 @@ b64pad = "=";
           this.props.data.name),
         React.createElement(
           "button",
-          {"className": this.props.style.button, "onClick": this.onDelete},
+          {
+            "className": this.props.style.button,
+            "onClick": this.onDelete
+          },
           "Delete")
       );
     },
@@ -437,24 +458,90 @@ b64pad = "=";
 
   var S3CFolderForm = React.createClass({
     "displayName": "S3CFolderForm",
+    "onCreate": function(e){
+      e.preventDefault();
+      var name = this.refs.name.getDOMNode().value;
+      this.props.onCreateFolder(name);
+    },
     "render": function(){
       return React.createElement(
+        // form
         "form",
         {
           "className": this.props.style.form,
           "method": "post",
           "encType": "multipart/form-data"
         },
+
+        // inputs
         React.createElement(
           "div",
           {"className": "form-group"},
           React.createElement(
             "input",
-            {"type": "text", "className": "form-control"})),
+            {
+              "type": "text",
+              "className": "form-control",
+              "ref": "name"
+            })),
+
+        // controls
         React.createElement(
           "button",
-          {"type": "submit", "className": this.props.style.button},
+          {
+            "type": "submit",
+            "className": this.props.style.button,
+            "onClick": this.onCreate
+          },
           "Create")
+      );
+    },
+  });
+
+  var S3CUploadForm = React.createClass({
+    "displayName": "S3CUploadForm",
+    "render": function(){
+      return React.createElement(
+        // form
+        "form",
+        {
+          "className": this.props.style.form,
+          "method": "post",
+          "encType": "multipart/form-data",
+          "action": this.props.url
+        },
+
+        // backend parameters
+        $.map(this.props.params, function(value, name){
+          return React.createElement(
+            "input",
+            {
+              "type": "hidden",
+              "name": name,
+              "value": value,
+              "key": "param-" + name
+            });
+        }),
+
+        // inputs
+        React.createElement(
+          "div",
+          {"className": "form-group"},
+          React.createElement(
+            "input",
+            {
+              "type": "file",
+              "name": "file"
+            })),
+
+        // controls
+        React.createElement(
+          "button",
+          {
+            "type": "submit",
+            "className": this.props.style.button
+          },
+          "Upload")
       );
     },
   });
@@ -469,46 +556,76 @@ b64pad = "=";
       };
     },
     "componentDidMount": function(){
-      this.props.backend.list().done(function(data){
-        this.setState(data);
-      }.bind(this));
+      this.props.backend.list()
+        .done(function(contents){
+          this.setState(contents);
+        }.bind(this))
+        .fail(function(){
+          alert("failed to list contents");
+        }.bind(this));
     },
     "onNavUp": function(){
-      var backend = this.props.backend;
       var path = this.state.path.pop();
-
-      backend.list(path).done(function(contents){
-        this.setState(contents);
-      }.bind(this));
+      this.props.backend.list(path)
+        .done(function(contents){
+          this.setState(contents);
+        }.bind(this))
+        .fail(function(){
+          alert("failed to list contents");
+        }.bind(this));
     },
     "onRefresh": function(){
-      var backend = this.props.backend;
       var path = this.state.path;
-
-      backend.list(path).done(function(contents){
-        this.setState(contents);
-      }.bind(this));
+      this.props.backend.list(path)
+        .done(function(contents){
+          this.setState(contents);
+        }.bind(this))
+        .fail(function(){
+          alert("failed to list contents");
+        }.bind(this));
     },
     "onNavFolder": function(folder){
-      var backend = this.props.backend;
       var path = this.state.path.push(folder.name + "/");
+      this.props.backend.list(path)
+        .done(function(contents){
+          this.setState(contents);
+        }.bind(this))
+        .fail(function(){
+          alert("failed to list contents");
+        }.bind(this));
+    },
+    "onCreateFolder": function(name){
+      // TODO valdiate name
 
-      backend.list(path).done(function(contents){
-        this.setState(contents);
-      }.bind(this));
+      var folder = this.state.path.clone().push(name + "/");
+      this.props.backend.createFolder(folder)
+        .done(function(){
+          this.onRefresh();
+        }.bind(this))
+        .fail(function(){
+          alert("failed to create folder");
+        }.bind(this));
     },
     "onDeleteFolder": function(folder){
-      var backend = this.props.backend;
-      backend.deleteFolder(folder.path);
-      // TODO
+      this.props.backend.deleteFolder(folder.path)
+        .done(function(){
+          this.onRefresh();
+        }.bind(this))
+        .fail(function(){
+          alert("failed to delete folder");
+        }.bind(this));
     },
     "onDownloadFile": function(file){
       this.props.backend.downloadFile(file.path);
     },
     "onDeleteFile": function(file){
-      var backend = this.props.backend;
-      backend.deleteFile(file.path);
-      // TODO
+      this.props.backend.deleteFile(file.path)
+        .done(function(){
+          this.onRefresh();
+        }.bind(this))
+        .fail(function(){
+          alert("failed to delete file");
+        }.bind(this));
     },
     "render": function(){
       // determine common properties
@@ -517,6 +634,7 @@ b64pad = "=";
         "onNavUp": this.onNavUp,
         "onRefresh": this.onRefresh,
         "onNavFolder": this.onNavFolder,
+        "onCreateFolder": this.onCreateFolder,
         "onDeleteFolder": this.onDeleteFolder,
         "onDownloadFile": this.onDownloadFile,
         "onDeleteFile": this.onDeleteFile,
@@ -530,24 +648,38 @@ b64pad = "=";
         // breadcrumbs
         React.createElement(
           S3CBreadcrumbs,
-          $.extend(props, {"data": this.state.path})),
+          $.extend({
+            "data": this.state.path
+          }, props)),
 
         // folders
         $.map(this.state.folders, function(folder){
           return React.createElement(
             S3CFolder,
-            $.extend(props, {"data": folder, "key": folder.name}));
-        }.bind(this)),
+            $.extend({
+              "data": folder,
+              "key": "folder-" + folder.name
+            }, props));
+        }),
 
         // files
         $.map(this.state.files, function(file){
           return React.createElement(
             S3CFile,
-            $.extend(props, {"data": file, "key": file.name}));
-        }.bind(this)),
+            $.extend({
+              "data": file,
+              "key": "file-" + file.name
+            }, props));
+        }),
 
         // controls
-        React.createElement(S3CFolderForm, props)
+        React.createElement(S3CFolderForm, props),
+        React.createElement(
+          S3CUploadForm,
+          $.extend({
+            "url": this.props.backend.getBucketURL(),
+            "params": this.props.backend.getUploadParams(this.state.path),
+          }, props))
       );
     },
   });
@@ -571,19 +703,20 @@ b64pad = "=";
     });
 
     // create the react element
+    var s3c = React.createElement(S3Commander, {
+      "backend": backend,
+      "style": {
+        "container": opts.containerClasses.join(" "),
+        "crumbs": opts.breadcrumbClasses.join(" "),
+        "entry": opts.entryClasses.join(" "),
+        "form": opts.formClasses.join(" "),
+        "button": opts.buttonClasses.join(" "),
+      },
+    });
+
+    // attach the react component to the container
     var container = $(this);
-    React.render(
-      React.createElement(S3Commander, {
-        "backend": backend,
-        "style": {
-          "container": opts.containerClasses.join(" "),
-          "crumbs": opts.breadcrumbClasses.join(" "),
-          "entry": opts.entryClasses.join(" "),
-          "form": opts.formClasses.join(" "),
-          "button": opts.buttonClasses.join(" "),
-        },
-      }),
-      container.get(0));
+    React.render(s3c, container.get(0));
 
     // return the container
     return $(this);
