@@ -548,6 +548,56 @@ b64pad = "=";
     },
   });
 
+  var S3CUploadDropzone = React.createClass({
+    "displayName": "S3CUploadDropzone",
+    "componentDidMount": function(){
+      // create the dropzone object
+      var component = this;
+      this.dropzone = new Dropzone(this.getDOMNode(), {
+        "url": this.props.url,
+        "error": function(file, error){
+          alert("uh-oh");
+        },
+        "complete": function(file){
+          // remove the file from dropzone
+          this.removeFile(file);
+
+          // refresh the screen
+          component.props.onRefresh();
+        }
+      });
+    },
+    "componentWillUnmount": function(){
+      // destroy the dropzone
+      this.dropzone.destroy();
+      this.dropzone = null;
+    },
+    "render": function(){
+      return React.createElement(
+        // form
+        "form",
+        {
+          "className": this.props.style.form + " dropzone",
+          "method": "post",
+          "encType": "multipart/form-data",
+          "action": this.props.url
+        },
+
+        // backend parameters
+        $.map(this.props.params, function(value, name){
+          return React.createElement(
+            "input",
+            {
+              "type": "hidden",
+              "name": name,
+              "value": value,
+              "key": "param-" + name
+            });
+        })
+      );
+    },
+  });
+
   var S3Commander = React.createClass({
     "displayName": "S3Commander",
     "getInitialState": function(){
@@ -555,6 +605,17 @@ b64pad = "=";
         "path": new Path("", true),
         "files": new Array(),
         "folders": new Array(),
+      };
+    },
+    "getDefaultProps": function(){
+      return {
+        "style": {
+          "container": "s3contents",
+          "crumbs": "s3crumbs",
+          "entry": "s3entry",
+          "form": "s3form form-inline",
+          "button": "btn btn-xs btn-primary pull-right",
+        },
       };
     },
     "componentDidMount": function(){
@@ -677,7 +738,7 @@ b64pad = "=";
         // controls
         React.createElement(S3CFolderForm, props),
         React.createElement(
-          S3CUploadForm,
+          typeof window.Dropzone === 'undefined' ? S3CUploadForm : S3CUploadDropzone,
           $.extend({
             "url": this.props.backend.getBucketURL(),
             "params": this.props.backend.getUploadParams(this.state.path),
@@ -696,7 +757,7 @@ b64pad = "=";
     var opts = $.extend({}, $.fn.s3commander.defaults, options)
 
     // create the backend
-    var backend = new S3Backend({
+    opts["backend"] = new S3Backend({
       "sAccessKey": opts.sAccessKey,
       "sSecretKey": opts.sSecretKey,
       "sBucket": opts.sBucket,
@@ -704,24 +765,14 @@ b64pad = "=";
       "sEndpoint": opts.sEndpoint,
     });
 
-    // create the react element
-    var s3c = React.createElement(S3Commander, {
-      "backend": backend,
-      "style": {
-        "container": opts.containerClasses.join(" "),
-        "crumbs": opts.breadcrumbClasses.join(" "),
-        "entry": opts.entryClasses.join(" "),
-        "form": opts.formClasses.join(" "),
-        "button": opts.buttonClasses.join(" "),
-      },
-    });
-
-    // attach the react component to the container
+    // create the react element and attach it to the container
     var container = $(this);
-    React.render(s3c, container.get(0));
+    React.render(
+      React.createElement(S3Commander, opts),
+      container.get(0));
 
     // return the container
-    return $(this);
+    return container;
   };
 
   // default settings
@@ -731,11 +782,6 @@ b64pad = "=";
     "sBucket": "",
     "sPrefix": "",
     "sEndpoint": "s3.amazonaws.com",
-    "containerClasses": ["s3contents"],
-    "breadcrumbClasses": ["s3crumbs"],
-    "entryClasses": ["s3entry"],
-    "formClasses": ["s3form", "form-inline"],
-    "buttonClasses": ["btn", "btn-xs", "btn-primary", "pull-right"],
   };
 
   /************************************************************************
