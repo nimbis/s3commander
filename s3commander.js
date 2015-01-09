@@ -344,20 +344,26 @@ b64pad = "=";
       return React.createElement(
         "div",
         {"className": this.props.style.crumbs},
+
+        // disk icon
         React.createElement("span", {"className": "glyphicon glyphicon-hdd"}),
+
+        // bread crumbs
         $.map(this.props.data.parts, function(part, i){
             return [
               React.createElement("span", {"key": "sep-" + i}, "/"),
               React.createElement("span", {"key": "crumb-" + i}, part),
             ];
         }),
+
+        // buttons
         React.createElement(
           "button",
-          {"className": this.props.style.button},
+          {"className": this.props.style.button, "onClick": this.props.onNavRefresh},
           "Refresh"),
         React.createElement(
           "button",
-          {"className": this.props.style.button},
+          {"className": this.props.style.button, "onClick": this.props.onNavUp},
           "Up")
       );
     },
@@ -437,24 +443,50 @@ b64pad = "=";
         this.setState(data);
       }.bind(this));
     },
+    "onNavUp": function() {
+      this.props.backend.list(this.state.path.pop()).done(function(data){
+        this.setState(data);
+      }.bind(this));
+    },
+    "onNavRefresh": function() {
+      this.props.backend.list(this.state.path).done(function(data){
+        this.setState(data);
+      }.bind(this));
+    },
     "render": function(){
+      // determine common properties
+      var props = {
+        "style": this.props.style,
+        "onNavUp": this.onNavUp,
+        "onNavRefresh": this.onNavRefresh,
+      };
+
+      // create and return elements
       return React.createElement(
         "div",
         {"className": this.props.style.container},
+
+        // breadcrumbs
         React.createElement(
           S3CBreadcrumbs,
-          {"data": this.state.path, "style": this.props.style}),
+          $.extend(props, {"data": this.state.path})),
+
+        // folders
         $.map(this.state.folders, function(folder){
           return React.createElement(
             S3CFolder,
-            {"data": folder, "key": folder.name, "style": this.props.style});
+            $.extend(props, {"data": folder, "key": folder.name}));
         }.bind(this)),
+
+        // files
         $.map(this.state.files, function(file){
           return React.createElement(
             S3CFile,
-            {"data": file, "key": file.name, "style": this.props.style});
+            $.extend(props, {"data": file, "key": file.name}));
         }.bind(this)),
-        React.createElement(S3CFolderForm, {"style": this.props.style})
+
+        // controls
+        React.createElement(S3CFolderForm, props)
       );
     },
   });
