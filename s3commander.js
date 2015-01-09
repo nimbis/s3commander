@@ -46,7 +46,7 @@ b64pad = "=";
   // Create a deep copy of this object and return it.
   Path.prototype.clone = function() {
     var other = new Path();
-    other.parts = new Array(this.parts);
+    other.parts = this.parts.slice();
     other.folder = this.folder;
 
     return other;
@@ -173,7 +173,7 @@ b64pad = "=";
   };
 
   // Retrieve the REST API URL for the given resource.
-  function getResourceURL(pResource) {
+  S3Backend.prototype.getResourceURL = function(pResource) {
     var abspath = this.opts.pPrefix.concat(pResource);
     return this.getBucketURL() + "/" + abspath.toString();
   };
@@ -234,24 +234,36 @@ b64pad = "=";
         console.log("S3Backend error:" + data.responseText);
       },
     }).then(function(data){
-      // XXX ugh, how can we make this cleaner?
-      var files = $(data).find("ListBucketResult > Contents > Key");
-      var folders = $(data).find("ListBucketResult > CommonPrefixes > Prefix");
+      // extract folders
+      var folders = $.map(
+        $(data).find("ListBucketResult > CommonPrefixes > Prefix"),
+        function(d){
+          // we always treat common prefixes as folders so force it in the path
+          var path = new Path(d.innerHTML, true);
 
-      function extract(e){
-        var relpath = new Path(e.innerHTML).rebase(pFolder);
-        return {"name": relpath.toString()};
-      }
+          // remove the trailing slash from the name by creating a file path
+          var name = new Path(d.innerHTML, false).rebase(pFolder).toString();
+          return {"name": name, "path": path};
+        });
 
-      function keep(e){
-        return e.name.length > 0;
-      }
+      // extract files
+      var files = $.map(
+        $(data).find("ListBucketResult > Contents > Key"),
+        function(d){
+          // this could be a folder or a file depending on whether the key
+          // has a trailing slash at the end, detect it using push() and
+          // ignore folder keys
+          var path = new Path().push(d.innerHTML);
+          if (path.folder) {
+            return;
+          }
 
-      return {
-        "path": pFolder,
-        "files": $.map(files, extract).filter(keep),
-        "folders": $.map(folders, extract).filter(keep),
-      };
+          var name = path.clone().rebase(pFolder).toString();
+          return {"name": name, "path": path};
+        });
+
+      // return directory contents
+      return {"path": pFolder, "files": files, "folders": folders};
     });
   };
 
@@ -310,7 +322,7 @@ b64pad = "=";
       'response-content-disposition': 'attachment'
     });
 
-    var url = this.getResourceUrl(pResource) + "?" + $.param(signdata);
+    var url = this.getResourceURL(pResource) + "?" + $.param(signdata);
     window.open(url, "_blank");
   };
 
@@ -323,7 +335,7 @@ b64pad = "=";
     }
 
     var signdata = this.signRequest("DELETE", pResource);
-    var url = this.getResourceUrl(pResource) + "?" + $.param(signdata);
+    var url = this.getResourceURL(pResource) + "?" + $.param(signdata);
 
     return $.ajax({
       url: url,
@@ -359,7 +371,7 @@ b64pad = "=";
         // buttons
         React.createElement(
           "button",
-          {"className": this.props.style.button, "onClick": this.props.onNavRefresh},
+          {"className": this.props.style.button, "onClick": this.props.onRefresh},
           "Refresh"),
         React.createElement(
           "button",
@@ -371,6 +383,12 @@ b64pad = "=";
 
   var S3CFolder = React.createClass({
     "displayName": "S3CFolder",
+    "onNav": function(e){
+      this.props.onNavFolder(this.props.data);
+    },
+    "onDelete": function(e){
+      this.props.onDeleteFolder(this.props.data);
+    },
     "render": function(){
       return React.createElement(
         "div",
@@ -378,10 +396,13 @@ b64pad = "=";
         React.createElement(
           "span",
           {"className": "glyphicon glyphicon-folder-open"}),
-        React.createElement("a", {}, this.props.data.name),
+        React.createElement(
+          "a",
+          {"onClick": this.onNav},
+          this.props.data.name),
         React.createElement(
           "button",
-          {"className": this.props.style.button},
+          {"className": this.props.style.button, "onClick": this.onDelete},
           "Delete")
       );
     },
@@ -389,6 +410,12 @@ b64pad = "=";
 
   var S3CFile = React.createClass({
     "displayName": "S3CFile",
+    "onDownload": function(e){
+      this.props.onDownloadFile(this.props.data);
+    },
+    "onDelete": function(e){
+      this.props.onDeleteFile(this.props.data);
+    },
     "render": function(){
       return React.createElement(
         "div",
@@ -396,10 +423,13 @@ b64pad = "=";
         React.createElement(
           "span",
           {"className": "glyphicon glyphicon-file"}),
-        React.createElement("a", {}, this.props.data.name),
+        React.createElement(
+          "a",
+          {"onClick": this.onDownload},
+          this.props.data.name),
         React.createElement(
           "button",
-          {"className": this.props.style.button},
+          {"className": this.props.style.button, "onClick": this.onDelete},
           "Delete")
       );
     },
@@ -438,27 +468,58 @@ b64pad = "=";
         "folders": new Array(),
       };
     },
-    "componentDidMount": function() {
+    "componentDidMount": function(){
       this.props.backend.list().done(function(data){
         this.setState(data);
       }.bind(this));
     },
-    "onNavUp": function() {
-      this.props.backend.list(this.state.path.pop()).done(function(data){
-        this.setState(data);
+    "onNavUp": function(){
+      var backend = this.props.backend;
+      var path = this.state.path.pop();
+
+      backend.list(path).done(function(contents){
+        this.setState(contents);
       }.bind(this));
     },
-    "onNavRefresh": function() {
-      this.props.backend.list(this.state.path).done(function(data){
-        this.setState(data);
+    "onRefresh": function(){
+      var backend = this.props.backend;
+      var path = this.state.path;
+
+      backend.list(path).done(function(contents){
+        this.setState(contents);
       }.bind(this));
+    },
+    "onNavFolder": function(folder){
+      var backend = this.props.backend;
+      var path = this.state.path.push(folder.name + "/");
+
+      backend.list(path).done(function(contents){
+        this.setState(contents);
+      }.bind(this));
+    },
+    "onDeleteFolder": function(folder){
+      var backend = this.props.backend;
+      backend.deleteFolder(folder.path);
+      // TODO
+    },
+    "onDownloadFile": function(file){
+      this.props.backend.downloadFile(file.path);
+    },
+    "onDeleteFile": function(file){
+      var backend = this.props.backend;
+      backend.deleteFile(file.path);
+      // TODO
     },
     "render": function(){
       // determine common properties
       var props = {
         "style": this.props.style,
         "onNavUp": this.onNavUp,
-        "onNavRefresh": this.onNavRefresh,
+        "onRefresh": this.onRefresh,
+        "onNavFolder": this.onNavFolder,
+        "onDeleteFolder": this.onDeleteFolder,
+        "onDownloadFile": this.onDownloadFile,
+        "onDeleteFile": this.onDeleteFile,
       };
 
       // create and return elements
