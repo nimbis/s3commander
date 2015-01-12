@@ -361,39 +361,25 @@ b64pad = "=";
    ************************************************************************/
 
   var S3CBreadcrumbs = React.createClass({
-    "displayName": "S3CBreadcrumbs",
     "render": function(){
-      return React.createElement(
-        "div",
-        {"className": this.props.style.crumbs},
+      var crumbs = $.map(this.props.data.parts, function(part, i){
+        return (
+          <span key="crumb-{i}">{part} /</span>
+        );
+      });
 
-        // disk icon
-        React.createElement("span", {"className": "glyphicon glyphicon-hdd"}),
-
-        // bread crumbs
-        React.createElement("span", {"key": "sep-root"}, "/"),
-        $.map(this.props.data.parts, function(part, i){
-            return [
-              React.createElement("span", {"key": "crumb-" + i}, part),
-              React.createElement("span", {"key": "sep-" + i}, "/"),
-            ];
-        }),
-
-        // buttons
-        React.createElement(
-          "button",
-          {
-            "className": this.props.style.button,
-            "onClick": this.props.onRefresh
-          },
-          "Refresh"),
-        React.createElement(
-          "button",
-          {
-            "className": this.props.style.button,
-            "onClick": this.props.onNavUp
-          },
-          "Up")
+      return (
+        <div className={this.props.style.crumbs}>
+          <span className="glyphicon glyphicon-hdd"></span>
+          <span>/</span>
+          {crumbs}
+          <button
+            className={this.props.style.button}
+            onClick={this.props.onRefresh}>Refresh</button>
+          <button
+            className={this.props.style.button}
+            onClick={this.props.onNavUp}>Up</button>
+        </div>
       );
     },
   });
@@ -407,23 +393,14 @@ b64pad = "=";
       this.props.onDeleteFolder(this.props.data);
     },
     "render": function(){
-      return React.createElement(
-        "div",
-        {"className": this.props.style.entry},
-        React.createElement(
-          "span",
-          {"className": "glyphicon glyphicon-folder-open"}),
-        React.createElement(
-          "a",
-          {"onClick": this.onNav},
-          this.props.data.name),
-        React.createElement(
-          "button",
-          {
-            "className": this.props.style.button,
-            "onClick": this.onDelete
-          },
-          "Delete")
+      return (
+        <div className={this.props.style.entry}>
+          <span className="glyphicon glyphicon-folder-open"></span>
+          <a onClick={this.onNav}>{this.props.data.name}</a>
+          <button
+            className={this.props.style.button}
+            onClick={this.onDelete}>Delete</button>
+        </div>
       );
     },
   });
@@ -437,23 +414,14 @@ b64pad = "=";
       this.props.onDeleteFile(this.props.data);
     },
     "render": function(){
-      return React.createElement(
-        "div",
-        {"className": this.props.style.entry},
-        React.createElement(
-          "span",
-          {"className": "glyphicon glyphicon-file"}),
-        React.createElement(
-          "a",
-          {"onClick": this.onDownload},
-          this.props.data.name),
-        React.createElement(
-          "button",
-          {
-            "className": this.props.style.button,
-            "onClick": this.onDelete
-          },
-          "Delete")
+      return (
+        <div className={this.props.style.entry}>
+          <span className="glyphicon glyphicon-file"></span>
+          <a onClick={this.onDownload}>{this.props.data.name}</a>
+          <button
+            className={this.props.style.button}
+            onClick={this.onDelete}>Delete</button>
+        </div>
       );
     },
   });
@@ -466,36 +434,17 @@ b64pad = "=";
       this.props.onCreateFolder(name);
     },
     "render": function(){
-      return React.createElement(
-        // form
-        "form",
-        {
-          "className": this.props.style.form,
-          "method": "post",
-          "encType": "multipart/form-data"
-        },
+      return (
+        <form className={this.props.style.form}>
+          <div className="form-group">
+            <input type="text" className="form-control" ref="name" />
+          </div>
 
-        // inputs
-        React.createElement(
-          "div",
-          {"className": "form-group"},
-          React.createElement(
-            "input",
-            {
-              "type": "text",
-              "className": "form-control",
-              "ref": "name"
-            })),
-
-        // controls
-        React.createElement(
-          "button",
-          {
-            "type": "submit",
-            "className": this.props.style.button,
-            "onClick": this.onCreate
-          },
-          "Create")
+          <button
+            type="submit"
+            className={this.props.style.button}
+            onClick={this.onCreate}>Create</button>
+        </form>
       );
     },
   });
@@ -503,47 +452,32 @@ b64pad = "=";
   var S3CUploadForm = React.createClass({
     "displayName": "S3CUploadForm",
     "render": function(){
-      return React.createElement(
-        // form
-        "form",
-        {
-          "className": this.props.style.form,
-          "method": "post",
-          "encType": "multipart/form-data",
-          "action": this.props.url
-        },
+      var params = $.map(this.props.params, function(value, name){
+        var key = "param-" + name;
+        return (
+          <input type="hidden" name={name} value={value} key={key} />
+        );
+      });
 
-        // backend parameters
-        $.map(this.props.params, function(value, name){
-          return React.createElement(
-            "input",
-            {
-              "type": "hidden",
-              "name": name,
-              "value": value,
-              "key": "param-" + name
-            });
-        }),
+      var formprops = {
+        "className": this.props.style.form,
+        "encType": "multipart/form-data",
+        "action": this.props.url,
+        "method": "post"
+      };
 
-        // inputs
-        React.createElement(
-          "div",
-          {"className": "form-group"},
-          React.createElement(
-            "input",
-            {
-              "type": "file",
-              "name": "file"
-            })),
+      return (
+        <form {...formprops}>
+          {params}
 
-        // controls
-        React.createElement(
-          "button",
-          {
-            "type": "submit",
-            "className": this.props.style.button
-          },
-          "Upload")
+          <div className="form-group">
+            <input type="file" name="file" />
+          </div>
+
+          <button type="submit" className={this.props.style.button}>
+            Upload
+          </button>
+        </form>
       );
     },
   });
@@ -573,27 +507,24 @@ b64pad = "=";
       this.dropzone = null;
     },
     "render": function(){
-      return React.createElement(
-        // form
-        "form",
-        {
-          "className": this.props.style.form + " dropzone",
-          "method": "post",
-          "encType": "multipart/form-data",
-          "action": this.props.url
-        },
+      var params = $.map(this.props.params, function(value, name){
+        var key = "param-" + name;
+        return (
+          <input type="hidden" name={name} value={value} key={key} />
+        );
+      });
 
-        // backend parameters
-        $.map(this.props.params, function(value, name){
-          return React.createElement(
-            "input",
-            {
-              "type": "hidden",
-              "name": name,
-              "value": value,
-              "key": "param-" + name
-            });
-        })
+      var formprops = {
+        "className": this.props.style.form + " dropzone",
+        "encType": "multipart/form-data",
+        "action": this.props.url,
+        "method": "post"
+      };
+
+      return (
+        <form {...formprops}>
+          {params}
+        </form>
       );
     },
   });
@@ -703,46 +634,48 @@ b64pad = "=";
         "onDeleteFile": this.onDeleteFile,
       };
 
-      // create and return elements
-      return React.createElement(
-        "div",
-        {"className": this.props.style.container},
+      // folders
+      var folders = $.map(this.state.folders, function(folder){
+        var key = "folder-" + folder.name;
+        return (
+          <S3CFolder {...props} data={folder} key={key} />
+        );
+      });
 
-        // breadcrumbs
-        React.createElement(
-          S3CBreadcrumbs,
-          $.extend({
-            "data": this.state.path
-          }, props)),
+      // files
+      var files = $.map(this.state.files, function(file){
+        var key = "file-" + file.name;
+        return (
+          <S3CFile {...props} data={file} key={key} />
+        );
+      });
 
-        // folders
-        $.map(this.state.folders, function(folder){
-          return React.createElement(
-            S3CFolder,
-            $.extend({
-              "data": folder,
-              "key": "folder-" + folder.name
-            }, props));
-        }),
+      // upload control
+      var uploadprops = $.extend({}, props, {
+        "url": this.props.backend.getBucketURL(),
+        "params": this.props.backend.getUploadParams(this.state.path)
+      });
 
-        // files
-        $.map(this.state.files, function(file){
-          return React.createElement(
-            S3CFile,
-            $.extend({
-              "data": file,
-              "key": "file-" + file.name
-            }, props));
-        }),
+      if (typeof window.Dropzone === 'undefined') {
+        var upload = (
+          <S3CUploadForm {...uploadprops} />
+        );
+      }
+      else {
+        var upload = (
+          <S3CUploadDropzone {...uploadprops} />
+        );
+      }
 
-        // controls
-        React.createElement(S3CFolderForm, props),
-        React.createElement(
-          typeof window.Dropzone === 'undefined' ? S3CUploadForm : S3CUploadDropzone,
-          $.extend({
-            "url": this.props.backend.getBucketURL(),
-            "params": this.props.backend.getUploadParams(this.state.path),
-          }, props))
+      // create the root element
+      return (
+        <div className={this.props.style.container}>
+          <S3CBreadcrumbs {...props} data={this.state.path} />
+          {folders}
+          {files}
+          <S3CFolderForm {...props} />
+          {upload}
+        </div>
       );
     },
   });
