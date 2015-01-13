@@ -550,7 +550,7 @@ b64pad = "=";
         <div className={this.props.style.entry}>
           <span className="glyphicon glyphicon-file"></span>
           <a onClick={this.onDownload}>{file.name}</a>
-          {this.getLatestVersion().deleted ? (
+          {versions.length > 0 && this.getLatestVersion().deleted ? (
             <span>(Deleted)</span>
           ) : undefined}
           <button
