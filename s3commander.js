@@ -304,8 +304,9 @@ b64pad = "=";
           // store the version information
           if (this.opts.bShowVersions) {
             entry.versions.push({
+              "deleted": false,
               "version": $(item).find("VersionId").text(),
-              "modified": $(item).find("LastModified").text(),
+              "modified": new Date($(item).find("LastModified").text()),
             });
           }
 
@@ -329,9 +330,29 @@ b64pad = "=";
             files[path].versions.push({
               "deleted": true,
               "version": $(item).find("VersionId").text(),
-              "modified": $(item).find("LastModified").text(),
+              "modified": new Date($(item).find("LastModified").text()),
             });
           });
+      }
+
+      // sort file versions
+      if (this.opts.bShowVersions) {
+        $.each(files, function(path, entry){
+          entry.versions.sort(function(a, b){
+            var am = a.modified;
+            var bm = b.modified;
+
+            if (am < bm){
+              return -1;
+            }
+            else if (am > bm) {
+              return 1;
+            }
+            else {
+              return 0;
+            }
+          });
+        });
       }
 
       // return directory contents
@@ -471,6 +492,14 @@ b64pad = "=";
   });
 
   var S3CFile = React.createClass({
+    "getLatestVersion": function(){
+      var versions = this.props.data.versions;
+      if (versions.length == 0) {
+        return undefined;
+      }
+
+      return versions[versions.length - 1];
+    },
     "componentDidMount": function(){
       this.onToggleVersions();
     },
@@ -500,12 +529,12 @@ b64pad = "=";
         return entry.deleted ? (
           <div {...props}>
             <span className="glyphicon glyphicon-trash"></span>
-            <span>{entry.modified}</span>
+            <span>{entry.modified.toString()}</span>
           </div>
         ) : (
           <div {...props}>
             <span className="glyphicon glyphicon-time"></span>
-            <a onClick={this.onDownloadVersion}>{entry.modified}</a>
+            <a onClick={this.onDownloadVersion}>{entry.modified.toString()}</a>
           </div>
         );
       }.bind(this));
@@ -521,6 +550,9 @@ b64pad = "=";
         <div className={this.props.style.entry}>
           <span className="glyphicon glyphicon-file"></span>
           <a onClick={this.onDownload}>{file.name}</a>
+          {this.getLatestVersion().deleted ? (
+            <span>(Deleted)</span>
+          ) : undefined}
           <button
             className={this.props.style.button}
             onClick={this.onDelete}>Delete</button>
