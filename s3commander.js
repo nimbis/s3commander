@@ -408,17 +408,24 @@ b64pad = "=";
   // Download the file at the given path. This creates a link to download
   // the file using the user's AWS credentials then opens it in a new window.
   // http://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectGET.html
-  S3Backend.prototype.downloadFile = function(pResource) {
+  S3Backend.prototype.downloadFile = function(pResource, sVersion) {
+    sVersion = typeof sVersion !== 'undefined' ? sVersion : "";
     if (pResource.folder) {
       console.log("downloadFile(): not a file: " + pResource.toString());
       return;
     }
 
-    var signdata = this.signRequest("GET", pResource, {
+    var params = {
       'response-cache-control': 'No-cache',
-      'response-content-disposition': 'attachment'
-    });
+      'response-content-disposition': 'attachment',
+    };
 
+    if (sVersion.length > 0) {
+      params["versionId"] = sVersion;
+      // params["response-content-disposition"] += "; filename=FOO_VERSION"
+    }
+
+    var signdata = this.signRequest("GET", pResource, params);
     var url = this.getResourceURL(pResource) + "?" + $.param(signdata);
     window.open(url, "_blank");
   };
@@ -491,6 +498,32 @@ b64pad = "=";
     },
   });
 
+  var S3CFileVersion = React.createClass({
+    "onDownload": function(e){
+      this.props.onDownloadVersion(this.props.data);
+    },
+    "render": function(){
+      var data = this.props.data;
+      var props = {
+        "className": this.props.style.entry,
+        "data-toggle": "version",
+        "key": "file-version-" + data.version
+      };
+
+      return data.deleted ? (
+        <div {...props}>
+          <span className="glyphicon glyphicon-trash"></span>
+          <span>{data.modified.toString()}</span>
+        </div>
+      ) : (
+        <div {...props}>
+          <span className="glyphicon glyphicon-time"></span>
+          <a onClick={this.onDownload}>{data.modified.toString()}</a>
+        </div>
+      );
+    },
+  });
+
   var S3CFile = React.createClass({
     "getLatestVersion": function(){
       var versions = this.props.data.versions;
@@ -512,8 +545,8 @@ b64pad = "=";
     "onToggleVersions": function(e){
       $(this.getDOMNode()).find("div[data-toggle='version']").toggle();
     },
-    "onDownloadVersion": function(e){
-      console.log(e);
+    "onDownloadVersion": function(entry){
+      this.props.onDownloadFileVersion(this.props.data, entry.version);
     },
     "render": function(){
       var file = this.props.data;
@@ -521,21 +554,14 @@ b64pad = "=";
       // file versions
       var versions = $.map(file.versions, function(entry){
         var props = {
-          "className": this.props.style.entry,
-          "data-toggle": "version",
+          "data": entry,
+          "style": this.props.style,
+          "onDownloadVersion": this.onDownloadVersion,
           "key": "file-version-" + entry.version
         };
 
-        return entry.deleted ? (
-          <div {...props}>
-            <span className="glyphicon glyphicon-trash"></span>
-            <span>{entry.modified.toString()}</span>
-          </div>
-        ) : (
-          <div {...props}>
-            <span className="glyphicon glyphicon-time"></span>
-            <a onClick={this.onDownloadVersion}>{entry.modified.toString()}</a>
-          </div>
+        return (
+          <S3CFileVersion {...props} />
         );
       }.bind(this));
 
@@ -752,6 +778,9 @@ b64pad = "=";
     "onDownloadFile": function(file){
       this.props.backend.downloadFile(file.path);
     },
+    "onDownloadFileVersion": function(file, version){
+      this.props.backend.downloadFile(file.path, version);
+    },
     "onDeleteFile": function(file){
       this.props.backend.deleteFile(file.path)
         .done(function(){
@@ -771,6 +800,7 @@ b64pad = "=";
         "onCreateFolder": this.onCreateFolder,
         "onDeleteFolder": this.onDeleteFolder,
         "onDownloadFile": this.onDownloadFile,
+        "onDownloadFileVersion": this.onDownloadFileVersion,
         "onDeleteFile": this.onDeleteFile,
       };
 
