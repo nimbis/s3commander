@@ -93,21 +93,13 @@ b64pad = "=";
     return result;
   };
 
-  // Make this path relative to the given one.
-  // Ex: new Path("foo/bar/xyz").rebase(new Path("foo")).toString() -> "bar/xyz"
-  Path.prototype.rebase = function(pOther) {
-    var index = 0;
-    while(index < pOther.parts.length) {
-      if(this.parts[0] == pOther.parts[index]) {
-        this.parts.shift();
-        index++;
-      }
-      else {
-        break;
-      }
+  // TODO
+  Path.prototype.basename = function(){
+    if (this.parts.length == 0) {
+      return undefined;
     }
 
-    return this;
+    return this.parts[this.parts.length - 1];
   };
 
   /************************************************************************
@@ -122,6 +114,7 @@ b64pad = "=";
       "sBucket": "",
       "pPrefix": new Path("", true),
       "sEndpoint": "s3.amazonaws.com",
+      "bShowVersions": false,
     }, options);
   }
 
@@ -153,9 +146,15 @@ b64pad = "=";
       secure += this.opts.pPrefix.concat(pResource).toString();
     }
 
+    var delimiter = "?";
+    if (this.opts.bShowVersions && sMethod == "GET" && pResource.folder) {
+      secure += "?versions";
+      delimiter = "&";
+    }
+
     var params = $.param(oParams);
     if (params.length > 0) {
-      secure += "?" + params;
+      secure += delimiter + params;
     }
 
     // return the query parameters required for this request
@@ -168,8 +167,16 @@ b64pad = "=";
 
   // Retrieve the REST API URL for a bucket.
   S3Backend.prototype.getBucketURL = function() {
-    // TODO we can't use https:// if the bucket name contains a '.' (dot)
-    return "https://" + this.opts.sBucket + "." + this.opts.sEndpoint;
+    // we can't use https:// if the bucket name contains a '.' (dot)
+    // because the SSL certificates won't work
+    var protocol = "https";
+    if (this.opts.sBucket.indexOf(".") !== -1) {
+      protocol = "http";
+      console.log("WARNING: Using clear-text transport protocol http:// !");
+    }
+
+    // construct the url
+    return protocol + "://" + this.opts.sBucket + "." + this.opts.sEndpoint;
   };
 
   // Retrieve the REST API URL for the given resource.
@@ -235,7 +242,7 @@ b64pad = "=";
     // request bucket contents with the absolute folder path as a prefix
     // and group results into common prefixes using a delimiter
     return $.ajax({
-      url: this.getBucketURL(),
+      url: this.getBucketURL() + (this.opts.bShowVersions ? "?versions" : ""),
       data: $.extend(signdata, {
         "prefix": abspath.toString(),
         "delimiter": "/",
@@ -246,35 +253,94 @@ b64pad = "=";
         console.log("S3Backend error:" + data.responseText);
       },
     }).then(function(data){
+      // TODO
+      if (this.opts.bShowVersions) {
+        var query = {
+          "folder": "ListVersionsResult > CommonPrefixes > Prefix",
+          "file": "ListVersionsResult > Version",
+          "delete": "ListVersionsResult > DeleteMarker"
+        };
+      }
+      else {
+        var query = {
+          "folder": "ListBucketResult > CommonPrefixes > Prefix",
+          "file": "ListBucketResult > Contents"
+        };
+      }
+
       // extract folders
-      var folders = $.map(
-        $(data).find("ListBucketResult > CommonPrefixes > Prefix"),
-        function(d){
-          // we always treat common prefixes as folders so force it in the path
-          var path = new Path(d.innerHTML, true);
-          var name = path.clone().rebase(pFolder).toString();
-          return {"name": name, "path": path};
+      var folders = new Object();
+      $.each(
+        $(data).find(query.folder),
+        function(i, item){
+          // we treat common prefixes as folders even though technically they
+          // are a side effect of the keys that actually represent folders
+          var path = new Path($(item).text(), true);
+          folders[path] = {
+            "path": path,
+            "name": path.basename(),
+          };
         });
 
       // extract files
-      var files = $.map(
-        $(data).find("ListBucketResult > Contents > Key"),
-        function(d){
-          // this could be a folder or a file depending on whether the key
-          // has a trailing slash at the end, detect it using push() and
-          // ignore folder keys
-          var path = new Path().push(d.innerHTML);
+      var files = new Object();
+      $.each(
+        $(data).find(query.file),
+        function(i, item){
+          // this could be a file or a folder depending on the key
+          var path = new Path().push($(item).find("Key").text());
           if (path.folder) {
+            // ignore folders
             return;
           }
 
-          var name = path.clone().rebase(pFolder).toString();
-          return {"name": name, "path": path};
-        });
+          // get or create the file entry
+          var entry = path in files ? files[path] : {
+            "path": path,
+            "name": path.basename(),
+            "versions": new Array(),
+          };
+
+          // store the version information
+          if (this.opts.bShowVersions) {
+            entry.versions.push({
+              "version": $(item).find("VersionId").text(),
+              "modified": $(item).find("LastModified").text(),
+            });
+          }
+
+          // store the file entry
+          files[path] = entry;
+        }.bind(this));
+
+      // delete markers
+      if (this.opts.bShowVersions) {
+        $.each(
+          $(data).find(query.delete),
+          function(i, item){
+            // this could be a file or a folder depending on the key name
+            var path = new Path().push($(item).find("Key").text());
+            if (path.folder) {
+              // ignore folders
+              return;
+            }
+
+            // update the file's version information
+            files[path].versions.push({
+              "deleted": true,
+              "version": $(item).find("VersionId").text(),
+              "modified": $(item).find("LastModified").text(),
+            });
+          });
+      }
 
       // return directory contents
-      return {"path": pFolder, "files": files, "folders": folders};
-    });
+      return {
+        "path": pFolder,
+        "files": files,
+        "folders": folders,
+      };
+    }.bind(this));
   };
 
   // Create a folder with the given path. Folders are S3 objects where
@@ -385,7 +451,6 @@ b64pad = "=";
   });
 
   var S3CFolder = React.createClass({
-    "displayName": "S3CFolder",
     "onNav": function(e){
       this.props.onNavFolder(this.props.data);
     },
@@ -406,7 +471,6 @@ b64pad = "=";
   });
 
   var S3CFile = React.createClass({
-    "displayName": "S3CFile",
     "onDownload": function(e){
       this.props.onDownloadFile(this.props.data);
     },
@@ -427,7 +491,6 @@ b64pad = "=";
   });
 
   var S3CFolderForm = React.createClass({
-    "displayName": "S3CFolderForm",
     "onCreate": function(e){
       e.preventDefault();
       var name = this.refs.name.getDOMNode().value;
@@ -450,41 +513,17 @@ b64pad = "=";
   });
 
   var S3CUploadForm = React.createClass({
-    "displayName": "S3CUploadForm",
-    "render": function(){
-      var params = $.map(this.props.params, function(value, name){
-        var key = "param-" + name;
-        return (
-          <input type="hidden" name={name} value={value} key={key} />
-        );
-      });
-
-      var formprops = {
-        "className": this.props.style.form,
-        "encType": "multipart/form-data",
-        "action": this.props.url,
-        "method": "post"
-      };
-
-      return (
-        <form {...formprops}>
-          {params}
-
-          <div className="form-group">
-            <input type="file" name="file" />
-          </div>
-
-          <button type="submit" className={this.props.style.button}>
-            Upload
-          </button>
-        </form>
-      );
+    "componentWillMount": function(){
+      // detect if we have dropzone support
+      this.useDropzone = (typeof window.Dropzone !== 'undefined');
     },
-  });
-
-  var S3CUploadDropzone = React.createClass({
-    "displayName": "S3CUploadDropzone",
     "componentDidMount": function(){
+      // check if we're using dropzone
+      if (!this.useDropzone) {
+        // do nothing
+        return;
+      }
+
       // create the dropzone object
       var component = this;
       this.dropzone = new Dropzone(this.getDOMNode(), {
@@ -502,11 +541,18 @@ b64pad = "=";
       });
     },
     "componentWillUnmount": function(){
+      // check if we're using dropzone
+      if (!this.useDropzone) {
+        // do nothing
+        return;
+      }
+
       // destroy the dropzone
       this.dropzone.destroy();
       this.dropzone = null;
     },
     "render": function(){
+      // amazon upload parameters
       var params = $.map(this.props.params, function(value, name){
         var key = "param-" + name;
         return (
@@ -514,28 +560,45 @@ b64pad = "=";
         );
       });
 
+      // form properties
       var formprops = {
-        "className": this.props.style.form + " dropzone",
+        "className": this.props.style.form,
         "encType": "multipart/form-data",
         "action": this.props.url,
         "method": "post"
       };
 
+      if (this.useDropzone) {
+        formprops["className"] += " dropzone";
+      }
+
+      // create components
       return (
         <form {...formprops}>
           {params}
+
+          {this.useDropzone ? undefined : (
+          <div className="form-group">
+            <input type="file" name="file" />
+          </div>
+          )}
+
+          {this.useDropzone ? undefined : (
+          <button type="submit" className={this.props.style.button}>
+            Upload
+          </button>
+          )}
         </form>
       );
     },
   });
 
   var S3Commander = React.createClass({
-    "displayName": "S3Commander",
     "getInitialState": function(){
       return {
         "path": new Path("", true),
-        "files": new Array(),
-        "folders": new Array(),
+        "files": new Object(),
+        "folders": new Object(),
       };
     },
     "getDefaultProps": function(){
@@ -650,22 +713,11 @@ b64pad = "=";
         );
       });
 
-      // upload control
+      // upload control properties
       var uploadprops = $.extend({}, props, {
         "url": this.props.backend.getBucketURL(),
         "params": this.props.backend.getUploadParams(this.state.path)
       });
-
-      if (typeof window.Dropzone === 'undefined') {
-        var upload = (
-          <S3CUploadForm {...uploadprops} />
-        );
-      }
-      else {
-        var upload = (
-          <S3CUploadDropzone {...uploadprops} />
-        );
-      }
 
       // create the root element
       return (
@@ -674,7 +726,7 @@ b64pad = "=";
           {folders}
           {files}
           <S3CFolderForm {...props} />
-          {upload}
+          <S3CUploadForm {...uploadprops} />
         </div>
       );
     },
@@ -696,6 +748,7 @@ b64pad = "=";
       "sBucket": opts.sBucket,
       "pPrefix": new Path(opts.sPrefix, true),
       "sEndpoint": opts.sEndpoint,
+      "bShowVersions": opts.bShowVersions,
     });
 
     // create the react element and attach it to the container
@@ -715,6 +768,7 @@ b64pad = "=";
     "sBucket": "",
     "sPrefix": "",
     "sEndpoint": "s3.amazonaws.com",
+    "bShowVersions": false,
   };
 
   /************************************************************************
