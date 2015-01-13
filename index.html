@@ -46,6 +46,10 @@
                             <label for="txtPrefix">Prefix</label>
                             <input type="text" class="form-control" id="txtPrefix" />
                         </div>
+                        <div class="form-group">
+                            <input type="checkbox" id="chkVersions" />
+                            <label for="chkVersions">Show Versions</label>
+                        </div>
                         <button type="submit" class="btn btn-primary">Connect</button>
                     </form>
                 </div>
@@ -67,7 +71,7 @@
                         sSecretKey: $("#txtSecretKey").val(),
                         sBucket: $("#txtBucket").val(),
                         sPrefix: $("#txtPrefix").val(),
-                        bShowVersions: true,
+                        bShowVersions: $("#chkVersions").is(":checked"),
                     });
 
                     return false;
