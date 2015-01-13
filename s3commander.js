@@ -471,20 +471,65 @@ b64pad = "=";
   });
 
   var S3CFile = React.createClass({
+    "componentDidMount": function(){
+      this.onToggleVersions();
+    },
     "onDownload": function(e){
       this.props.onDownloadFile(this.props.data);
     },
     "onDelete": function(e){
       this.props.onDeleteFile(this.props.data);
     },
+    "onToggleVersions": function(e){
+      $(this.getDOMNode()).find("div[data-toggle='version']").toggle();
+    },
+    "onDownloadVersion": function(e){
+      console.log(e);
+    },
     "render": function(){
+      var file = this.props.data;
+
+      // file versions
+      var versions = $.map(file.versions, function(entry){
+        var props = {
+          "className": this.props.style.entry,
+          "data-toggle": "version",
+          "key": "file-version-" + entry.version
+        };
+
+        return entry.deleted ? (
+          <div {...props}>
+            <span className="glyphicon glyphicon-trash"></span>
+            <span>{entry.modified}</span>
+          </div>
+        ) : (
+          <div {...props}>
+            <span className="glyphicon glyphicon-time"></span>
+            <a onClick={this.onDownloadVersion}>{entry.modified}</a>
+          </div>
+        );
+      }.bind(this));
+
+      // don't show any version information for
+      // files that only have one version
+      if (versions.length == 1) {
+        versions = new Array();
+      }
+
+      // file control
       return (
         <div className={this.props.style.entry}>
           <span className="glyphicon glyphicon-file"></span>
-          <a onClick={this.onDownload}>{this.props.data.name}</a>
+          <a onClick={this.onDownload}>{file.name}</a>
           <button
             className={this.props.style.button}
             onClick={this.onDelete}>Delete</button>
+          {versions.length > 0 ? (
+          <button
+            className={this.props.style.button}
+            onClick={this.onToggleVersions}>Toggle Versions</button>
+          ) : undefined}
+          {versions}
         </div>
       );
     },
