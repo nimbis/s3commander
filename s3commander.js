@@ -93,7 +93,7 @@ b64pad = "=";
     return result;
   };
 
-  // TODO
+  // Get the last component of the path if available.
   Path.prototype.basename = function(){
     if (this.parts.length == 0) {
       return undefined;
@@ -253,7 +253,7 @@ b64pad = "=";
         console.log("S3Backend error:" + data.responseText);
       },
     }).then(function(data){
-      // TODO
+      // decide how to parse the results
       if (this.opts.bShowVersions) {
         var query = {
           "folder": "ListVersionsResult > CommonPrefixes > Prefix",
