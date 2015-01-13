@@ -755,8 +755,13 @@ b64pad = "=";
         }.bind(this));
     },
     "onCreateFolder": function(name){
-      // TODO valdiate name
+      // validate name
+      if (name.match("^[a-zA-Z0-9 _\-]+$") == null) {
+        alert("Folder name is invalid!");
+        return;
+      }
 
+      // create the folder
       var folder = this.state.path.clone().push(name + "/");
       this.props.backend.createFolder(folder)
         .done(function(){
