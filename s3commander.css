@@ -34,6 +34,10 @@ div.s3entry > span {
     margin-right: 6px;
 }
 
+div.s3entry > a {
+    margin-right: 6px;
+}
+
 div.s3entry > button {
     margin-left: 6px;
 }
