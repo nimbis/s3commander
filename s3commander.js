@@ -575,7 +575,7 @@ b64pad = "=";
           <a onClick={this.onDownload}>{file.name}</a>
 
           {versions.length > 0 && this.getLatestVersion().deleted ? (
-          <span>(Deleted)</span>
+          <span className="glyphicon glyphicon-asterisk"></span>
           ) : (
           <button
             className={this.props.style.button}
