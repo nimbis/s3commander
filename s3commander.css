@@ -3,7 +3,7 @@ div.s3contents {
     padding: 4px;
 }
 
-div.s3crumbs {
+div.s3control {
     padding: 4px;
     background-color: #eee;
     border-bottom: 1px dashed black;
@@ -11,11 +11,11 @@ div.s3crumbs {
     font-weight: bold;
 }
 
-div.s3crumbs > span {
+div.s3control > span {
     margin-right: 6px;
 }
 
-div.s3crumbs > button {
+div.s3control > button {
     margin-left: 6px;
 }
 

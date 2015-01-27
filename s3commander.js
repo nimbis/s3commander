@@ -463,7 +463,7 @@ b64pad = "=";
       });
 
       return (
-        <div className={this.props.style.crumbs}>
+        <div className={this.props.style.control}>
           <span className="glyphicon glyphicon-hdd"></span>
           <span>/</span>
           {crumbs}
@@ -473,6 +473,34 @@ b64pad = "=";
           <button
             className={this.props.style.button}
             onClick={this.props.onNavUp}>Up</button>
+        </div>
+      );
+    },
+  });
+
+  var S3COptionsControl = React.createClass({
+    "componentDidMount": function(){
+      $(this.getDOMNode())
+        .find("#chkShowDeleted")
+        .bootstrapToggle({
+          "size": "mini",
+          "on": "On <span class='glyphicon glyphicon-asterisk'></span>&nbsp;",
+        })
+        .on('change', this.onShowDeletedChange);
+    },
+    "onShowDeletedChange": function(e){
+      this.props.setStateOptions({
+        "showDeletedFiles": $("#chkShowDeleted").prop("checked"),
+      });
+    },
+    "render": function(){
+      return (
+        <div className={this.props.style.control}>
+          <span>Show Deleted Files</span>
+          <input
+            type="checkbox"
+            id="chkShowDeleted"
+            defaultChecked={this.props.options.showDeletedFiles ? "checked" : ""} />
         </div>
       );
     },
@@ -506,8 +534,7 @@ b64pad = "=";
       var data = this.props.data;
       var props = {
         "className": this.props.style.entry,
-        "data-toggle": "version",
-        "key": "file-version-" + data.version
+        "key": this.props.key
       };
 
       return data.deleted ? (
@@ -525,6 +552,11 @@ b64pad = "=";
   });
 
   var S3CFile = React.createClass({
+    "getInitialState": function(){
+      return {
+        "showVersions": false
+      };
+    },
     "getLatestVersion": function(){
       var versions = this.props.data.versions;
       if (versions.length == 0) {
@@ -533,9 +565,6 @@ b64pad = "=";
 
       return versions[versions.length - 1];
     },
-    "componentDidMount": function(){
-      this.onToggleVersions();
-    },
     "onDownload": function(e){
       this.props.onDownloadFile(this.props.data);
     },
@@ -543,7 +572,9 @@ b64pad = "=";
       this.props.onDeleteFile(this.props.data);
     },
     "onToggleVersions": function(e){
-      $(this.getDOMNode()).find("div[data-toggle='version']").toggle();
+      this.setState({
+        "showVersions": !this.state.showVersions
+      });
     },
     "onDownloadVersion": function(entry){
       this.props.onDownloadFileVersion(this.props.data, entry.version);
@@ -557,7 +588,7 @@ b64pad = "=";
           "data": entry,
           "style": this.props.style,
           "onDownloadVersion": this.onDownloadVersion,
-          "key": "file-version-" + entry.version
+          "key": "file-" + file.name + "-" + entry.version
         };
 
         return (
@@ -565,29 +596,27 @@ b64pad = "=";
         );
       }.bind(this));
 
-      // don't show any version information for
-      // files that only have one version
-      if (versions.length == 1) {
-        versions = new Array();
-      }
-
       // file control
       return (
         <div className={this.props.style.entry}>
           <span className="glyphicon glyphicon-file"></span>
           <a onClick={this.onDownload}>{file.name}</a>
+
           {versions.length > 0 && this.getLatestVersion().deleted ? (
-            <span>(Deleted)</span>
-          ) : undefined}
+          <span className="glyphicon glyphicon-asterisk"></span>
+          ) : (
           <button
             className={this.props.style.button}
             onClick={this.onDelete}>Delete</button>
+          )}
+
           {versions.length > 0 ? (
           <button
             className={this.props.style.button}
-            onClick={this.onToggleVersions}>Toggle Versions</button>
+            onClick={this.onToggleVersions}>Versions</button>
           ) : undefined}
-          {versions}
+
+          {this.state.showVersions ? versions : undefined}
         </div>
       );
     },
@@ -702,23 +731,37 @@ b64pad = "=";
         "path": new Path("", true),
         "files": new Object(),
         "folders": new Object(),
+        "options": {
+          "showDeletedFiles": false,
+        }
       };
     },
     "getDefaultProps": function(){
       return {
         "style": {
           "container": "s3contents",
-          "crumbs": "s3crumbs",
+          "control": "s3control",
           "entry": "s3entry",
           "form": "s3form form-inline",
           "button": "btn btn-xs btn-primary pull-right",
         },
       };
     },
+    "setStateContents": function(contents){
+      this.setState($.extend({}, this.state, contents));
+    },
+    "setStateOptions": function(options){
+      this.setState({
+        "path": this.state.path,
+        "files": this.state.files,
+        "folders": this.state.folders,
+        "options": $.extend({}, this.state.options, options),
+      });
+    },
     "componentDidMount": function(){
       this.props.backend.list()
         .done(function(contents){
-          this.setState(contents);
+          this.setStateContents(contents);
         }.bind(this))
         .fail(function(){
           alert("failed to list contents");
@@ -728,7 +771,7 @@ b64pad = "=";
       var path = this.state.path.pop();
       this.props.backend.list(path)
         .done(function(contents){
-          this.setState(contents);
+          this.setStateContents(contents);
         }.bind(this))
         .fail(function(){
           alert("failed to list contents");
@@ -738,7 +781,7 @@ b64pad = "=";
       var path = this.state.path;
       this.props.backend.list(path)
         .done(function(contents){
-          this.setState(contents);
+          this.setStateContents(contents);
         }.bind(this))
         .fail(function(){
           alert("failed to list contents");
@@ -748,7 +791,7 @@ b64pad = "=";
       var path = this.state.path.push(folder.name + "/");
       this.props.backend.list(path)
         .done(function(contents){
-          this.setState(contents);
+          this.setStateContents(contents);
         }.bind(this))
         .fail(function(){
           alert("failed to list contents");
@@ -799,6 +842,8 @@ b64pad = "=";
       // determine common properties
       var props = {
         "style": this.props.style,
+        "options": this.state.options,
+        "setStateOptions": this.setStateOptions,
         "onNavUp": this.onNavUp,
         "onRefresh": this.onRefresh,
         "onNavFolder": this.onNavFolder,
@@ -819,11 +864,22 @@ b64pad = "=";
 
       // files
       var files = $.map(this.state.files, function(file){
+        // check if we should render hidden files
+        if (file.versions.length > 0) {
+          var options = this.state.options;
+          var latest = file.versions[file.versions.length - 1];
+
+          if (!options.showDeletedFiles && latest.deleted) {
+            return;
+          }
+        }
+
+        // render the file
         var key = "file-" + file.name;
         return (
           <S3CFile {...props} data={file} key={key} />
         );
-      });
+      }.bind(this));
 
       // upload control properties
       var uploadprops = $.extend({}, props, {
@@ -835,6 +891,7 @@ b64pad = "=";
       return (
         <div className={this.props.style.container}>
           <S3CBreadcrumbs {...props} data={this.state.path} />
+          <S3COptionsControl {...props} />
           {folders}
           {files}
           <S3CFolderForm {...props} />
