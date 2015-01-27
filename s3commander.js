@@ -463,7 +463,7 @@ b64pad = "=";
       });
 
       return (
-        <div className={this.props.style.crumbs}>
+        <div className={this.props.style.control}>
           <span className="glyphicon glyphicon-hdd"></span>
           <span>/</span>
           {crumbs}
@@ -473,6 +473,29 @@ b64pad = "=";
           <button
             className={this.props.style.button}
             onClick={this.props.onNavUp}>Up</button>
+        </div>
+      );
+    },
+  });
+
+  var S3CVersionControl = React.createClass({
+    "componentDidMount": function(){
+      $(this.getDOMNode())
+        .find("#chkShowDeleted")
+        .bootstrapToggle({
+          "size": "mini",
+          "on": "On <span class='glyphicon glyphicon-asterisk'></span>&nbsp;",
+        });
+    },
+    "render": function(){
+      return (
+        <div className={this.props.style.control}>
+          <span>Show Deleted Files</span>
+          <input
+            type="checkbox"
+            id="chkShowDeleted"
+            ref="showDeleted"
+            defaultChecked="checked" />
         </div>
       );
     },
@@ -703,23 +726,29 @@ b64pad = "=";
         "path": new Path("", true),
         "files": new Object(),
         "folders": new Object(),
+        "options": {
+          "showDeletedFiles": false,
+        }
       };
     },
     "getDefaultProps": function(){
       return {
         "style": {
           "container": "s3contents",
-          "crumbs": "s3crumbs",
+          "control": "s3control",
           "entry": "s3entry",
           "form": "s3form form-inline",
           "button": "btn btn-xs btn-primary pull-right",
         },
       };
     },
+    "setStateContents": function(contents){
+      this.setState($.extend({}, this.state, contents));
+    },
     "componentDidMount": function(){
       this.props.backend.list()
         .done(function(contents){
-          this.setState(contents);
+          this.setStateContents(contents);
         }.bind(this))
         .fail(function(){
           alert("failed to list contents");
@@ -729,7 +758,7 @@ b64pad = "=";
       var path = this.state.path.pop();
       this.props.backend.list(path)
         .done(function(contents){
-          this.setState(contents);
+          this.setStateContents(contents);
         }.bind(this))
         .fail(function(){
           alert("failed to list contents");
@@ -739,7 +768,7 @@ b64pad = "=";
       var path = this.state.path;
       this.props.backend.list(path)
         .done(function(contents){
-          this.setState(contents);
+          this.setStateContents(contents);
         }.bind(this))
         .fail(function(){
           alert("failed to list contents");
@@ -749,7 +778,7 @@ b64pad = "=";
       var path = this.state.path.push(folder.name + "/");
       this.props.backend.list(path)
         .done(function(contents){
-          this.setState(contents);
+          this.setStateContents(contents);
         }.bind(this))
         .fail(function(){
           alert("failed to list contents");
@@ -836,6 +865,7 @@ b64pad = "=";
       return (
         <div className={this.props.style.container}>
           <S3CBreadcrumbs {...props} data={this.state.path} />
+          <S3CVersionControl {...props} />
           {folders}
           {files}
           <S3CFolderForm {...props} />
