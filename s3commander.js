@@ -506,8 +506,7 @@ b64pad = "=";
       var data = this.props.data;
       var props = {
         "className": this.props.style.entry,
-        "data-toggle": "version",
-        "key": "file-version-" + data.version
+        "key": this.props.key
       };
 
       return data.deleted ? (
@@ -525,6 +524,11 @@ b64pad = "=";
   });
 
   var S3CFile = React.createClass({
+    "getInitialState": function(){
+      return {
+        "showVersions": false
+      };
+    },
     "getLatestVersion": function(){
       var versions = this.props.data.versions;
       if (versions.length == 0) {
@@ -533,9 +537,6 @@ b64pad = "=";
 
       return versions[versions.length - 1];
     },
-    "componentDidMount": function(){
-      this.onToggleVersions();
-    },
     "onDownload": function(e){
       this.props.onDownloadFile(this.props.data);
     },
@@ -543,7 +544,9 @@ b64pad = "=";
       this.props.onDeleteFile(this.props.data);
     },
     "onToggleVersions": function(e){
-      $(this.getDOMNode()).find("div[data-toggle='version']").toggle();
+      this.setState({
+        "showVersions": !this.state.showVersions
+      });
     },
     "onDownloadVersion": function(entry){
       this.props.onDownloadFileVersion(this.props.data, entry.version);
@@ -557,7 +560,7 @@ b64pad = "=";
           "data": entry,
           "style": this.props.style,
           "onDownloadVersion": this.onDownloadVersion,
-          "key": "file-version-" + entry.version
+          "key": "file-" + file.name + "-" + entry.version
         };
 
         return (
@@ -565,29 +568,27 @@ b64pad = "=";
         );
       }.bind(this));
 
-      // don't show any version information for
-      // files that only have one version
-      if (versions.length == 1) {
-        versions = new Array();
-      }
-
       // file control
       return (
         <div className={this.props.style.entry}>
           <span className="glyphicon glyphicon-file"></span>
           <a onClick={this.onDownload}>{file.name}</a>
+
           {versions.length > 0 && this.getLatestVersion().deleted ? (
-            <span>(Deleted)</span>
-          ) : undefined}
+          <span>(Deleted)</span>
+          ) : (
           <button
             className={this.props.style.button}
             onClick={this.onDelete}>Delete</button>
+          )}
+
           {versions.length > 0 ? (
           <button
             className={this.props.style.button}
-            onClick={this.onToggleVersions}>Toggle Versions</button>
+            onClick={this.onToggleVersions}>Versions</button>
           ) : undefined}
-          {versions}
+
+          {this.state.showVersions ? versions : undefined}
         </div>
       );
     },
