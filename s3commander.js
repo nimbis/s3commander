@@ -478,14 +478,20 @@ b64pad = "=";
     },
   });
 
-  var S3CVersionControl = React.createClass({
+  var S3COptionsControl = React.createClass({
     "componentDidMount": function(){
       $(this.getDOMNode())
         .find("#chkShowDeleted")
         .bootstrapToggle({
           "size": "mini",
           "on": "On <span class='glyphicon glyphicon-asterisk'></span>&nbsp;",
-        });
+        })
+        .on('change', this.onShowDeletedChange);
+    },
+    "onShowDeletedChange": function(e){
+      this.props.setStateOptions({
+        "showDeletedFiles": $("#chkShowDeleted").prop("checked"),
+      });
     },
     "render": function(){
       return (
@@ -494,8 +500,7 @@ b64pad = "=";
           <input
             type="checkbox"
             id="chkShowDeleted"
-            ref="showDeleted"
-            defaultChecked="checked" />
+            defaultChecked={this.props.options.showDeletedFiles ? "checked" : ""} />
         </div>
       );
     },
@@ -745,6 +750,14 @@ b64pad = "=";
     "setStateContents": function(contents){
       this.setState($.extend({}, this.state, contents));
     },
+    "setStateOptions": function(options){
+      this.setState({
+        "path": this.state.path,
+        "files": this.state.files,
+        "folders": this.state.folders,
+        "options": $.extend({}, this.state.options, options),
+      });
+    },
     "componentDidMount": function(){
       this.props.backend.list()
         .done(function(contents){
@@ -829,6 +842,8 @@ b64pad = "=";
       // determine common properties
       var props = {
         "style": this.props.style,
+        "options": this.state.options,
+        "setStateOptions": this.setStateOptions,
         "onNavUp": this.onNavUp,
         "onRefresh": this.onRefresh,
         "onNavFolder": this.onNavFolder,
@@ -849,11 +864,22 @@ b64pad = "=";
 
       // files
       var files = $.map(this.state.files, function(file){
+        // check if we should render hidden files
+        if (file.versions.length > 0) {
+          var options = this.state.options;
+          var latest = file.versions[file.versions.length - 1];
+
+          if (!options.showDeletedFiles && latest.deleted) {
+            return;
+          }
+        }
+
+        // render the file
         var key = "file-" + file.name;
         return (
           <S3CFile {...props} data={file} key={key} />
         );
-      });
+      }.bind(this));
 
       // upload control properties
       var uploadprops = $.extend({}, props, {
@@ -865,7 +891,7 @@ b64pad = "=";
       return (
         <div className={this.props.style.container}>
           <S3CBreadcrumbs {...props} data={this.state.path} />
-          <S3CVersionControl {...props} />
+          <S3COptionsControl {...props} />
           {folders}
           {files}
           <S3CFolderForm {...props} />
