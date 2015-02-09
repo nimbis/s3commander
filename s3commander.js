@@ -317,7 +317,7 @@ b64pad = "=";
       // delete markers
       if (this.opts.bShowVersions) {
         $.each(
-          $(data).find(query['delete']),
+          $(data).find(query["delete"]),
           function(i, item){
             // this could be a file or a folder depending on the key name
             var path = new Path().push($(item).find("Key").text());
@@ -454,31 +454,31 @@ b64pad = "=";
    * User Interface                                                       *
    ************************************************************************/
 
-  var S3CBreadcrumbs = React.createClass({displayName: "S3CBreadcrumbs",
+  var S3CBreadcrumbs = React.createClass({
     "render": function(){
       var crumbs = $.map(this.props.data.parts, function(part, i){
         return (
-          React.createElement("span", {key: "crumb-{i}"}, part, " /")
+          <span key="crumb-{i}">{part} /</span>
         );
       });
 
       return (
-        React.createElement("div", {className: this.props.style.control}, 
-          React.createElement("span", {className: "glyphicon glyphicon-hdd"}), 
-          React.createElement("span", null, "/"), 
-          crumbs, 
-          React.createElement("button", {
-            className: this.props.style.button, 
-            onClick: this.props.onRefresh}, "Refresh"), 
-          React.createElement("button", {
-            className: this.props.style.button, 
-            onClick: this.props.onNavUp}, "Up")
-        )
+        <div className={this.props.style.control}>
+          <span className="glyphicon glyphicon-hdd"></span>
+          <span>/</span>
+          {crumbs}
+          <button
+            className={this.props.style.button}
+            onClick={this.props.onRefresh}>Refresh</button>
+          <button
+            className={this.props.style.button}
+            onClick={this.props.onNavUp}>Up</button>
+        </div>
       );
     },
   });
 
-  var S3COptionsControl = React.createClass({displayName: "S3COptionsControl",
+  var S3COptionsControl = React.createClass({
     "componentDidMount": function(){
       $(this.getDOMNode())
         .find("#chkShowDeleted")
@@ -495,18 +495,18 @@ b64pad = "=";
     },
     "render": function(){
       return (
-        React.createElement("div", {className: this.props.style.control}, 
-          React.createElement("span", null, "Show Deleted Files"), 
-          React.createElement("input", {
-            type: "checkbox", 
-            id: "chkShowDeleted", 
-            defaultChecked: this.props.options.showDeletedFiles ? "checked" : ""})
-        )
+        <div className={this.props.style.control}>
+          <span>Show Deleted Files</span>
+          <input
+            type="checkbox"
+            id="chkShowDeleted"
+            defaultChecked={this.props.options.showDeletedFiles ? "checked" : ""} />
+        </div>
       );
     },
   });
 
-  var S3CFolder = React.createClass({displayName: "S3CFolder",
+  var S3CFolder = React.createClass({
     "onNav": function(e){
       this.props.onNavFolder(this.props.data);
     },
@@ -515,18 +515,18 @@ b64pad = "=";
     },
     "render": function(){
       return (
-        React.createElement("div", {className: this.props.style.entry}, 
-          React.createElement("span", {className: "glyphicon glyphicon-folder-open"}), 
-          React.createElement("a", {onClick: this.onNav}, this.props.data.name), 
-          React.createElement("button", {
-            className: this.props.style.button, 
-            onClick: this.onDelete}, "Delete")
-        )
+        <div className={this.props.style.entry}>
+          <span className="glyphicon glyphicon-folder-open"></span>
+          <a onClick={this.onNav}>{this.props.data.name}</a>
+          <button
+            className={this.props.style.button}
+            onClick={this.onDelete}>Delete</button>
+        </div>
       );
     },
   });
 
-  var S3CFileVersion = React.createClass({displayName: "S3CFileVersion",
+  var S3CFileVersion = React.createClass({
     "onDownload": function(e){
       this.props.onDownloadVersion(this.props.data);
     },
@@ -538,20 +538,20 @@ b64pad = "=";
       };
 
       return data.deleted ? (
-        React.createElement("div", React.__spread({},  props), 
-          React.createElement("span", {className: "glyphicon glyphicon-trash"}), 
-          React.createElement("span", null, data.modified.toString())
-        )
+        <div {...props}>
+          <span className="glyphicon glyphicon-trash"></span>
+          <span>{data.modified.toString()}</span>
+        </div>
       ) : (
-        React.createElement("div", React.__spread({},  props), 
-          React.createElement("span", {className: "glyphicon glyphicon-time"}), 
-          React.createElement("a", {onClick: this.onDownload}, data.modified.toString())
-        )
+        <div {...props}>
+          <span className="glyphicon glyphicon-time"></span>
+          <a onClick={this.onDownload}>{data.modified.toString()}</a>
+        </div>
       );
     },
   });
 
-  var S3CFile = React.createClass({displayName: "S3CFile",
+  var S3CFile = React.createClass({
     "getInitialState": function(){
       return {
         "showVersions": false
@@ -592,37 +592,37 @@ b64pad = "=";
         };
 
         return (
-          React.createElement(S3CFileVersion, React.__spread({},  props))
+          <S3CFileVersion {...props} />
         );
       }.bind(this));
 
       // file control
       return (
-        React.createElement("div", {className: this.props.style.entry}, 
-          React.createElement("span", {className: "glyphicon glyphicon-file"}), 
-          React.createElement("a", {onClick: this.onDownload}, file.name), 
+        <div className={this.props.style.entry}>
+          <span className="glyphicon glyphicon-file"></span>
+          <a onClick={this.onDownload}>{file.name}</a>
 
-          versions.length > 0 && this.getLatestVersion().deleted ? (
-          React.createElement("span", {className: "glyphicon glyphicon-asterisk"})
+          {versions.length > 0 && this.getLatestVersion().deleted ? (
+          <span className="glyphicon glyphicon-asterisk"></span>
           ) : (
-          React.createElement("button", {
-            className: this.props.style.button, 
-            onClick: this.onDelete}, "Delete")
-          ), 
+          <button
+            className={this.props.style.button}
+            onClick={this.onDelete}>Delete</button>
+          )}
 
-          versions.length > 0 ? (
-          React.createElement("button", {
-            className: this.props.style.button, 
-            onClick: this.onToggleVersions}, "Versions")
-          ) : undefined, 
+          {versions.length > 0 ? (
+          <button
+            className={this.props.style.button}
+            onClick={this.onToggleVersions}>Versions</button>
+          ) : undefined}
 
-          this.state.showVersions ? versions : undefined
-        )
+          {this.state.showVersions ? versions : undefined}
+        </div>
       );
     },
   });
 
-  var S3CFolderForm = React.createClass({displayName: "S3CFolderForm",
+  var S3CFolderForm = React.createClass({
     "onCreate": function(e){
       e.preventDefault();
       var name = this.refs.name.getDOMNode().value;
@@ -630,21 +630,21 @@ b64pad = "=";
     },
     "render": function(){
       return (
-        React.createElement("form", {className: this.props.style.form}, 
-          React.createElement("div", {className: "form-group"}, 
-            React.createElement("input", {type: "text", className: "form-control", ref: "name"})
-          ), 
+        <form className={this.props.style.form}>
+          <div className="form-group">
+            <input type="text" className="form-control" ref="name" />
+          </div>
 
-          React.createElement("button", {
-            type: "submit", 
-            className: this.props.style.button, 
-            onClick: this.onCreate}, "Create")
-        )
+          <button
+            type="submit"
+            className={this.props.style.button}
+            onClick={this.onCreate}>Create</button>
+        </form>
       );
     },
   });
 
-  var S3CUploadForm = React.createClass({displayName: "S3CUploadForm",
+  var S3CUploadForm = React.createClass({
     "componentWillMount": function(){
       // detect if we have dropzone support
       this.useDropzone = (typeof window.Dropzone !== 'undefined');
@@ -688,7 +688,7 @@ b64pad = "=";
       var params = $.map(this.props.params, function(value, name){
         var key = "param-" + name;
         return (
-          React.createElement("input", {type: "hidden", name: name, value: value, key: key})
+          <input type="hidden" name={name} value={value} key={key} />
         );
       });
 
@@ -706,26 +706,26 @@ b64pad = "=";
 
       // create components
       return (
-        React.createElement("form", React.__spread({},  formprops), 
-          params, 
+        <form {...formprops}>
+          {params}
 
-          this.useDropzone ? undefined : (
-          React.createElement("div", {className: "form-group"}, 
-            React.createElement("input", {type: "file", name: "file"})
-          )
-          ), 
+          {this.useDropzone ? undefined : (
+          <div className="form-group">
+            <input type="file" name="file" />
+          </div>
+          )}
 
-          this.useDropzone ? undefined : (
-          React.createElement("button", {type: "submit", className: this.props.style.button}, 
-            "Upload"
-          )
-          )
-        )
+          {this.useDropzone ? undefined : (
+          <button type="submit" className={this.props.style.button}>
+            Upload
+          </button>
+          )}
+        </form>
       );
     },
   });
 
-  var S3Commander = React.createClass({displayName: "S3Commander",
+  var S3Commander = React.createClass({
     "getInitialState": function(){
       return {
         "path": new Path("", true),
@@ -858,7 +858,7 @@ b64pad = "=";
       var folders = $.map(this.state.folders, function(folder){
         var key = "folder-" + folder.name;
         return (
-          React.createElement(S3CFolder, React.__spread({},  props, {data: folder, key: key}))
+          <S3CFolder {...props} data={folder} key={key} />
         );
       });
 
@@ -877,7 +877,7 @@ b64pad = "=";
         // render the file
         var key = "file-" + file.name;
         return (
-          React.createElement(S3CFile, React.__spread({},  props, {data: file, key: key}))
+          <S3CFile {...props} data={file} key={key} />
         );
       }.bind(this));
 
@@ -889,14 +889,14 @@ b64pad = "=";
 
       // create the root element
       return (
-        React.createElement("div", {className: this.props.style.container}, 
-          React.createElement(S3CBreadcrumbs, React.__spread({},  props, {data: this.state.path})), 
-          React.createElement(S3COptionsControl, React.__spread({},  props)), 
-          folders, 
-          files, 
-          React.createElement(S3CFolderForm, React.__spread({},  props)), 
-          React.createElement(S3CUploadForm, React.__spread({},  uploadprops))
-        )
+        <div className={this.props.style.container}>
+          <S3CBreadcrumbs {...props} data={this.state.path} />
+          <S3COptionsControl {...props} />
+          {folders}
+          {files}
+          <S3CFolderForm {...props} />
+          <S3CUploadForm {...uploadprops} />
+        </div>
       );
     },
   });
