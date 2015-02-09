@@ -1,7 +1,7 @@
 /**
 * S3 Commander
 *
-* Version: 0.3.1
+* Version: 0.3.2
 * Author: Alexandru Barbur
 */
 
@@ -114,7 +114,7 @@ b64pad = "=";
       "sBucket": "",
       "pPrefix": new Path("", true),
       "sEndpoint": "s3.amazonaws.com",
-      "bShowVersions": false,
+      "bShowVersions": false
     }, options);
   }
 
@@ -161,7 +161,7 @@ b64pad = "=";
     return $.extend({}, oParams, {
       'AWSAccessKeyId': this.opts.sAccessKey,
       'Signature': this.sign(this.opts.sSecretKey, secure),
-      'Expires': timestamp,
+      'Expires': timestamp
     });
   };
 
@@ -194,8 +194,8 @@ b64pad = "=";
         {"acl": "private"},
         {"bucket": this.opts.sBucket},
         ["starts-with", "$key", this.opts.pPrefix.toString()],
-        ["starts-with", "$Content-Type", ""],
-      ],
+        ["starts-with", "$Content-Type", ""]
+      ]
     };
 
     // encode the policy as Base64 and sign it
@@ -206,7 +206,7 @@ b64pad = "=";
     return {
       "acl": "private",
       "policy": policy_b64,
-      "signature": signature,
+      "signature": signature
     };
   };
 
@@ -245,13 +245,13 @@ b64pad = "=";
       url: this.getBucketURL() + (this.opts.bShowVersions ? "?versions" : ""),
       data: $.extend(signdata, {
         "prefix": abspath.toString(),
-        "delimiter": "/",
+        "delimiter": "/"
       }),
       dataFormat: "xml",
       cache: false,
       error: function(data){
         console.log("S3Backend error:" + data.responseText);
-      },
+      }
     }).then(function(data){
       // decide how to parse the results
       if (this.opts.bShowVersions) {
@@ -278,7 +278,7 @@ b64pad = "=";
           var path = new Path($(item).text(), true);
           folders[path] = {
             "path": path,
-            "name": path.basename(),
+            "name": path.basename()
           };
         });
 
@@ -298,7 +298,7 @@ b64pad = "=";
           var entry = path in files ? files[path] : {
             "path": path,
             "name": path.basename(),
-            "versions": new Array(),
+            "versions": new Array()
           };
 
           // store the version information
@@ -306,7 +306,7 @@ b64pad = "=";
             entry.versions.push({
               "deleted": false,
               "version": $(item).find("VersionId").text(),
-              "modified": new Date($(item).find("LastModified").text()),
+              "modified": new Date($(item).find("LastModified").text())
             });
           }
 
@@ -317,7 +317,7 @@ b64pad = "=";
       // delete markers
       if (this.opts.bShowVersions) {
         $.each(
-          $(data).find(query.delete),
+          $(data).find(query['delete']),
           function(i, item){
             // this could be a file or a folder depending on the key name
             var path = new Path().push($(item).find("Key").text());
@@ -330,7 +330,7 @@ b64pad = "=";
             files[path].versions.push({
               "deleted": true,
               "version": $(item).find("VersionId").text(),
-              "modified": new Date($(item).find("LastModified").text()),
+              "modified": new Date($(item).find("LastModified").text())
             });
           });
       }
@@ -359,7 +359,7 @@ b64pad = "=";
       return {
         "path": pFolder,
         "files": files,
-        "folders": folders,
+        "folders": folders
       };
     }.bind(this));
   };
@@ -401,7 +401,7 @@ b64pad = "=";
       type: "DELETE",
       error: function(data){
         console.log("S3Backend error: " + data.responseText);
-      },
+      }
     });
   };
 
@@ -417,7 +417,7 @@ b64pad = "=";
 
     var params = {
       'response-cache-control': 'No-cache',
-      'response-content-disposition': 'attachment',
+      'response-content-disposition': 'attachment'
     };
 
     if (sVersion.length > 0) {
@@ -446,7 +446,7 @@ b64pad = "=";
       type: "DELETE",
       error: function(data){
         console.log("S3Backend error: " + data.responseText);
-      },
+      }
     });
   };
 
@@ -454,37 +454,37 @@ b64pad = "=";
    * User Interface                                                       *
    ************************************************************************/
 
-  var S3CBreadcrumbs = React.createClass({
+  var S3CBreadcrumbs = React.createClass({displayName: "S3CBreadcrumbs",
     "render": function(){
       var crumbs = $.map(this.props.data.parts, function(part, i){
         return (
-          <span key="crumb-{i}">{part} /</span>
+          React.createElement("span", {key: "crumb-{i}"}, part, " /")
         );
       });
 
       return (
-        <div className={this.props.style.control}>
-          <span className="glyphicon glyphicon-hdd"></span>
-          <span>/</span>
-          {crumbs}
-          <button
-            className={this.props.style.button}
-            onClick={this.props.onRefresh}>Refresh</button>
-          <button
-            className={this.props.style.button}
-            onClick={this.props.onNavUp}>Up</button>
-        </div>
+        React.createElement("div", {className: this.props.style.control}, 
+          React.createElement("span", {className: "glyphicon glyphicon-hdd"}), 
+          React.createElement("span", null, "/"), 
+          crumbs, 
+          React.createElement("button", {
+            className: this.props.style.button, 
+            onClick: this.props.onRefresh}, "Refresh"), 
+          React.createElement("button", {
+            className: this.props.style.button, 
+            onClick: this.props.onNavUp}, "Up")
+        )
       );
     },
   });
 
-  var S3COptionsControl = React.createClass({
+  var S3COptionsControl = React.createClass({displayName: "S3COptionsControl",
     "componentDidMount": function(){
       $(this.getDOMNode())
         .find("#chkShowDeleted")
         .bootstrapToggle({
           "size": "mini",
-          "on": "On <span class='glyphicon glyphicon-asterisk'></span>&nbsp;",
+          "on": "On <span class='glyphicon glyphicon-asterisk'></span>&nbsp;"
         })
         .on('change', this.onShowDeletedChange);
     },
@@ -495,18 +495,18 @@ b64pad = "=";
     },
     "render": function(){
       return (
-        <div className={this.props.style.control}>
-          <span>Show Deleted Files</span>
-          <input
-            type="checkbox"
-            id="chkShowDeleted"
-            defaultChecked={this.props.options.showDeletedFiles ? "checked" : ""} />
-        </div>
+        React.createElement("div", {className: this.props.style.control}, 
+          React.createElement("span", null, "Show Deleted Files"), 
+          React.createElement("input", {
+            type: "checkbox", 
+            id: "chkShowDeleted", 
+            defaultChecked: this.props.options.showDeletedFiles ? "checked" : ""})
+        )
       );
     },
   });
 
-  var S3CFolder = React.createClass({
+  var S3CFolder = React.createClass({displayName: "S3CFolder",
     "onNav": function(e){
       this.props.onNavFolder(this.props.data);
     },
@@ -515,18 +515,18 @@ b64pad = "=";
     },
     "render": function(){
       return (
-        <div className={this.props.style.entry}>
-          <span className="glyphicon glyphicon-folder-open"></span>
-          <a onClick={this.onNav}>{this.props.data.name}</a>
-          <button
-            className={this.props.style.button}
-            onClick={this.onDelete}>Delete</button>
-        </div>
+        React.createElement("div", {className: this.props.style.entry}, 
+          React.createElement("span", {className: "glyphicon glyphicon-folder-open"}), 
+          React.createElement("a", {onClick: this.onNav}, this.props.data.name), 
+          React.createElement("button", {
+            className: this.props.style.button, 
+            onClick: this.onDelete}, "Delete")
+        )
       );
     },
   });
 
-  var S3CFileVersion = React.createClass({
+  var S3CFileVersion = React.createClass({displayName: "S3CFileVersion",
     "onDownload": function(e){
       this.props.onDownloadVersion(this.props.data);
     },
@@ -538,20 +538,20 @@ b64pad = "=";
       };
 
       return data.deleted ? (
-        <div {...props}>
-          <span className="glyphicon glyphicon-trash"></span>
-          <span>{data.modified.toString()}</span>
-        </div>
+        React.createElement("div", React.__spread({},  props), 
+          React.createElement("span", {className: "glyphicon glyphicon-trash"}), 
+          React.createElement("span", null, data.modified.toString())
+        )
       ) : (
-        <div {...props}>
-          <span className="glyphicon glyphicon-time"></span>
-          <a onClick={this.onDownload}>{data.modified.toString()}</a>
-        </div>
+        React.createElement("div", React.__spread({},  props), 
+          React.createElement("span", {className: "glyphicon glyphicon-time"}), 
+          React.createElement("a", {onClick: this.onDownload}, data.modified.toString())
+        )
       );
     },
   });
 
-  var S3CFile = React.createClass({
+  var S3CFile = React.createClass({displayName: "S3CFile",
     "getInitialState": function(){
       return {
         "showVersions": false
@@ -592,37 +592,37 @@ b64pad = "=";
         };
 
         return (
-          <S3CFileVersion {...props} />
+          React.createElement(S3CFileVersion, React.__spread({},  props))
         );
       }.bind(this));
 
       // file control
       return (
-        <div className={this.props.style.entry}>
-          <span className="glyphicon glyphicon-file"></span>
-          <a onClick={this.onDownload}>{file.name}</a>
+        React.createElement("div", {className: this.props.style.entry}, 
+          React.createElement("span", {className: "glyphicon glyphicon-file"}), 
+          React.createElement("a", {onClick: this.onDownload}, file.name), 
 
-          {versions.length > 0 && this.getLatestVersion().deleted ? (
-          <span className="glyphicon glyphicon-asterisk"></span>
+          versions.length > 0 && this.getLatestVersion().deleted ? (
+          React.createElement("span", {className: "glyphicon glyphicon-asterisk"})
           ) : (
-          <button
-            className={this.props.style.button}
-            onClick={this.onDelete}>Delete</button>
-          )}
+          React.createElement("button", {
+            className: this.props.style.button, 
+            onClick: this.onDelete}, "Delete")
+          ), 
 
-          {versions.length > 0 ? (
-          <button
-            className={this.props.style.button}
-            onClick={this.onToggleVersions}>Versions</button>
-          ) : undefined}
+          versions.length > 0 ? (
+          React.createElement("button", {
+            className: this.props.style.button, 
+            onClick: this.onToggleVersions}, "Versions")
+          ) : undefined, 
 
-          {this.state.showVersions ? versions : undefined}
-        </div>
+          this.state.showVersions ? versions : undefined
+        )
       );
     },
   });
 
-  var S3CFolderForm = React.createClass({
+  var S3CFolderForm = React.createClass({displayName: "S3CFolderForm",
     "onCreate": function(e){
       e.preventDefault();
       var name = this.refs.name.getDOMNode().value;
@@ -630,21 +630,21 @@ b64pad = "=";
     },
     "render": function(){
       return (
-        <form className={this.props.style.form}>
-          <div className="form-group">
-            <input type="text" className="form-control" ref="name" />
-          </div>
+        React.createElement("form", {className: this.props.style.form}, 
+          React.createElement("div", {className: "form-group"}, 
+            React.createElement("input", {type: "text", className: "form-control", ref: "name"})
+          ), 
 
-          <button
-            type="submit"
-            className={this.props.style.button}
-            onClick={this.onCreate}>Create</button>
-        </form>
+          React.createElement("button", {
+            type: "submit", 
+            className: this.props.style.button, 
+            onClick: this.onCreate}, "Create")
+        )
       );
     },
   });
 
-  var S3CUploadForm = React.createClass({
+  var S3CUploadForm = React.createClass({displayName: "S3CUploadForm",
     "componentWillMount": function(){
       // detect if we have dropzone support
       this.useDropzone = (typeof window.Dropzone !== 'undefined');
@@ -688,7 +688,7 @@ b64pad = "=";
       var params = $.map(this.props.params, function(value, name){
         var key = "param-" + name;
         return (
-          <input type="hidden" name={name} value={value} key={key} />
+          React.createElement("input", {type: "hidden", name: name, value: value, key: key})
         );
       });
 
@@ -706,33 +706,33 @@ b64pad = "=";
 
       // create components
       return (
-        <form {...formprops}>
-          {params}
+        React.createElement("form", React.__spread({},  formprops), 
+          params, 
 
-          {this.useDropzone ? undefined : (
-          <div className="form-group">
-            <input type="file" name="file" />
-          </div>
-          )}
+          this.useDropzone ? undefined : (
+          React.createElement("div", {className: "form-group"}, 
+            React.createElement("input", {type: "file", name: "file"})
+          )
+          ), 
 
-          {this.useDropzone ? undefined : (
-          <button type="submit" className={this.props.style.button}>
-            Upload
-          </button>
-          )}
-        </form>
+          this.useDropzone ? undefined : (
+          React.createElement("button", {type: "submit", className: this.props.style.button}, 
+            "Upload"
+          )
+          )
+        )
       );
     },
   });
 
-  var S3Commander = React.createClass({
+  var S3Commander = React.createClass({displayName: "S3Commander",
     "getInitialState": function(){
       return {
         "path": new Path("", true),
         "files": new Object(),
         "folders": new Object(),
         "options": {
-          "showDeletedFiles": false,
+          "showDeletedFiles": false
         }
       };
     },
@@ -743,8 +743,8 @@ b64pad = "=";
           "control": "s3control",
           "entry": "s3entry",
           "form": "s3form form-inline",
-          "button": "btn btn-xs btn-primary pull-right",
-        },
+          "button": "btn btn-xs btn-primary pull-right"
+        }
       };
     },
     "setStateContents": function(contents){
@@ -755,7 +755,7 @@ b64pad = "=";
         "path": this.state.path,
         "files": this.state.files,
         "folders": this.state.folders,
-        "options": $.extend({}, this.state.options, options),
+        "options": $.extend({}, this.state.options, options)
       });
     },
     "componentDidMount": function(){
@@ -851,14 +851,14 @@ b64pad = "=";
         "onDeleteFolder": this.onDeleteFolder,
         "onDownloadFile": this.onDownloadFile,
         "onDownloadFileVersion": this.onDownloadFileVersion,
-        "onDeleteFile": this.onDeleteFile,
+        "onDeleteFile": this.onDeleteFile
       };
 
       // folders
       var folders = $.map(this.state.folders, function(folder){
         var key = "folder-" + folder.name;
         return (
-          <S3CFolder {...props} data={folder} key={key} />
+          React.createElement(S3CFolder, React.__spread({},  props, {data: folder, key: key}))
         );
       });
 
@@ -877,7 +877,7 @@ b64pad = "=";
         // render the file
         var key = "file-" + file.name;
         return (
-          <S3CFile {...props} data={file} key={key} />
+          React.createElement(S3CFile, React.__spread({},  props, {data: file, key: key}))
         );
       }.bind(this));
 
@@ -889,14 +889,14 @@ b64pad = "=";
 
       // create the root element
       return (
-        <div className={this.props.style.container}>
-          <S3CBreadcrumbs {...props} data={this.state.path} />
-          <S3COptionsControl {...props} />
-          {folders}
-          {files}
-          <S3CFolderForm {...props} />
-          <S3CUploadForm {...uploadprops} />
-        </div>
+        React.createElement("div", {className: this.props.style.container}, 
+          React.createElement(S3CBreadcrumbs, React.__spread({},  props, {data: this.state.path})), 
+          React.createElement(S3COptionsControl, React.__spread({},  props)), 
+          folders, 
+          files, 
+          React.createElement(S3CFolderForm, React.__spread({},  props)), 
+          React.createElement(S3CUploadForm, React.__spread({},  uploadprops))
+        )
       );
     },
   });
@@ -917,7 +917,7 @@ b64pad = "=";
       "sBucket": opts.sBucket,
       "pPrefix": new Path(opts.sPrefix, true),
       "sEndpoint": opts.sEndpoint,
-      "bShowVersions": opts.bShowVersions,
+      "bShowVersions": opts.bShowVersions
     });
 
     // create the react element and attach it to the container
@@ -937,7 +937,7 @@ b64pad = "=";
     "sBucket": "",
     "sPrefix": "",
     "sEndpoint": "s3.amazonaws.com",
-    "bShowVersions": false,
+    "bShowVersions": false
   };
 
   /************************************************************************
