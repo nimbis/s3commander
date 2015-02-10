@@ -114,7 +114,7 @@ b64pad = "=";
       "sBucket": "",
       "pPrefix": new Path("", true),
       "sEndpoint": "s3.amazonaws.com",
-      "bShowVersions": false
+      "bShowVersions": false,
     }, options);
   }
 
@@ -161,7 +161,7 @@ b64pad = "=";
     return $.extend({}, oParams, {
       'AWSAccessKeyId': this.opts.sAccessKey,
       'Signature': this.sign(this.opts.sSecretKey, secure),
-      'Expires': timestamp
+      'Expires': timestamp,
     });
   };
 
@@ -194,8 +194,8 @@ b64pad = "=";
         {"acl": "private"},
         {"bucket": this.opts.sBucket},
         ["starts-with", "$key", this.opts.pPrefix.toString()],
-        ["starts-with", "$Content-Type", ""]
-      ]
+        ["starts-with", "$Content-Type", ""],
+      ],
     };
 
     // encode the policy as Base64 and sign it
@@ -206,7 +206,7 @@ b64pad = "=";
     return {
       "acl": "private",
       "policy": policy_b64,
-      "signature": signature
+      "signature": signature,
     };
   };
 
@@ -245,13 +245,13 @@ b64pad = "=";
       url: this.getBucketURL() + (this.opts.bShowVersions ? "?versions" : ""),
       data: $.extend(signdata, {
         "prefix": abspath.toString(),
-        "delimiter": "/"
+        "delimiter": "/",
       }),
       dataFormat: "xml",
       cache: false,
       error: function(data){
         console.log("S3Backend error:" + data.responseText);
-      }
+      },
     }).then(function(data){
       // decide how to parse the results
       if (this.opts.bShowVersions) {
@@ -278,7 +278,7 @@ b64pad = "=";
           var path = new Path($(item).text(), true);
           folders[path] = {
             "path": path,
-            "name": path.basename()
+            "name": path.basename(),
           };
         });
 
@@ -298,7 +298,7 @@ b64pad = "=";
           var entry = path in files ? files[path] : {
             "path": path,
             "name": path.basename(),
-            "versions": new Array()
+            "versions": new Array(),
           };
 
           // store the version information
@@ -306,7 +306,7 @@ b64pad = "=";
             entry.versions.push({
               "deleted": false,
               "version": $(item).find("VersionId").text(),
-              "modified": new Date($(item).find("LastModified").text())
+              "modified": new Date($(item).find("LastModified").text()),
             });
           }
 
@@ -330,7 +330,7 @@ b64pad = "=";
             files[path].versions.push({
               "deleted": true,
               "version": $(item).find("VersionId").text(),
-              "modified": new Date($(item).find("LastModified").text())
+              "modified": new Date($(item).find("LastModified").text()),
             });
           });
       }
@@ -359,7 +359,7 @@ b64pad = "=";
       return {
         "path": pFolder,
         "files": files,
-        "folders": folders
+        "folders": folders,
       };
     }.bind(this));
   };
@@ -401,7 +401,7 @@ b64pad = "=";
       type: "DELETE",
       error: function(data){
         console.log("S3Backend error: " + data.responseText);
-      }
+      },
     });
   };
 
@@ -417,7 +417,7 @@ b64pad = "=";
 
     var params = {
       'response-cache-control': 'No-cache',
-      'response-content-disposition': 'attachment'
+      'response-content-disposition': 'attachment',
     };
 
     if (sVersion.length > 0) {
@@ -446,7 +446,7 @@ b64pad = "=";
       type: "DELETE",
       error: function(data){
         console.log("S3Backend error: " + data.responseText);
-      }
+      },
     });
   };
 
@@ -484,7 +484,7 @@ b64pad = "=";
         .find("#chkShowDeleted")
         .bootstrapToggle({
           "size": "mini",
-          "on": "On <span class='glyphicon glyphicon-asterisk'></span>&nbsp;"
+          "on": "On <span class='glyphicon glyphicon-asterisk'></span>&nbsp;",
         })
         .on('change', this.onShowDeletedChange);
     },
@@ -732,7 +732,7 @@ b64pad = "=";
         "files": new Object(),
         "folders": new Object(),
         "options": {
-          "showDeletedFiles": false
+          "showDeletedFiles": false,
         }
       };
     },
@@ -743,8 +743,8 @@ b64pad = "=";
           "control": "s3control",
           "entry": "s3entry",
           "form": "s3form form-inline",
-          "button": "btn btn-xs btn-primary pull-right"
-        }
+          "button": "btn btn-xs btn-primary pull-right",
+        },
       };
     },
     "setStateContents": function(contents){
@@ -755,7 +755,7 @@ b64pad = "=";
         "path": this.state.path,
         "files": this.state.files,
         "folders": this.state.folders,
-        "options": $.extend({}, this.state.options, options)
+        "options": $.extend({}, this.state.options, options),
       });
     },
     "componentDidMount": function(){
@@ -851,7 +851,7 @@ b64pad = "=";
         "onDeleteFolder": this.onDeleteFolder,
         "onDownloadFile": this.onDownloadFile,
         "onDownloadFileVersion": this.onDownloadFileVersion,
-        "onDeleteFile": this.onDeleteFile
+        "onDeleteFile": this.onDeleteFile,
       };
 
       // folders
@@ -917,7 +917,7 @@ b64pad = "=";
       "sBucket": opts.sBucket,
       "pPrefix": new Path(opts.sPrefix, true),
       "sEndpoint": opts.sEndpoint,
-      "bShowVersions": opts.bShowVersions
+      "bShowVersions": opts.bShowVersions,
     });
 
     // create the react element and attach it to the container
@@ -937,7 +937,7 @@ b64pad = "=";
     "sBucket": "",
     "sPrefix": "",
     "sEndpoint": "s3.amazonaws.com",
-    "bShowVersions": false
+    "bShowVersions": false,
   };
 
   /************************************************************************
