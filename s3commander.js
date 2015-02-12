@@ -102,6 +102,23 @@ b64pad = "=";
     return this.parts[this.parts.length - 1];
   };
 
+  // Make this path relative to the given one.
+  // Ex: new Path("foo/bar/xyz").rebase(new Path("foo")).toString() -> "bar/xyz"
+  Path.prototype.rebase = function(pOther) {
+    var index = 0;
+    while(index < pOther.parts.length) {
+      if(this.parts[0] == pOther.parts[index]) {
+        this.parts.shift();
+        index++;
+      }
+      else {
+        break;
+      }
+    }
+
+    return this;
+  };
+
   /************************************************************************
    * Amazon S3 Backend                                                    *
    ************************************************************************/
@@ -448,23 +465,6 @@ b64pad = "=";
         console.log("S3Backend error: " + data.responseText);
       },
     });
-  };
-
-  // Make this path relative to the given one.
-  // Ex: new Path("foo/bar/xyz").rebase(new Path("foo")).toString() -> "bar/xyz"
-  Path.prototype.rebase = function(pOther) {
-    var index = 0;
-    while(index < pOther.parts.length) {
-      if(this.parts[0] == pOther.parts[index]) {
-        this.parts.shift();
-        index++;
-      }
-      else {
-        break;
-      }
-    }
-
-    return this;
   };
 
   /************************************************************************
