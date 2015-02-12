@@ -271,7 +271,7 @@ b64pad = "=";
       },
     }).then(function(data){
       // store prefix so we can rebase paths further down
-      var prefix = this.opts.pPrefix
+      var prefix = this.opts.pPrefix;
 
       // decide how to parse the results
       if (this.opts.bShowVersions) {
@@ -295,9 +295,9 @@ b64pad = "=";
         function(i, item){
           // we treat common prefixes as folders even though technically they
           // are a side effect of the keys that actually represent folders
-          var path = new Path($(item).text(), true).rebase(prefix);
+          var path = new Path($(item).text(), true);
           folders[path] = {
-            "path": path,
+            "path": path.rebase(prefix),
             "name": path.basename(),
           };
         });
@@ -308,7 +308,7 @@ b64pad = "=";
         $(data).find(query.file),
         function(i, item){
           // this could be a file or a folder depending on the key
-          var path = new Path().push($(item).find("Key").text()).rebase(prefix);
+          var path = new Path().push($(item).find("Key").text());
           if (path.folder) {
             // ignore folders
             return;
@@ -316,7 +316,7 @@ b64pad = "=";
 
           // get or create the file entry
           var entry = path in files ? files[path] : {
-            "path": path,
+            "path": path.rebase(prefix),
             "name": path.basename(),
             "versions": new Array(),
           };
