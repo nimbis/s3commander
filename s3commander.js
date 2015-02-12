@@ -477,8 +477,9 @@ b64pad = "=";
   var S3CBreadcrumbs = React.createClass({
     "render": function(){
       var crumbs = $.map(this.props.data.parts, function(part, i){
+        var key = "crumb-" + i;
         return (
-          <span key="crumb-" + i>{part} /</span>
+          <span key={key}>{part} /</span>
         );
       });
 
