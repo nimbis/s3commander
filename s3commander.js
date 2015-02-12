@@ -450,6 +450,23 @@ b64pad = "=";
     });
   };
 
+  // Make this path relative to the given one.
+  // Ex: new Path("foo/bar/xyz").rebase(new Path("foo")).toString() -> "bar/xyz"
+  Path.prototype.rebase = function(pOther) {
+    var index = 0;
+    while(index < pOther.parts.length) {
+      if(this.parts[0] == pOther.parts[index]) {
+        this.parts.shift();
+        index++;
+      }
+      else {
+        break;
+      }
+    }
+
+    return this;
+  };
+
   /************************************************************************
    * User Interface                                                       *
    ************************************************************************/
