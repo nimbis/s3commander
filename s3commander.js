@@ -458,7 +458,7 @@ b64pad = "=";
     "render": function(){
       var crumbs = $.map(this.props.data.parts, function(part, i){
         return (
-          <span key="crumb-{i}">{part} /</span>
+          <span key="crumb-" + i>{part} /</span>
         );
       });
 
