@@ -102,6 +102,23 @@ b64pad = "=";
     return this.parts[this.parts.length - 1];
   };
 
+  // Make this path relative to the given one.
+  // Ex: new Path("foo/bar/xyz").rebase(new Path("foo")).toString() -> "bar/xyz"
+  Path.prototype.rebase = function(pOther) {
+    var index = 0;
+    while(index < pOther.parts.length) {
+      if(this.parts[0] == pOther.parts[index]) {
+        this.parts.shift();
+        index++;
+      }
+      else {
+        break;
+      }
+    }
+
+    return this;
+  };
+
   /************************************************************************
    * Amazon S3 Backend                                                    *
    ************************************************************************/
@@ -253,6 +270,9 @@ b64pad = "=";
         console.log("S3Backend error:" + data.responseText);
       },
     }).then(function(data){
+      // store prefix so we can rebase paths further down
+      var prefix = this.opts.pPrefix;
+
       // decide how to parse the results
       if (this.opts.bShowVersions) {
         var query = {
@@ -277,7 +297,7 @@ b64pad = "=";
           // are a side effect of the keys that actually represent folders
           var path = new Path($(item).text(), true);
           folders[path] = {
-            "path": path,
+            "path": path.rebase(prefix),
             "name": path.basename(),
           };
         });
@@ -296,7 +316,7 @@ b64pad = "=";
 
           // get or create the file entry
           var entry = path in files ? files[path] : {
-            "path": path,
+            "path": path.rebase(prefix),
             "name": path.basename(),
             "versions": new Array(),
           };
@@ -457,8 +477,9 @@ b64pad = "=";
   var S3CBreadcrumbs = React.createClass({
     "render": function(){
       var crumbs = $.map(this.props.data.parts, function(part, i){
+        var key = "crumb-" + i;
         return (
-          <span key="crumb-{i}">{part} /</span>
+          <span key={key}>{part} /</span>
         );
       });
 
