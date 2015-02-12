@@ -270,6 +270,9 @@ b64pad = "=";
         console.log("S3Backend error:" + data.responseText);
       },
     }).then(function(data){
+      // store prefix so we can rebase paths further down
+      var prefix = this.opts.pPrefix
+
       // decide how to parse the results
       if (this.opts.bShowVersions) {
         var query = {
@@ -292,7 +295,7 @@ b64pad = "=";
         function(i, item){
           // we treat common prefixes as folders even though technically they
           // are a side effect of the keys that actually represent folders
-          var path = new Path($(item).text(), true);
+          var path = new Path($(item).text(), true).rebase(prefix);
           folders[path] = {
             "path": path,
             "name": path.basename(),
@@ -305,7 +308,7 @@ b64pad = "=";
         $(data).find(query.file),
         function(i, item){
           // this could be a file or a folder depending on the key
-          var path = new Path().push($(item).find("Key").text());
+          var path = new Path().push($(item).find("Key").text()).rebase(prefix);
           if (path.folder) {
             // ignore folders
             return;
