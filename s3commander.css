@@ -57,4 +57,10 @@ form.s3form input[type=text] {
 
 .dropzone {
     min-height: 128px;
+    border: none;
+}
+
+.dropzone .dz-message {
+  font-size: 20px;
+  line-height: 28px;
 }

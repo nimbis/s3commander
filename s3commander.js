@@ -681,8 +681,25 @@ b64pad = "=";
       var component = this;
       this.dropzone = new Dropzone(this.getDOMNode(), {
         "url": this.props.url,
+        "init": function(){
+          // enable uploading to folders by manipulating the S3 object key
+          // TODO this is S3 specific and violates the backend/frontend barrier
+          this.on("sending", function(file, xhr, formData){
+            if(file.hasOwnProperty("fullPath")) {
+              formData.append("key", new Path(component.props.params.key)
+                .pop()                  // pop original ${filename} token
+                .push(file.fullPath)    // push full path to the file
+                .pop()                  // pop filename component
+                .push("${filename}")    // push the S3 ${filename} token
+                .toString());
+            }
+            else {
+              formData.append("key", component.props.params.key);
+            }
+          });
+        },
         "error": function(file, error){
-          alert("uh-oh");
+          alert(error);
         },
         "complete": function(file){
           // remove the file from dropzone
@@ -705,13 +722,19 @@ b64pad = "=";
       this.dropzone = null;
     },
     "render": function(){
-      // amazon upload parameters
+      // upload form parameters
       var params = $.map(this.props.params, function(value, name){
+        // let dropzone manipulate the upload key
+        // TODO this is S3 specific and violates the frontend/backend barrier
+        if (this.useDropzone && name == "key") {
+          return;
+        }
+
         var key = "param-" + name;
         return (
           <input type="hidden" name={name} value={value} key={key} />
         );
-      });
+      }.bind(this));
 
       // form properties
       var formprops = {
