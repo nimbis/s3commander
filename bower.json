@@ -1,7 +1,7 @@
 {
   "name": "s3commander",
   "main": "s3commander.js",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "homepage": "https://github.com/nimbis/s3commander",
   "description": "Web-based S3 file browser.",
   "keywords": [
@@ -17,7 +17,7 @@
     "tests"
   ],
   "dependencies": {
-    "bootstrap": "3.0.0+",
+    "bootstrap": "~3.0.0",
     "jquery": "~1.11.2"
   }
 }
