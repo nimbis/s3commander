@@ -7,7 +7,7 @@ Requirements
 ------------
 
 * Bootstrap 3.0.0+
-* jQuery 2.0.0+
+* jQuery 1.11.2+
 
 Quick Setup
 -----------
