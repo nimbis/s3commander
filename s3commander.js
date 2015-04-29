@@ -160,7 +160,14 @@ b64pad = "=";
     secure += "/" + this.opts.sBucket + "/";
 
     if (!pResource.empty()) {
-      secure += this.opts.pPrefix.concat(pResource).toString();
+      var unencoded = this.opts.pPrefix.concat(pResource).toString();
+      if(pResource.folder){
+        // Don't URI encode trailing slash to %2F
+        secure += encodeURIComponent(unencoded.slice(0,-1)) + '/'
+      }
+      else{
+        secure += encodeURIComponent(unencoded)
+      }
     }
 
     var delimiter = "?";
