@@ -132,6 +132,7 @@ b64pad = "=";
       "pPrefix": new Path("", true),
       "sEndpoint": "s3.amazonaws.com",
       "bShowVersions": false,
+      "iMaxFilesizeMB": 1024
     }, options);
   }
 
@@ -714,7 +715,8 @@ b64pad = "=";
 
           // refresh the screen
           component.props.onRefresh();
-        }
+        },
+        "maxFilesize": this.props.iMaxFilesizeMB
       });
     },
     "componentWillUnmount": function(){
@@ -935,7 +937,8 @@ b64pad = "=";
       // upload control properties
       var uploadprops = $.extend({}, props, {
         "url": this.props.backend.getBucketURL(),
-        "params": this.props.backend.getUploadParams(this.state.path)
+        "params": this.props.backend.getUploadParams(this.state.path),
+        "iMaxFilesizeMB": this.props.iMaxFilesizeMB
       });
 
       // create the root element
@@ -969,6 +972,7 @@ b64pad = "=";
       "pPrefix": new Path(opts.sPrefix, true),
       "sEndpoint": opts.sEndpoint,
       "bShowVersions": opts.bShowVersions,
+      "iMaxFilesizeMB": opts.iMaxFilesizeMB
     });
 
     // create the react element and attach it to the container
@@ -989,6 +993,7 @@ b64pad = "=";
     "sPrefix": "",
     "sEndpoint": "s3.amazonaws.com",
     "bShowVersions": false,
+    "iMaxFilesizeMB": 1024
   };
 
   /************************************************************************
