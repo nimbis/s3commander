@@ -50,3 +50,11 @@ Quirks
 * When not using Dropzone for drag-and-drop uploads, the directory contents will
   not automatically refresh after a file is uploaded. The user needs to click
   the refresh button manually.
+
+
+Version History:
+----------------
+
+v0.3.7 - June 14, 2015
+
+    * Update the max file size to 10GB.
