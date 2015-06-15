@@ -16,8 +16,8 @@
         <script src="https://gitcdn.github.io/bootstrap-toggle/2.2.0/js/bootstrap-toggle.min.js"></script>
 
         <!-- Optional: Dropzone -->
-        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/dropzone/3.10.2/css/dropzone.css" />
-        <script src="//cdnjs.cloudflare.com/ajax/libs/dropzone/3.10.2/dropzone.js"></script>
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/dropzone/4.0.1/dropzone.css" />
+        <script src="//cdnjs.cloudflare.com/ajax/libs/dropzone/4.0.1/dropzone.js"></script>
 
         <!-- React -->
         <script src="http://fb.me/react-0.12.2.js"></script>
@@ -48,7 +48,11 @@
                         </div>
                         <div class="form-group">
                             <label for="txtPrefix">Prefix</label>
-                            <input type="text" class="form-control" id="txtPrefix" />
+                            <input type="text" class="form-control" id="txtPrefix" value="/" />
+                        </div>
+                        <div class="form-group">
+                            <label for="txtEndpoint">Endpoint</label>
+                            <input type="text" class="form-control" id="txtEndpoint" value="s3.amazonaws.com" />
                         </div>
                         <div class="form-group">
                             <input type="checkbox" id="chkVersions" />
@@ -75,7 +79,9 @@
                         sSecretKey: $("#txtSecretKey").val(),
                         sBucket: $("#txtBucket").val(),
                         sPrefix: $("#txtPrefix").val(),
+                        sEndpoint: $("#txtEndpoint").val(),
                         bShowVersions: $("#chkVersions").is(":checked"),
+                        iMaxFilesizeMB: 10240
                     });
 
                     return false;
