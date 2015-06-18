@@ -55,6 +55,10 @@ Quirks
 Version History:
 ----------------
 
+v0.3.8 - June 18, 2015
+
+    * Fixed issue with losing versions.  Changed signing method to (properly) allow for spaces (and likely other escape-needing characters).
+
 v0.3.7 - June 14, 2015
 
-    * Update the max file size to 10GB.
+    * Implemented iMaxFilesize.  Set default to 1GB (10GB in example HTML).
