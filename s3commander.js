@@ -1,8 +1,8 @@
 /**
 * S3 Commander
 *
-* Version: 0.3.2
-* Author: Alexandru Barbur
+* Version: 0.3.8
+* Authors: Alexandru Barbur, Eric Amador, Shaun Brady, Dean Kiourtsis
 */
 
 // configure sha1.js for RFC compliance
@@ -119,6 +119,20 @@ b64pad = "=";
     return this;
   };
 
+  Path.prototype.getURIEncoded = function() {
+    // We want to encode the parts, but not the whole
+    var enc_parts = this.parts.map(
+      function(val, index, arr){
+        return encodeURIComponent(val);
+      });
+    var uri = enc_parts.join("/");
+    if (this.folder && this.parts.length > 0) {
+      uri += "/";
+    }
+
+    return uri;
+  };
+
   /************************************************************************
    * Amazon S3 Backend                                                    *
    ************************************************************************/
@@ -161,14 +175,7 @@ b64pad = "=";
     secure += "/" + this.opts.sBucket + "/";
 
     if (!pResource.empty()) {
-      var unencoded = this.opts.pPrefix.concat(pResource).toString();
-      if(pResource.folder){
-        // Don't URI encode trailing slash to %2F
-        secure += encodeURIComponent(unencoded.slice(0,-1)) + '/'
-      }
-      else{
-        secure += encodeURIComponent(unencoded)
-      }
+      secure += this.opts.pPrefix.concat(pResource).getURIEncoded();
     }
 
     var delimiter = "?";
@@ -316,7 +323,10 @@ b64pad = "=";
         $(data).find(query.file),
         function(i, item){
           // this could be a file or a folder depending on the key
-          var path = new Path().push($(item).find("Key").text());
+          var path = new Path().push(
+            $(item).find("Key").text()
+          ).rebase(prefix);
+
           if (path.folder) {
             // ignore folders
             return;
@@ -324,7 +334,7 @@ b64pad = "=";
 
           // get or create the file entry
           var entry = path in files ? files[path] : {
-            "path": path.rebase(prefix),
+            "path": path,
             "name": path.basename(),
             "versions": new Array(),
           };
@@ -348,7 +358,10 @@ b64pad = "=";
           $(data).find(query["delete"]),
           function(i, item){
             // this could be a file or a folder depending on the key name
-            var path = new Path().push($(item).find("Key").text());
+            var path = new Path().push(
+              $(item).find("Key").text()
+            ).rebase(prefix);
+
             if (path.folder) {
               // ignore folders
               return;
