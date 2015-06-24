@@ -641,8 +641,14 @@ b64pad = "=";
       // file control
       return (
         <div className={this.props.style.entry}>
-          <span className="glyphicon glyphicon-file"></span>
-          <a onClick={this.onDownload}>{file.name}</a>
+          <span
+            onClick={this.onDownload}
+            className="s3icon glyphicon glyphicon-file">
+          </span>
+          <a
+            className={this.props.style.link}
+            onClick={this.onDownload}>{file.name}
+          </a>
 
           {versions.length > 0 && this.getLatestVersion().deleted ? (
           <span className="glyphicon glyphicon-asterisk"></span>
@@ -810,6 +816,7 @@ b64pad = "=";
           "entry": "s3entry",
           "form": "s3form form-inline",
           "button": "btn btn-xs btn-primary pull-right",
+          "link" : "btn btn-xs btn-link",
         },
       };
     },
