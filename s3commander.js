@@ -816,7 +816,7 @@ b64pad = "=";
           "entry": "s3entry",
           "form": "s3form form-inline",
           "button": "btn btn-xs btn-primary pull-right",
-          "link" : "btn btn-xs btn-link",
+          "link" : "btn-link",
         },
       };
     },
