@@ -735,6 +735,7 @@ b64pad = "=";
           // refresh the screen
           component.props.onRefresh();
         },
+        "clickable": ".fileinput-button",
         "maxFilesize": this.props.iMaxFilesizeMB
       });
     },
@@ -780,6 +781,11 @@ b64pad = "=";
       return (
         <form {...formprops}>
           {params}
+
+          <span className="btn btn-primary fileinput-button dz-clickable">
+            <i className="glyphicon glyphicon-plus"></i>
+            <span>Add files...</span>
+          </span>
 
           {this.useDropzone ? undefined : (
           <div className="form-group">
