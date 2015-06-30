@@ -1,8 +1,9 @@
 /**
 * S3 Commander
 *
-* Version: 0.3.8
-* Authors: Alexandru Barbur, Eric Amador, Shaun Brady, Dean Kiourtsis
+* Version: 0.3.9
+* Authors: Alexandru Barbur, Eric Amador, Shaun Brady, Dean Kiourtsis,
+*          Mike Liu, Brian Schott
 */
 
 // configure sha1.js for RFC compliance
@@ -641,8 +642,14 @@ b64pad = "=";
       // file control
       return (
         <div className={this.props.style.entry}>
-          <span className="glyphicon glyphicon-file"></span>
-          <a onClick={this.onDownload}>{file.name}</a>
+          <span
+            onClick={this.onDownload}
+            className="s3icon glyphicon glyphicon-file">
+          </span>
+          <a
+            className={this.props.style.link}
+            onClick={this.onDownload}>{file.name}
+          </a>
 
           {versions.length > 0 && this.getLatestVersion().deleted ? (
           <span className="glyphicon glyphicon-asterisk"></span>
@@ -729,6 +736,7 @@ b64pad = "=";
           // refresh the screen
           component.props.onRefresh();
         },
+        "clickable": ".fileinput-button",
         "maxFilesize": this.props.iMaxFilesizeMB
       });
     },
@@ -775,6 +783,10 @@ b64pad = "=";
         <form {...formprops}>
           {params}
 
+          <span className="btn btn-primary fileinput-button dz-clickable">
+            <i className="glyphicon glyphicon-plus"></i> Add files...
+          </span>
+
           {this.useDropzone ? undefined : (
           <div className="form-group">
             <input type="file" name="file" />
@@ -810,6 +822,7 @@ b64pad = "=";
           "entry": "s3entry",
           "form": "s3form form-inline",
           "button": "btn btn-xs btn-primary pull-right",
+          "link" : "btn-link",
         },
       };
     },

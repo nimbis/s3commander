@@ -55,6 +55,10 @@ Quirks
 Version History:
 ----------------
 
+v0.3.9 - June 30, 2015
+
+    * Added button for file uploads.  Made icons clickable.  Made files have 'click' pointer.
+
 v0.3.8 - June 18, 2015
 
     * Fixed issue with losing versions.  Changed signing method to (properly) allow for spaces (and likely other escape-needing characters).
