@@ -783,8 +783,7 @@ b64pad = "=";
           {params}
 
           <span className="btn btn-primary fileinput-button dz-clickable">
-            <i className="glyphicon glyphicon-plus"></i>
-            <span>Add files...</span>
+            <i className="glyphicon glyphicon-plus"></i> Add files...
           </span>
 
           {this.useDropzone ? undefined : (
