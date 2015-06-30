@@ -1,8 +1,9 @@
 /**
 * S3 Commander
 *
-* Version: 0.3.8
-* Authors: Alexandru Barbur, Eric Amador, Shaun Brady, Dean Kiourtsis
+* Version: 0.3.9
+* Authors: Alexandru Barbur, Eric Amador, Shaun Brady, Dean Kiourtsis,
+*          Mike Liu, Brian Schott
 */
 
 // configure sha1.js for RFC compliance
