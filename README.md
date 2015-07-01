@@ -55,6 +55,10 @@ Quirks
 Version History:
 ----------------
 
+v0.3.10 - July 1, 2015
+
+    * Adding cursor style to s3links.  Updated bootstrap from CDN in example index.html.
+
 v0.3.9 - June 30, 2015
 
     * Added button for file uploads.  Made icons clickable.  Made files have 'click' pointer.

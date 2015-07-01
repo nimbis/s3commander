@@ -1,7 +1,7 @@
 /**
 * S3 Commander
 *
-* Version: 0.3.9
+* Version: 0.3.10
 * Authors: Alexandru Barbur, Eric Amador, Shaun Brady, Dean Kiourtsis,
 *          Mike Liu, Brian Schott
 */
@@ -822,7 +822,7 @@ b64pad = "=";
           "entry": "s3entry",
           "form": "s3form form-inline",
           "button": "btn btn-xs btn-primary pull-right",
-          "link" : "btn-link",
+          "link" : "s3link",
         },
       };
     },
