@@ -59,6 +59,10 @@ span.s3icon {
     cursor: pointer;
 }
 
+a.s3link {
+    cursor: pointer;
+}
+
 .dropzone {
     min-height: 128px;
     border: none;

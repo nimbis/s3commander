@@ -822,7 +822,7 @@ b64pad = "=";
           "entry": "s3entry",
           "form": "s3form form-inline",
           "button": "btn btn-xs btn-primary pull-right",
-          "link" : "btn-link",
+          "link" : "s3link",
         },
       };
     },
