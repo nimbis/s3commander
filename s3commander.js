@@ -1,7 +1,7 @@
 /**
 * S3 Commander
 *
-* Version: 0.3.9
+* Version: 0.3.10
 * Authors: Alexandru Barbur, Eric Amador, Shaun Brady, Dean Kiourtsis,
 *          Mike Liu, Brian Schott
 */
