@@ -51,6 +51,10 @@ Quirks
   not automatically refresh after a file is uploaded. The user needs to click
   the refresh button manually.
 
+Contributing
+------------
+
+See the [Contributing Guidelines](CONTRIBUTING.md).
 
 Version History:
 ----------------
