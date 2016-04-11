@@ -58,6 +58,10 @@
                             <input type="checkbox" id="chkVersions" />
                             <label for="chkVersions">Show Versions</label>
                         </div>
+                        <div class="form-group">
+                            <input type="checkbox" id="chkConfirm" />
+                            <label for="chkConfirm">Confirm Delete</label>
+                        </div>
                         <button type="submit" class="btn btn-primary">Connect</button>
                     </form>
                 </div>
@@ -81,6 +85,7 @@
                         sPrefix: $("#txtPrefix").val(),
                         sEndpoint: $("#txtEndpoint").val(),
                         bShowVersions: $("#chkVersions").is(":checked"),
+                        bConfirmDelete: $("#chkConfirm").is(":checked"),
                         iMaxFilesizeMB: 10240
                     });
 
