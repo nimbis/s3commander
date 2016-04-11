@@ -810,6 +810,7 @@ b64pad = "=";
         "files": new Object(),
         "folders": new Object(),
         "options": {
+          "confirmDelete": this.props.bConfirmDelete,
           "showDeletedFiles": false,
         }
       };
@@ -894,6 +895,13 @@ b64pad = "=";
         }.bind(this));
     },
     "onDeleteFolder": function(folder){
+      if(this.state.options.confirmDelete){
+        var msg = "Do you want to delete the " + folder.name + " folder?";
+        if (!window.confirm(msg)){
+          return;
+        }
+      }
+
       this.props.backend.deleteFolder(folder.path)
         .done(function(){
           this.onRefresh();
@@ -909,6 +917,13 @@ b64pad = "=";
       this.props.backend.downloadFile(file.path, version);
     },
     "onDeleteFile": function(file){
+      if(this.state.options.confirmDelete){
+        var msg = "Do you want to delete the " + file.name + " file?";
+        if (!window.confirm(msg)){
+          return;
+        }
+      }
+
       this.props.backend.deleteFile(file.path)
         .done(function(){
           this.onRefresh();
@@ -1019,6 +1034,7 @@ b64pad = "=";
     "sPrefix": "",
     "sEndpoint": "s3.amazonaws.com",
     "bShowVersions": false,
+    "bConfirmDelete": false,
     "iMaxFilesizeMB": 1024
   };
 
