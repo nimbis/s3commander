@@ -120,12 +120,13 @@ b64pad = "=";
     return this;
   };
 
+  // Get the URI encoded string representation of the path.
   Path.prototype.getURIEncoded = function() {
     // We want to encode the parts, but not the whole
-    var enc_parts = this.parts.map(
-      function(val, index, arr){
+    var enc_parts = this.parts.map(function(val) {
         return encodeURIComponent(val);
-      });
+    });
+
     var uri = enc_parts.join("/");
     if (this.folder && this.parts.length > 0) {
       uri += "/";
@@ -215,7 +216,7 @@ b64pad = "=";
   // Retrieve the REST API URL for the given resource.
   S3Backend.prototype.getResourceURL = function(pResource) {
     var abspath = this.opts.pPrefix.concat(pResource);
-    return this.getBucketURL() + "/" + abspath.toString();
+    return this.getBucketURL() + "/" + abspath.getURIEncoded();
   };
 
   // Get the encoded policy and it's signature required to upload files.
