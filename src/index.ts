@@ -8,6 +8,6 @@ import {main} from './app/main';
 import './index.css';
 
 angular
-  .module('app', ['ui.router'])
+  .module('s3commander', ['ui.router'])
   .config(routesConfig)
-  .component('app', main)
+  .component('app', main);

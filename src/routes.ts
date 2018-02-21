@@ -6,7 +6,7 @@ function routesConfig($stateProvider: angular.ui.IStateProvider, $urlRouterProvi
   $urlRouterProvider.otherwise('/');
 
   $stateProvider
-    .state('app', {
+    .state('s3commander', {
       url: '/',
       component: 'app'
     });
