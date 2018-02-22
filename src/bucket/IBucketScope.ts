@@ -1,4 +1,4 @@
-import {Bucket} from './Bucket';
+import {Bucket} from './../common/Bucket';
 
 export interface IBucketScope extends ng.IScope {
   bucket: Bucket;

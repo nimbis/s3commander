@@ -1,4 +1,4 @@
-import {Bucket} from './Bucket';
+import {Bucket} from './../common/Bucket';
 import {IBucketScope} from './IBucketScope';
 
 export class BucketController {
