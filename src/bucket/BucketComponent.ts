@@ -2,7 +2,9 @@ import {BucketController} from './BucketController';
 
 export const BucketComponent: angular.IComponentOptions = {
   bindings: {
-    bucketName: '@name'
+    backendName: '@backend',
+    bucketName: '@name',
+    bucketRegion: '@region'
   },
   template: require('./bucket.html'),
   controller: BucketController

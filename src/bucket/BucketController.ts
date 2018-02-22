@@ -1,4 +1,7 @@
 import {Bucket} from './../common/Bucket';
+import {IBackend} from './../common/IBackend';
+import {AmazonS3Backend} from './../common/AmazonS3Backend';
+
 import {IBucketScope} from './IBucketScope';
 
 export class BucketController {
@@ -11,9 +14,24 @@ export class BucketController {
   ];
 
   /**
+   * Backend name. Passed in as component binding.
+   */
+  public backendName: string;
+
+  /**
    * Bucket name. Passed in as a component binding.
    */
   public bucketName: string;
+
+  /**
+   * Bucket region. Passed in as a component binding.
+   */
+  public bucketRegion: string;
+
+  /**
+   * Backend.
+   */
+  private backend: IBackend;
 
   /**
    * Bucket.
@@ -29,6 +47,15 @@ export class BucketController {
    * Initialize the controller.
    */
   $onInit() {
-    this.bucket = this.$scope.bucket = new Bucket(this.bucketName);
+    switch (this.backendName) {
+      case 's3':
+        this.backend = new AmazonS3Backend(this.bucketRegion);
+        break;
+
+      default:
+        throw ('Unknown backend: ' + this.backendName);
+    }
+
+    this.bucket = this.$scope.bucket = this.backend.getBucket(this.bucketName);
   }
 }
