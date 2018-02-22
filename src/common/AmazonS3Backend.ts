@@ -1,7 +1,7 @@
 import {Bucket} from './Bucket';
 import {IBackend} from './IBackend';
 
-export class AmazonS3Backend extends IBackend {
+export class AmazonS3Backend implements IBackend {
   /**
    * Create an instance of the backend.
    */
