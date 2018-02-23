@@ -6,7 +6,8 @@
   "license": "SEE LICENSE IN LICENSE.txt",
   "dependencies": {
     "angular": "^1.6.2",
-    "angular-ui-router": "1.0.0-beta.3"
+    "angular-ui-router": "1.0.0-beta.3",
+    "aws-sdk": "^2.201.0"
   },
   "devDependencies": {
     "@types/angular": "^1.6.6",
