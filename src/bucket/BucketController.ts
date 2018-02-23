@@ -10,7 +10,7 @@ export class BucketController {
    * @see http://docs.angularjs.org/guide/di
    */
   public static $inject = [
-    '$scope'
+    '$rootScope'
   ];
 
   /**
@@ -24,9 +24,34 @@ export class BucketController {
   public bucketName: string;
 
   /**
-   * Bucket region. Passed in as a component binding.
+   * AWS region. Passed in as a component binding.
    */
-  public bucketRegion: string;
+  public awsRegion: string;
+
+  /**
+   * AWS Access Key ID. Passed in as a component binding.
+   */
+  public awsAccessKeyId: string;
+
+  /**
+   * AWS Secret Access Key. Passed in as a component binding.
+   */
+  public awsSecretAccessKey: string;
+
+  /**
+   * Flag used to indicate a background operation is running.
+   */
+  public working: boolean;
+
+  /**
+   * TODO.
+   */
+  public error: Error;
+
+  /**
+   * Bucket.
+   */
+  public bucket: Bucket;
 
   /**
    * Backend.
@@ -34,28 +59,41 @@ export class BucketController {
   private backend: IBackend;
 
   /**
-   * Bucket.
+   * Create an instance of the controller.
    */
-  private bucket: Bucket;
-
-  /**
-   * Create a controller instance.
-   */
-  constructor(private $scope: IBucketScope) { }
+  constructor(private $rootScope: ng.IScope) { }
 
   /**
    * Initialize the controller.
    */
   $onInit() {
-    switch (this.backendName) {
-      case 's3':
-        this.backend = new AmazonS3Backend(this.bucketRegion);
-        break;
-
-      default:
-        throw ('Unknown backend: ' + this.backendName);
+    // create the backend
+    if (this.backendName === 's3') {
+      this.backend = new AmazonS3Backend(
+        this.awsRegion,
+        this.awsAccessKeyId,
+        this.awsSecretAccessKey);
+    } else {
+      throw `Unknown backend: ${this.backendName}`;
     }
 
-    this.bucket = this.$scope.bucket = this.backend.getBucket(this.bucketName);
+    // retrieve the bucket
+    this.working = true;
+    this.backend.getBucket(this.bucketName).then(
+      (bucket: Bucket) => {
+        this.bucket = bucket;
+        this.error = null;
+      },
+      (error: Error) => {
+        this.bucket = null;
+        this.error = error;
+      }
+    ).then(() => {
+      this.working = false;
+
+      // apply scope changes. because we're using $ctrl instead of $scope in
+      // the template we need to update the parent scope somehow.
+      this.$rootScope.$digest();
+    });
   }
 }

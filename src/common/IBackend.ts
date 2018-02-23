@@ -4,5 +4,5 @@ export interface IBackend {
   /**
    * Get a bucket with the given name.
    */
-  getBucket(name: string): Bucket;
+  getBucket(name: string): Promise<Bucket>;
 }

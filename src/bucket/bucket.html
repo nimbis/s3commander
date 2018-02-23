@@ -1,3 +1,6 @@
-<span>{{ $ctrl.bucket.name }}</span>
-<br />
-<a>{{ $ctrl.bucket.baseUrl }}</a>
+<span ng-if="$ctrl.working">Working</span>
+<span ng-if="$ctrl.error">Error: {{ $ctrl.error }}</span>
+<span ng-if="$ctrl.bucket">
+  Name: {{ $ctrl.bucket.name }}<br />
+  Versioned: {{ $ctrl.bucket.versioned }}
+</span>
