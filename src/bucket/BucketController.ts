@@ -42,7 +42,7 @@ export class BucketController {
   public working: boolean;
 
   /**
-   * TODO.
+   * Error encountered running background operation.
    */
   public error: Error;
 
