@@ -2,8 +2,6 @@ import {Bucket} from './../common/Bucket';
 import {IBackend} from './../common/IBackend';
 import {AmazonS3Backend} from './../common/AmazonS3Backend';
 
-import {IBucketScope} from './IBucketScope';
-
 export class BucketController {
   /**
    * Dependencies we want passed to the constructor.
