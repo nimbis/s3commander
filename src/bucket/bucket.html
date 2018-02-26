@@ -18,8 +18,12 @@
     <button class="s3c-nav-button">Up</button>
   </div>
 
-  <!-- TODO: folders -->
-  <!-- TODO: files -->
+  <!-- folders -->
+  <folder ng-repeat="folder in $ctrl.folders" folder="folder"></folder>
+
+  <!-- files -->
+  <file ng-repeat="file in $ctrl.files" file="file"></file>
+
   <!-- TODO: folder create -->
   <!-- TODO: upload files -->
 </div>
