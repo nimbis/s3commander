@@ -2,7 +2,9 @@
 
 import AWS = require('aws-sdk');
 
+import {Path} from './Path';
 import {Bucket} from './Bucket';
+import {StorageObject} from './StorageObject';
 import {IBackend} from './IBackend';
 
 export class AmazonS3Backend implements IBackend {
@@ -39,6 +41,38 @@ export class AmazonS3Backend implements IBackend {
       .promise()
       .then(function (data: any) {
         return new Bucket(name, data.Status === 'Enabled');
+      });
+  }
+
+  /**
+   * Get bucket objects with a given prefix.
+   */
+  getObjects(bucket: Bucket, prefix: Path): Promise<StorageObject[]> {
+    if (!prefix.isFolder()) {
+      throw `Bucket prefix is not a folder: ${prefix}`;
+    }
+
+    var params = {
+      Bucket: bucket.name,
+      Prefix: prefix.toString(),
+      Delimiter: '/'
+    };
+
+    return this.s3.listObjectsV2(params)
+      .promise()
+      .then(function (data: any) {
+        // extract folder objects
+        let folders = data.CommonPrefixes.map(function (folderData: any) {
+          return new StorageObject(new Path(folderData.Prefix)); // XXX: extend from prefix
+        });
+
+        // extract file objects
+        let files = data.Contents.map(function (fileData: any) {
+          return new StorageObject(new Path(fileData.Key)); // XXX: extend from prefix
+        });
+
+        // return all objects
+        return folders + files;
       });
   }
 }
