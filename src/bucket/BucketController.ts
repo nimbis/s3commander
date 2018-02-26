@@ -1,4 +1,6 @@
-import {Bucket} from './../common/Bucket';
+import {Path} from './../common/Path';
+import {StorageBucket} from './../common/StorageBucket';
+import {StorageObject} from './../common/StorageObject';
 import {IBackend} from './../common/IBackend';
 import {AmazonS3Backend} from './../common/AmazonS3Backend';
 
@@ -49,7 +51,22 @@ export class BucketController {
   /**
    * Bucket.
    */
-  public bucket: Bucket;
+  public bucket: StorageBucket;
+
+  /**
+   * Current working path.
+   */
+  public workingPath: Path;
+
+  /**
+   * Folder objects in the current working path.
+   */
+  public folders: StorageObject[];
+
+  /**
+   * File objects in the current working path.
+   */
+  public files: StorageObject[];
 
   /**
    * Backend.
@@ -59,7 +76,9 @@ export class BucketController {
   /**
    * Create an instance of the controller.
    */
-  constructor(private $rootScope: ng.IScope) { }
+  constructor(private $rootScope: ng.IScope) {
+    this.workingPath = new Path('/');
+  }
 
   /**
    * Initialize the controller.
@@ -75,18 +94,44 @@ export class BucketController {
       throw `Unknown backend: ${this.backendName}`;
     }
 
-    // retrieve the bucket
+    // retrieve the bucket and objects at the working path
     this.working = true;
-    this.backend.getBucket(this.bucketName).then(
-      (bucket: Bucket) => {
-        this.bucket = bucket;
-        this.error = null;
-      },
-      (error: Error) => {
-        this.bucket = null;
-        this.error = error;
+    this.backend.getBucket(this.bucketName).then((bucket: StorageBucket) => {
+      this.bucket = bucket;
+      return this.backend.getObjects(bucket, this.workingPath);
+    }).then((objects: StorageObject[]) => {
+      function compareObjectNames (a: StorageObject, b: StorageObject) {
+        var nameA = a.path.name().toLowerCase();
+        var nameB = b.path.name().toLowerCase();
+
+        if (nameA < nameB) {
+          return -1;
+        }
+
+        if (nameA > nameB) {
+          return 1;
+        }
+
+        return 0;
       }
-    ).then(() => {
+
+      // retrieve folders and sort alphabetically by name
+      this.folders = objects.filter((object: StorageObject) => {
+        return object.path.isFolder();
+      }).sort(compareObjectNames);
+
+      // retrieve files and sort alphabetically by name
+      this.files = objects.filter((object: StorageObject) => {
+        return !object.path.isFolder();
+      }).sort(compareObjectNames);
+    }).catch((error: Error) => {
+      this.error = error;
+
+      // XXX: well this is extreme
+      this.bucket = null;
+      this.folders = [];
+      this.files = [];
+    }).then(() => {
       this.working = false;
 
       // apply scope changes. because we're using $ctrl instead of $scope in

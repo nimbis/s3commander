@@ -3,7 +3,7 @@
 import AWS = require('aws-sdk');
 
 import {Path} from './Path';
-import {Bucket} from './Bucket';
+import {StorageBucket} from './StorageBucket';
 import {StorageObject} from './StorageObject';
 import {IBackend} from './IBackend';
 
@@ -36,18 +36,18 @@ export class AmazonS3Backend implements IBackend {
   /**
    * Get a bucket with the given name.
    */
-  getBucket(name: string): Promise<Bucket> {
+  getBucket(name: string): Promise<StorageBucket> {
     return this.s3.getBucketVersioning({Bucket: name})
       .promise()
       .then(function (data: any) {
-        return new Bucket(name, data.Status === 'Enabled');
+        return new StorageBucket(name, data.Status === 'Enabled');
       });
   }
 
   /**
    * Get bucket objects with a given prefix.
    */
-  getObjects(bucket: Bucket, prefix: Path): Promise<StorageObject[]> {
+  getObjects(bucket: StorageBucket, prefix: Path): Promise<StorageObject[]> {
     if (!prefix.isFolder()) {
       throw `Bucket prefix is not a folder: ${prefix}`;
     }
@@ -72,7 +72,7 @@ export class AmazonS3Backend implements IBackend {
         });
 
         // return all objects
-        return folders + files;
+        return folders.concat(files);
       });
   }
 }

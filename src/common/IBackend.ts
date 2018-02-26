@@ -1,15 +1,15 @@
 import {Path} from './Path';
-import {Bucket} from './Bucket';
+import {StorageBucket} from './StorageBucket';
 import {StorageObject} from './StorageObject';
 
 export interface IBackend {
   /**
    * Get a bucket with the given name.
    */
-  getBucket(name: string): Promise<Bucket>;
+  getBucket(name: string): Promise<StorageBucket>;
 
   /**
    * Get bucket objects with a given prefix.
    */
-  getObjects(bucket: Bucket, prefix: Path): Promise<StorageObject[]>;
+  getObjects(bucket: StorageBucket, prefix: Path): Promise<StorageObject[]>;
 }
