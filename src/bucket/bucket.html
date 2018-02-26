@@ -1,6 +1,25 @@
-<span ng-if="$ctrl.working">Working</span>
-<span ng-if="$ctrl.error">Error: {{ $ctrl.error }}</span>
-<span ng-if="$ctrl.bucket">
-  Name: {{ $ctrl.bucket.name }}<br />
-  Versioned: {{ $ctrl.bucket.versioned }}
-</span>
+<div class="s3c-bucket">
+  <!-- errors -->
+  <span ng-if="$ctrl.error">{{ $ctrl.error }}</span>
+
+  <!-- bucket and path information -->
+  <div class="s3c-section s3c-bucket-details">
+    <span ng-if="$ctrl.bucket">{{ $ctrl.bucket.name }} /</span>
+    <!-- TODO: path crumbs -->
+    <span>foo /</span>
+    <span>bar /</span>
+    <!-- TODO: end path crumbs -->
+
+    <!-- TODO: loading spinner -->
+    <span ng-if="$ctrl.working">LOADING</span>
+
+    <!-- navigation controls -->
+    <button class="s3c-nav-button">Refresh</button>
+    <button class="s3c-nav-button">Up</button>
+  </div>
+
+  <!-- TODO: folders -->
+  <!-- TODO: files -->
+  <!-- TODO: folder create -->
+  <!-- TODO: upload files -->
+</div>

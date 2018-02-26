@@ -3,3 +3,24 @@ html, body, {
   height: 100%;
   font-family: 'Open Sans', sans-serif;
 }
+
+div.s3c-bucket {
+  border: 1px dashed #ccc;
+  padding: 4px;
+}
+
+div.s3c-section {
+  padding: 4px;
+  background-color: #eee;
+  border-bottom: 1px dashed black;
+  margin-bottom: 8px;
+}
+
+div.s3c-bucket-details {
+  background-color: #eee;
+  font-weight: bold;
+}
+
+div.s3c-bucket-details button {
+  margin-left: 6px;
+}
