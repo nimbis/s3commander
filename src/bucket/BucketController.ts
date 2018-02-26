@@ -56,7 +56,7 @@ export class BucketController {
   /**
    * Current working path.
    */
-  public workingPath: Path;
+  public path: Path;
 
   /**
    * Folder objects in the current working path.
@@ -77,7 +77,9 @@ export class BucketController {
    * Create an instance of the controller.
    */
   constructor(private $rootScope: ng.IScope) {
-    this.workingPath = new Path('/');
+    this.path = new Path('/');
+    this.folders = [];
+    this.files = [];
   }
 
   /**
@@ -98,7 +100,7 @@ export class BucketController {
     this.working = true;
     this.backend.getBucket(this.bucketName).then((bucket: StorageBucket) => {
       this.bucket = bucket;
-      return this.backend.getObjects(bucket, this.workingPath);
+      return this.backend.getObjects(bucket, this.path);
     }).then((objects: StorageObject[]) => {
       function compareObjectNames (a: StorageObject, b: StorageObject) {
         var nameA = a.path.name().toLowerCase();

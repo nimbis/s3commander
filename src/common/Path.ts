@@ -23,6 +23,13 @@ export class Path {
   }
 
   /**
+   * Get path components.
+   */
+  public components(): string[] {
+    return this.parts;
+  }
+
+  /**
    * Get the file or folder name.
    */
   public name(): string {

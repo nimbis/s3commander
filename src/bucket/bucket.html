@@ -5,10 +5,7 @@
   <!-- bucket and path information -->
   <div class="s3c-section s3c-bucket-details">
     <span ng-if="$ctrl.bucket">{{ $ctrl.bucket.name }} /</span>
-    <!-- TODO: path crumbs -->
-    <span>foo /</span>
-    <span>bar /</span>
-    <!-- TODO: end path crumbs -->
+    <span ng-repeat="part in $ctrl.path.components()">{{ part }} /</span>
 
     <!-- TODO: loading spinner -->
     <span ng-if="$ctrl.working">LOADING</span>
