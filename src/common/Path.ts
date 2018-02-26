@@ -12,7 +12,7 @@ export class Path {
   /**
    * Create a new path.
    */
-  constructor (path: string) {
+  constructor (path: string = '') {
     // split the path into components
     this.parts = path.split('/').filter(function(part: string) {
       return part.length > 0;
@@ -46,6 +46,12 @@ export class Path {
    * Get the string representation.
    */
   public toString(): string {
+    // corner case: empty path
+    if (this.parts.length === 0) {
+      return '';
+    }
+
+    // determine the path string
     var uri = this.parts.join('/');
     if (this.folder) {
       return `${uri}/`;
