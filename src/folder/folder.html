@@ -1,5 +1,5 @@
 <div class="s3c-folder">
   <!-- TODO: icon -->
-  <a>{{ $ctrl.folder.path.name() }}</a>
-  <button class="s3c-item-button">Delete</button>
+  <a ng-click="$ctrl.onNavigate()">{{ $ctrl.folder.path.name() }}</a>
+  <button class="s3c-item-button" ng-click="$ctrl.onDelete()">Delete</button>
 </div>
