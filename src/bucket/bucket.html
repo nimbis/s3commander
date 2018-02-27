@@ -11,12 +11,14 @@
     <span ng-if="$ctrl.working">LOADING</span>
 
     <!-- navigation controls -->
-    <button class="s3c-nav-button">Refresh</button>
-    <button class="s3c-nav-button">Up</button>
+    <button class="s3c-nav-button" ng-click="$ctrl.loadContents()">Refresh</button>
+    <button class="s3c-nav-button" ng-click="$ctrl.navParent()">Up</button>
   </div>
 
   <!-- folders -->
-  <folder ng-repeat="folder in $ctrl.folders" folder="folder"></folder>
+  <folder ng-repeat="folder in $ctrl.folders"
+    folder="folder"
+    on-navigate="$ctrl.navFolder(folder)"></folder>
 
   <!-- files -->
   <file ng-repeat="file in $ctrl.files" file="file"></file>

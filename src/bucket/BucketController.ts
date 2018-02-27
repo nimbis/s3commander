@@ -78,6 +78,7 @@ export class BucketController {
    */
   constructor(private $rootScope: ng.IScope) {
     this.path = new Path('/');
+    this.bucket = null;
     this.folders = [];
     this.files = [];
   }
@@ -96,7 +97,14 @@ export class BucketController {
       throw `Unknown backend: ${this.backendName}`;
     }
 
-    // retrieve the bucket and objects at the working path
+    // initial load
+    this.loadContents();
+  }
+
+  /**
+   * Load bucket and objects at working path.
+   */
+  public loadContents() {
     this.working = true;
     this.backend.getBucket(this.bucketName).then((bucket: StorageBucket) => {
       this.bucket = bucket;
@@ -127,12 +135,8 @@ export class BucketController {
         return !object.path.isFolder();
       }).sort(compareObjectNames);
     }).catch((error: Error) => {
+      // display the error
       this.error = error;
-
-      // XXX: well this is extreme
-      this.bucket = null;
-      this.folders = [];
-      this.files = [];
     }).then(() => {
       this.working = false;
 
@@ -140,5 +144,32 @@ export class BucketController {
       // the template we need to update the parent scope somehow.
       this.$rootScope.$digest();
     });
+  }
+
+  /**
+   * Navigate to a folder.
+   */
+  public navFolder(object: StorageObject) {
+    // verify the object is a folder
+    if (!object.path.isFolder()) {
+      throw `Object is not a folder: ${object}`;
+    }
+
+    // update the working path
+    this.path = object.path.clone();
+
+    // load bucket contents
+    this.loadContents();
+  }
+
+  /**
+   * Navigate to the parent folder.
+   */
+  public navParent() {
+    // modify the working path
+    this.path.pop();
+
+    // load bucket contents
+    this.loadContents();
   }
 }

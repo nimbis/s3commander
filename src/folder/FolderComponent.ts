@@ -2,7 +2,9 @@ import {FolderController} from './FolderController';
 
 export const FolderComponent: angular.IComponentOptions = {
   bindings: {
-    folder: '=folder'
+    folder: '=',
+    onNavigate: '&',
+    onDelete: '&'
   },
   template: require('./folder.html'),
   controller: FolderController
