@@ -12,8 +12,7 @@ export class BucketController {
    * @see http://docs.angularjs.org/guide/di
    */
   public static $inject = [
-    '$rootScope',
-    '$timeout'
+    '$rootScope'
   ];
 
   /**
@@ -84,7 +83,7 @@ export class BucketController {
   /**
    * Create an instance of the controller.
    */
-  constructor(private $rootScope: ng.IScope, private $timeout: ng.ITimeoutService) {
+  constructor(private $rootScope: ng.IScope) {
     this.currentFolder = new Folder(new Path('/'));
     this.folders = [];
     this.files = [];
