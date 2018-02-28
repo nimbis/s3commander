@@ -1,4 +1,4 @@
-html, body, {
+html, body {
   margin: 0;
   height: 100%;
   font-family: 'Open Sans', sans-serif;
@@ -33,15 +33,28 @@ div.s3c-file, div.s3c-folder {
   margin: 4px 0;
 }
 
-div.s3c-bucket button {
+div.s3c-bucket button.s3c-button {
   margin-left: 8px;
+}
+
+div.s3c-file-upload input[type="file"] {
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  position: absolute;
+  z-index: -1;
+}
+
+div.s3c-file-upload label {
+  cursor: pointer;
 }
 
 /**
  * Style.
  */
 
-div.s3c-bucket button {
+.s3c-button {
   border-style: solid;
   border-radius: 5%;
   border-width: 1px;
@@ -89,4 +102,13 @@ div.s3c-spinner {
     -moz-transform: rotate(360deg);
     transform: rotate(360deg);
   }
+}
+
+div.s3c-file-upload form {
+  margin: 4px 0;
+}
+
+div.s3c-file-upload label {
+  /* why is this necessary??? */
+  padding: 4px 8px;
 }

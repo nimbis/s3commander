@@ -30,11 +30,19 @@
     on-download="$ctrl.downloadFile(file)"
     on-delete="$ctrl.deleteFile(file)"></file>
 
-  <!-- folder controls -->
-  <div class="s3c-bottom-section s3c-folder-controls">
+  <!-- folder create form -->
+  <div class="s3c-bottom-section s3c-folder-create">
     <input placeholder="folder name" ng-model="$ctrl.folderName"/>
     <button class="s3c-button" ng-click="$ctrl.createFolder()">Create</button>
   </div>
 
-  <!-- TODO: upload files -->
+  <!-- file upload form -->
+  <div class="s3c-bottom-section s3c-file-upload">
+    <form>
+      <input type="file" id="{{ $ctrl.bucket.name }}-upload" />
+      <label for="{{ $ctrl.bucket.name }}-upload" class="s3c-button">
+        Upload Files
+      </label>
+    </form>
+  </div>
 </div>
