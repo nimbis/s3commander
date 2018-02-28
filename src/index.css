@@ -9,28 +9,24 @@ html, body {
  */
 
 div.s3c-bucket {
-  border: 1px dashed #ccc;
   padding: 4px;
 }
 
 div.s3c-top-section, div.s3c-bottom-section {
-  background-color: #eee;
   padding: 4px;
 }
 
 div.s3c-top-section {
-  border-bottom: 1px dashed black;
   margin-bottom: 8px;
 }
 
 div.s3c-bottom-section {
-  border-top: 1px dashed black;
   margin-top: 8px;
 }
 
 div.s3c-file, div.s3c-folder {
-  padding: 2px;
-  margin: 4px 0;
+  padding: 4px;
+  margin: 2px 0;
 }
 
 div.s3c-bucket button.s3c-button {
@@ -54,7 +50,27 @@ div.s3c-file-upload label {
  * Style.
  */
 
-.s3c-button {
+div.s3c-bucket {
+  border: 1px dashed #ccc;
+}
+
+div.s3c-top-section, div.s3c-bottom-section {
+ background-color: #eee;
+}
+
+div.s3c-top-section {
+ border-bottom: 1px dashed black;
+}
+
+div.s3c-bottom-section {
+ border-top: 1px dashed black;
+}
+
+div.s3c-folder, div.s3c-file {
+  background-color: #eee;
+}
+
+button.s3c-button, label.s3c-button {
   border-style: solid;
   border-radius: 5%;
   border-width: 1px;
