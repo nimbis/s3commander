@@ -188,7 +188,24 @@ export class BucketController {
 
     // delete the folder and all of it's contents
     this.working = true;
-    this.backend.deleteObjects(this.bucket, folder.path)
+    return this.backend.deleteObjects(this.bucket, folder.path)
+      .then(() => {
+        return this.loadContents();
+      });
+  }
+
+  /**
+   * Delete a file.
+   */
+  public deleteFile(file: StorageObject) {
+    // verify the object is a file
+    if (file.path.isFolder()) {
+      throw `Object is a folder: ${file}`;
+    }
+
+    // delete the file
+    this.working = true;
+    return this.backend.deleteObjects(this.bucket, file.path)
       .then(() => {
         return this.loadContents();
       });
