@@ -17,4 +17,9 @@ export interface IBackend {
    * Delete multiple objects from the bucket.
    */
   deleteObjects(bucket: StorageBucket, prefix: Path): Promise<any>;
+
+  /**
+   * Create an empty object.
+   */
+  createEmptyObject(bucket: StorageBucket, path: Path): Promise<any>;
 }

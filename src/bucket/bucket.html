@@ -29,8 +29,8 @@
 
   <!-- folder controls -->
   <div class="s3c-bottom-section s3c-folder-controls">
-    <input placeholder="folder name" />
-    <button class="s3c-button">Create</button>
+    <input placeholder="folder name" ng-model="$ctrl.folderName"/>
+    <button class="s3c-button" ng-click="$ctrl.createFolder()">Create</button>
   </div>
 
   <!-- TODO: upload files -->

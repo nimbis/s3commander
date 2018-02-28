@@ -69,6 +69,11 @@ export class BucketController {
   public files: StorageObject[];
 
   /**
+   * Used to specify the name of new folders.
+   */
+  public folderName: string;
+
+  /**
    * Backend.
    */
   private backend: IBackend;
@@ -175,6 +180,20 @@ export class BucketController {
 
     // load bucket contents
     this.loadContents();
+  }
+
+  /**
+   * Create a folder.
+   */
+  public createFolder() {
+    let folderPath = this.path.clone().push(`${this.folderName}/`);
+
+    this.working = true;
+    return this.backend.createEmptyObject(this.bucket, folderPath)
+      .then(() => {
+        this.folderName = '';
+        return this.loadContents();
+      })
   }
 
   /**

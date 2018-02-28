@@ -106,4 +106,17 @@ export class AmazonS3Backend implements IBackend {
         return this.s3.deleteObjects(deleteParams).promise();
       });
   }
+
+  /**
+   * Create an empty object.
+   */
+  public createEmptyObject(bucket: StorageBucket, path: Path): Promise<any> {
+    var params = {
+      Bucket: bucket.name,
+      Key: path.toString(),
+      Body: ''
+    };
+
+    return this.s3.putObject(params).promise();
+  }
 }
