@@ -36,7 +36,7 @@ export class AmazonS3Backend implements IBackend {
   /**
    * Get a bucket with the given name.
    */
-  getBucket(name: string): Promise<StorageBucket> {
+  public getBucket(name: string): Promise<StorageBucket> {
     return this.s3.getBucketVersioning({Bucket: name})
       .promise()
       .then(function (data: any) {
@@ -47,7 +47,7 @@ export class AmazonS3Backend implements IBackend {
   /**
    * Get bucket objects with a given prefix.
    */
-  getObjects(bucket: StorageBucket, prefix: Path): Promise<StorageObject[]> {
+  public getObjects(bucket: StorageBucket, prefix: Path): Promise<StorageObject[]> {
     if (!prefix.isFolder()) {
       throw `Bucket prefix is not a folder: ${prefix}`;
     }
@@ -76,6 +76,34 @@ export class AmazonS3Backend implements IBackend {
 
         // return all objects
         return folders.concat(files);
+      });
+  }
+
+  /**
+   * Delete multiple objects from the bucket.
+   */
+  public deleteObjects(bucket: StorageBucket, prefix: Path): Promise<any> {
+    var getParams = {
+      Bucket: bucket.name,
+      Prefix: prefix.toString()
+    };
+
+    return this.s3.listObjectsV2(getParams)
+      .promise()
+      .then((data: any) => {
+        return data.Contents.map(function (objectData: any) {
+          return {Key: objectData.Key};
+        });
+      })
+      .then((objects: any[]) => {
+        var deleteParams = {
+          Bucket: bucket.name,
+          Delete: {
+            Objects: objects
+          }
+        };
+
+        return this.s3.deleteObjects(deleteParams).promise();
       });
   }
 }

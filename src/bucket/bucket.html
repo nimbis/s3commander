@@ -18,7 +18,8 @@
   <!-- folders -->
   <folder ng-repeat="folder in $ctrl.folders"
     folder="folder"
-    on-navigate="$ctrl.navFolder(folder)"></folder>
+    on-navigate="$ctrl.navFolder(folder)"
+    on-delete="$ctrl.deleteFolder(folder)"></folder>
 
   <!-- files -->
   <file ng-repeat="file in $ctrl.files" file="file"></file>

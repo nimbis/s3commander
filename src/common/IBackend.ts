@@ -12,4 +12,9 @@ export interface IBackend {
    * Get bucket objects with a given prefix.
    */
   getObjects(bucket: StorageBucket, prefix: Path): Promise<StorageObject[]>;
+
+  /**
+   * Delete multiple objects from the bucket.
+   */
+  deleteObjects(bucket: StorageBucket, prefix: Path): Promise<any>;
 }

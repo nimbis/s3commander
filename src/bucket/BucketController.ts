@@ -106,44 +106,48 @@ export class BucketController {
    */
   public loadContents() {
     this.working = true;
-    this.backend.getBucket(this.bucketName).then((bucket: StorageBucket) => {
-      this.bucket = bucket;
-      return this.backend.getObjects(bucket, this.path);
-    }).then((objects: StorageObject[]) => {
-      function compareObjectNames (a: StorageObject, b: StorageObject) {
-        var nameA = a.path.name().toLowerCase();
-        var nameB = b.path.name().toLowerCase();
+    return this.backend.getBucket(this.bucketName)
+      .then((bucket: StorageBucket) => {
+        this.bucket = bucket;
+        return this.backend.getObjects(bucket, this.path);
+      })
+      .then((objects: StorageObject[]) => {
+        function compareObjectNames (a: StorageObject, b: StorageObject) {
+          var nameA = a.path.name().toLowerCase();
+          var nameB = b.path.name().toLowerCase();
 
-        if (nameA < nameB) {
-          return -1;
+          if (nameA < nameB) {
+            return -1;
+          }
+
+          if (nameA > nameB) {
+            return 1;
+          }
+
+          return 0;
         }
 
-        if (nameA > nameB) {
-          return 1;
-        }
+        // retrieve folders and sort alphabetically by name
+        this.folders = objects.filter((object: StorageObject) => {
+          return object.path.isFolder();
+        }).sort(compareObjectNames);
 
-        return 0;
-      }
+        // retrieve files and sort alphabetically by name
+        this.files = objects.filter((object: StorageObject) => {
+          return !object.path.isFolder();
+        }).sort(compareObjectNames);
+      })
+      .catch((error: Error) => {
+        // display the error
+        this.error = error;
+      })
+      .then(() => {
+        this.working = false;
 
-      // retrieve folders and sort alphabetically by name
-      this.folders = objects.filter((object: StorageObject) => {
-        return object.path.isFolder();
-      }).sort(compareObjectNames);
-
-      // retrieve files and sort alphabetically by name
-      this.files = objects.filter((object: StorageObject) => {
-        return !object.path.isFolder();
-      }).sort(compareObjectNames);
-    }).catch((error: Error) => {
-      // display the error
-      this.error = error;
-    }).then(() => {
-      this.working = false;
-
-      // apply scope changes. because we're using $ctrl instead of $scope in
-      // the template we need to update the parent scope somehow.
-      this.$rootScope.$digest();
-    });
+        // apply scope changes. because we're using $ctrl instead of $scope in
+        // the template we need to update the parent scope somehow.
+        this.$rootScope.$digest();
+      });
   }
 
   /**
@@ -171,5 +175,22 @@ export class BucketController {
 
     // load bucket contents
     this.loadContents();
+  }
+
+  /**
+   * Delete a folder and it's contents.
+   */
+  public deleteFolder(folder: StorageObject) {
+    // verify the object is a folder
+    if (!folder.path.isFolder()) {
+      throw `Object is not a folder: ${folder}`;
+    }
+
+    // delete the folder and all of it's contents
+    this.working = true;
+    this.backend.deleteObjects(this.bucket, folder.path)
+      .then(() => {
+        return this.loadContents();
+      });
   }
 }
