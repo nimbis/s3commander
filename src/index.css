@@ -56,3 +56,37 @@ div.s3c-bucket button {
 div.s3c-bucket-details {
   font-weight: bold;
 }
+
+div.s3c-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+
+  border-radius: 50%;
+  border: 1px dashed black;
+  background: linear-gradient(#ccc, white);
+  -webkit-animation: s3c-spinner-spin 2s linear infinite;
+  -moz-animation: s3c-spinner-spin 2s linear infinite;
+  animation: s3c-spinner-spin 2s linear infinite;
+}
+
+@-webkit-keyframes s3c-spinner-spin {
+  100% {
+    -webkit-transform: rotate(360deg);
+  }
+}
+
+@-moz-keyframes s3c-spinner-spin {
+  100% {
+    -moz-transform: rotate(360deg);
+  }
+}
+
+@keyframes s3c-spinner-spin {
+  100% {
+    -webkit-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
