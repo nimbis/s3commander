@@ -26,7 +26,11 @@ export class Path {
    * Create a deep copy of this path.
    */
   public clone(): Path {
-    return new Path(this.toString());
+    let newPath = new Path();
+    newPath.parts = this.parts.slice(0);
+    newPath.folder = this.folder;
+
+    return newPath;
   }
 
   /**
