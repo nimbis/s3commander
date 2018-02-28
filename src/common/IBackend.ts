@@ -1,25 +1,25 @@
 import {Path} from './Path';
-import {StorageBucket} from './StorageBucket';
+import {Bucket} from './Bucket';
 import {StorageObject} from './StorageObject';
 
 export interface IBackend {
   /**
    * Get a bucket with the given name.
    */
-  getBucket(name: string): Promise<StorageBucket>;
+  getBucket(name: string): Promise<Bucket>;
 
   /**
    * Get bucket objects with a given prefix.
    */
-  getObjects(bucket: StorageBucket, prefix: Path): Promise<StorageObject[]>;
+  getObjects(bucket: Bucket, prefix: Path): Promise<StorageObject[]>;
 
   /**
    * Delete multiple objects from the bucket.
    */
-  deleteObjects(bucket: StorageBucket, prefix: Path): Promise<any>;
+  deleteObjects(bucket: Bucket, prefix: Path): Promise<any>;
 
   /**
    * Create an empty object.
    */
-  createEmptyObject(bucket: StorageBucket, path: Path): Promise<any>;
+  createEmptyObject(bucket: Bucket, path: Path): Promise<any>;
 }

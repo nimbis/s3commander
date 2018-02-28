@@ -1,5 +1,5 @@
 import {Path} from './../common/Path';
-import {StorageBucket} from './../common/StorageBucket';
+import {Bucket} from './../common/Bucket';
 import {StorageObject} from './../common/StorageObject';
 import {IBackend} from './../common/IBackend';
 import {AmazonS3Backend} from './../common/AmazonS3Backend';
@@ -51,7 +51,7 @@ export class BucketController {
   /**
    * Bucket.
    */
-  public bucket: StorageBucket;
+  public bucket: Bucket;
 
   /**
    * Current working path.
@@ -112,7 +112,7 @@ export class BucketController {
   public loadContents() {
     this.working = true;
     return this.backend.getBucket(this.bucketName)
-      .then((bucket: StorageBucket) => {
+      .then((bucket: Bucket) => {
         this.bucket = bucket;
         return this.backend.getObjects(bucket, this.path);
       })

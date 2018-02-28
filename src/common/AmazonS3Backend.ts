@@ -3,7 +3,7 @@
 import AWS = require('aws-sdk');
 
 import {Path} from './Path';
-import {StorageBucket} from './StorageBucket';
+import {Bucket} from './Bucket';
 import {StorageObject} from './StorageObject';
 import {IBackend} from './IBackend';
 
@@ -36,18 +36,18 @@ export class AmazonS3Backend implements IBackend {
   /**
    * Get a bucket with the given name.
    */
-  public getBucket(name: string): Promise<StorageBucket> {
+  public getBucket(name: string): Promise<Bucket> {
     return this.s3.getBucketVersioning({Bucket: name})
       .promise()
       .then(function (data: any) {
-        return new StorageBucket(name, data.Status === 'Enabled');
+        return new Bucket(name, data.Status === 'Enabled');
       });
   }
 
   /**
    * Get bucket objects with a given prefix.
    */
-  public getObjects(bucket: StorageBucket, prefix: Path): Promise<StorageObject[]> {
+  public getObjects(bucket: Bucket, prefix: Path): Promise<StorageObject[]> {
     if (!prefix.isFolder()) {
       throw `Bucket prefix is not a folder: ${prefix}`;
     }
@@ -82,7 +82,7 @@ export class AmazonS3Backend implements IBackend {
   /**
    * Delete multiple objects from the bucket.
    */
-  public deleteObjects(bucket: StorageBucket, prefix: Path): Promise<any> {
+  public deleteObjects(bucket: Bucket, prefix: Path): Promise<any> {
     var getParams = {
       Bucket: bucket.name,
       Prefix: prefix.toString()
@@ -110,7 +110,7 @@ export class AmazonS3Backend implements IBackend {
   /**
    * Create an empty object.
    */
-  public createEmptyObject(bucket: StorageBucket, path: Path): Promise<any> {
+  public createEmptyObject(bucket: Bucket, path: Path): Promise<any> {
     var params = {
       Bucket: bucket.name,
       Key: path.toString(),
