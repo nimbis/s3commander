@@ -1,7 +1,9 @@
 import {Path} from './../common/Path';
 import {Bucket} from './../common/Bucket';
-import {StorageObject} from './../common/StorageObject';
-import {IBackend} from './../common/IBackend';
+import {IBucketObject} from './../common/IBucketObject';
+import {File} from './../common/File';
+import {Folder} from './../common/Folder';
+import {IBackend, IFolderContents} from './../common/IBackend';
 import {AmazonS3Backend} from './../common/AmazonS3Backend';
 
 export class BucketController {
@@ -54,19 +56,19 @@ export class BucketController {
   public bucket: Bucket;
 
   /**
-   * Current working path.
+   * Current working folder.
    */
-  public path: Path;
+  public currentFolder: Folder;
 
   /**
    * Folder objects in the current working path.
    */
-  public folders: StorageObject[];
+  public folders: Folder[];
 
   /**
    * File objects in the current working path.
    */
-  public files: StorageObject[];
+  public files: File[];
 
   /**
    * Used to specify the name of new folders.
@@ -82,8 +84,7 @@ export class BucketController {
    * Create an instance of the controller.
    */
   constructor(private $rootScope: ng.IScope) {
-    this.path = new Path('/');
-    this.bucket = null;
+    this.currentFolder = new Folder(new Path('/'));
     this.folders = [];
     this.files = [];
   }
@@ -109,17 +110,17 @@ export class BucketController {
   /**
    * Load bucket and objects at working path.
    */
-  public loadContents() {
+  public loadContents(): Promise<any> {
     this.working = true;
     return this.backend.getBucket(this.bucketName)
       .then((bucket: Bucket) => {
         this.bucket = bucket;
-        return this.backend.getObjects(bucket, this.path);
+        return this.backend.getContents(bucket, this.currentFolder);
       })
-      .then((objects: StorageObject[]) => {
-        function compareObjectNames (a: StorageObject, b: StorageObject) {
-          var nameA = a.path.name().toLowerCase();
-          var nameB = b.path.name().toLowerCase();
+      .then((contents: IFolderContents) => {
+        function compareObjectNames (a: IBucketObject, b: IBucketObject) {
+          var nameA = a.getPath().name().toLowerCase();
+          var nameB = b.getPath().name().toLowerCase();
 
           if (nameA < nameB) {
             return -1;
@@ -132,15 +133,9 @@ export class BucketController {
           return 0;
         }
 
-        // retrieve folders and sort alphabetically by name
-        this.folders = objects.filter((object: StorageObject) => {
-          return object.path.isFolder();
-        }).sort(compareObjectNames);
-
-        // retrieve files and sort alphabetically by name
-        this.files = objects.filter((object: StorageObject) => {
-          return !object.path.isFolder();
-        }).sort(compareObjectNames);
+        // retrieve folders and files in alphabetical order
+        this.folders = contents.folders.sort(compareObjectNames);
+        this.files = contents.files.sort(compareObjectNames);
       })
       .catch((error: Error) => {
         // display the error
@@ -158,56 +153,41 @@ export class BucketController {
   /**
    * Navigate to a folder.
    */
-  public navFolder(object: StorageObject) {
-    // verify the object is a folder
-    if (!object.path.isFolder()) {
-      throw `Object is not a folder: ${object}`;
-    }
-
-    // update the working path
-    this.path = object.path.clone();
-
-    // load bucket contents
-    this.loadContents();
+  public navigateFolder(folder: Folder): Promise<any> {
+    this.currentFolder = folder;
+    return this.loadContents();
   }
 
   /**
    * Navigate to the parent folder.
    */
-  public navParent() {
-    // modify the working path
-    this.path.pop();
-
-    // load bucket contents
-    this.loadContents();
+  public navigateParent(): Promise<any> {
+    this.currentFolder = this.currentFolder.parent();
+    return this.loadContents();
   }
 
   /**
    * Create a folder.
    */
-  public createFolder() {
-    let folderPath = this.path.clone().push(`${this.folderName}/`);
+  public createFolder(): Promise<any> {
+    let folderPath = this.currentFolder.getPath()
+      .clone()
+      .push(`${this.folderName}/`);
 
     this.working = true;
-    return this.backend.createEmptyObject(this.bucket, folderPath)
+    return this.backend.createFolder(this.bucket, new Folder(folderPath))
       .then(() => {
         this.folderName = '';
         return this.loadContents();
-      })
+      });
   }
 
   /**
    * Delete a folder and it's contents.
    */
-  public deleteFolder(folder: StorageObject) {
-    // verify the object is a folder
-    if (!folder.path.isFolder()) {
-      throw `Object is not a folder: ${folder}`;
-    }
-
-    // delete the folder and all of it's contents
+  public deleteFolder(folder: Folder) {
     this.working = true;
-    return this.backend.deleteObjects(this.bucket, folder.path)
+    return this.backend.deleteFolder(this.bucket, folder)
       .then(() => {
         return this.loadContents();
       });
@@ -216,15 +196,9 @@ export class BucketController {
   /**
    * Delete a file.
    */
-  public deleteFile(file: StorageObject) {
-    // verify the object is a file
-    if (file.path.isFolder()) {
-      throw `Object is a folder: ${file}`;
-    }
-
-    // delete the file
+  public deleteFile(file: File) {
     this.working = true;
-    return this.backend.deleteObjects(this.bucket, file.path)
+    return this.backend.deleteFile(this.bucket, file)
       .then(() => {
         return this.loadContents();
       });

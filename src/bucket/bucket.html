@@ -5,21 +5,23 @@
   <!-- navigation header and controls -->
   <div class="s3c-top-section s3c-bucket-details">
     <!-- bucket name and current path -->
-    <span ng-if="$ctrl.bucket">{{ $ctrl.bucket.name }} /</span>
-    <span ng-repeat="part in $ctrl.path.components()">{{ part }} /</span>
+    <span ng-if="$ctrl.bucket">{{ $ctrl.bucket.name }} &#47;</span>
+    <span ng-repeat="part in $ctrl.currentFolder.getPath().components()">
+      &nbsp;{{ part }} &#47;
+    </span>
 
-    <!-- TODO: loading spinner -->
-    <span ng-if="$ctrl.working">LOADING</span>
+    <!-- loading spinner -->
+    <div class="s3c-spinner" ng-if="$ctrl.working"></div>
 
     <!-- navigation controls -->
     <button class="s3c-button" ng-click="$ctrl.loadContents()">Refresh</button>
-    <button class="s3c-button" ng-click="$ctrl.navParent()">Up</button>
+    <button class="s3c-button" ng-click="$ctrl.navigateParent()">Up</button>
   </div>
 
   <!-- folders -->
   <folder ng-repeat="folder in $ctrl.folders"
     folder="folder"
-    on-navigate="$ctrl.navFolder(folder)"
+    on-navigate="$ctrl.navigateFolder(folder)"
     on-delete="$ctrl.deleteFolder(folder)"></folder>
 
   <!-- files -->

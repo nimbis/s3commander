@@ -1,6 +1,12 @@
 import {Path} from './Path';
 import {Bucket} from './Bucket';
-import {StorageObject} from './StorageObject';
+import {File} from './File';
+import {Folder} from './Folder';
+
+export interface IFolderContents {
+  folders: Folder[];
+  files: File[];
+}
 
 export interface IBackend {
   /**
@@ -9,17 +15,22 @@ export interface IBackend {
   getBucket(name: string): Promise<Bucket>;
 
   /**
-   * Get bucket objects with a given prefix.
+   * Get the contents of a folder.
    */
-  getObjects(bucket: Bucket, prefix: Path): Promise<StorageObject[]>;
+  getContents(bucket: Bucket, folder: Folder): Promise<IFolderContents>;
 
   /**
-   * Delete multiple objects from the bucket.
+   * Create a folder.
    */
-  deleteObjects(bucket: Bucket, prefix: Path): Promise<any>;
+  createFolder(bucket: Bucket, folder: Folder): Promise<any>;
 
   /**
-   * Create an empty object.
+   * Delete a folder and its contents.
    */
-  createEmptyObject(bucket: Bucket, path: Path): Promise<any>;
+  deleteFolder(bucket: Bucket, folder: Folder): Promise<any>;
+
+  /**
+   * Delete a file.
+   */
+  deleteFile(bucket: Bucket, file: File): Promise<any>;
 }

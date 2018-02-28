@@ -4,8 +4,9 @@ import AWS = require('aws-sdk');
 
 import {Path} from './Path';
 import {Bucket} from './Bucket';
-import {StorageObject} from './StorageObject';
-import {IBackend} from './IBackend';
+import {File} from './File';
+import {Folder} from './Folder';
+import {IBackend, IFolderContents} from './IBackend';
 
 export class AmazonS3Backend implements IBackend {
   /**
@@ -45,16 +46,12 @@ export class AmazonS3Backend implements IBackend {
   }
 
   /**
-   * Get bucket objects with a given prefix.
+   * Get the contents of a folder.
    */
-  public getObjects(bucket: Bucket, prefix: Path): Promise<StorageObject[]> {
-    if (!prefix.isFolder()) {
-      throw `Bucket prefix is not a folder: ${prefix}`;
-    }
-
+  getContents(bucket: Bucket, folder: Folder): Promise<IFolderContents> {
     var params = {
       Bucket: bucket.name,
-      Prefix: prefix.toString(),
+      Prefix: folder.getPath().toString(),
       Delimiter: '/'
     };
 
@@ -63,29 +60,45 @@ export class AmazonS3Backend implements IBackend {
       .then(function (data: any) {
         // extract folder objects
         let folders = data.CommonPrefixes.map(function (folderData: any) {
-          return new StorageObject(new Path(folderData.Prefix));
+          return new Folder(new Path(folderData.Prefix));
         });
 
         // extract file objects
-        let files = data.Contents.map(function (fileData: any) {
-          return new StorageObject(new Path(fileData.Key));
-        }).filter(function (object: StorageObject) {
+        let files = data.Contents.filter(function (fileData: any) {
           // ignore the folder object by comparing it's path
-          return !object.path.equals(prefix);
+          return folder.getPath().toString() !== fileData.Key;
+        }).map(function (fileData: any) {
+          return new File(new Path(fileData.Key));
         });
 
-        // return all objects
-        return folders.concat(files);
+        // return the contents
+        return {
+          folders: folders,
+          files: files
+        };
       });
   }
 
   /**
-   * Delete multiple objects from the bucket.
+   * Create a folder.
    */
-  public deleteObjects(bucket: Bucket, prefix: Path): Promise<any> {
+  createFolder(bucket: Bucket, folder: Folder): Promise<any> {
+    var params = {
+      Bucket: bucket.name,
+      Key: folder.getPath().toString(),
+      Body: ''
+    };
+
+    return this.s3.putObject(params).promise();
+  }
+
+  /**
+   * Delete a folder and its contents.
+   */
+  deleteFolder(bucket: Bucket, folder: Folder): Promise<any> {
     var getParams = {
       Bucket: bucket.name,
-      Prefix: prefix.toString()
+      Prefix: folder.getPath().toString()
     };
 
     return this.s3.listObjectsV2(getParams)
@@ -108,15 +121,14 @@ export class AmazonS3Backend implements IBackend {
   }
 
   /**
-   * Create an empty object.
+   * Delete a file.
    */
-  public createEmptyObject(bucket: Bucket, path: Path): Promise<any> {
+  deleteFile(bucket: Bucket, file: File): Promise<any> {
     var params = {
       Bucket: bucket.name,
-      Key: path.toString(),
-      Body: ''
+      Key: file.getPath().toString()
     };
 
-    return this.s3.putObject(params).promise();
+    return this.s3.deleteObject(params).promise();
   }
 }
