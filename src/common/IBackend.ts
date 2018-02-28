@@ -30,6 +30,11 @@ export interface IBackend {
   deleteFolder(bucket: Bucket, folder: Folder): Promise<any>;
 
   /**
+   * Get a download link for a file.
+   */
+  getFileLink(bucket: Bucket, file: File): string;
+
+  /**
    * Delete a file.
    */
   deleteFile(bucket: Bucket, file: File): Promise<any>;

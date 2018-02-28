@@ -30,7 +30,8 @@ export class AmazonS3Backend implements IBackend {
       accessKeyId: accessKeyId,
       secretAccessKey: secretAccessKey,
       sessionToken: sessionToken,
-      sslEnabled: true
+      sslEnabled: true,
+      signatureVersion: 'v4'
     });
   }
 
@@ -118,6 +119,18 @@ export class AmazonS3Backend implements IBackend {
 
         return this.s3.deleteObjects(deleteParams).promise();
       });
+  }
+
+  /**
+   * Get a download link for a file.
+   */
+  public getFileLink(bucket: Bucket, file: File): string {
+    var params = {
+      Bucket: bucket.name,
+      Key: file.getPath().toString()
+    };
+
+    return this.s3.getSignedUrl('getObject', params);
   }
 
   /**

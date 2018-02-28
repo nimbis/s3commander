@@ -12,7 +12,8 @@ export class BucketController {
    * @see http://docs.angularjs.org/guide/di
    */
   public static $inject = [
-    '$rootScope'
+    '$rootScope',
+    '$timeout'
   ];
 
   /**
@@ -83,7 +84,7 @@ export class BucketController {
   /**
    * Create an instance of the controller.
    */
-  constructor(private $rootScope: ng.IScope) {
+  constructor(private $rootScope: ng.IScope, private $timeout: ng.ITimeoutService) {
     this.currentFolder = new Folder(new Path('/'));
     this.folders = [];
     this.files = [];
@@ -191,6 +192,22 @@ export class BucketController {
       .then(() => {
         return this.loadContents();
       });
+  }
+
+  /**
+   * Download a file.
+   */
+  public downloadFile(file: File) {
+    var anchor = document.createElement('a');
+    anchor.href = this.backend.getFileLink(this.bucket, file);
+    anchor.target = '_blank';
+    anchor.download = file.getPath().name();
+
+    // the anchor element must be part of the document when it's clicked
+    // otherwise some browsers (firefox) will ignore the click event
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
   }
 
   /**

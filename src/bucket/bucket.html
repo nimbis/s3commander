@@ -27,6 +27,7 @@
   <!-- files -->
   <file ng-repeat="file in $ctrl.files"
     file="file"
+    on-download="$ctrl.downloadFile(file)"
     on-delete="$ctrl.deleteFile(file)"></file>
 
   <!-- folder controls -->
