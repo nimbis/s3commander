@@ -2,8 +2,9 @@
   <!-- errors -->
   <span ng-if="$ctrl.error">{{ $ctrl.error }}</span>
 
-  <!-- bucket and path information -->
-  <div class="s3c-section s3c-bucket-details">
+  <!-- navigation header and controls -->
+  <div class="s3c-top-section s3c-bucket-details">
+    <!-- bucket name and current path -->
     <span ng-if="$ctrl.bucket">{{ $ctrl.bucket.name }} /</span>
     <span ng-repeat="part in $ctrl.path.components()">{{ part }} /</span>
 
@@ -11,8 +12,8 @@
     <span ng-if="$ctrl.working">LOADING</span>
 
     <!-- navigation controls -->
-    <button class="s3c-nav-button" ng-click="$ctrl.loadContents()">Refresh</button>
-    <button class="s3c-nav-button" ng-click="$ctrl.navParent()">Up</button>
+    <button class="s3c-button" ng-click="$ctrl.loadContents()">Refresh</button>
+    <button class="s3c-button" ng-click="$ctrl.navParent()">Up</button>
   </div>
 
   <!-- folders -->
@@ -26,6 +27,11 @@
     file="file"
     on-delete="$ctrl.deleteFile(file)"></file>
 
-  <!-- TODO: folder create -->
+  <!-- folder controls -->
+  <div class="s3c-bottom-section s3c-folder-controls">
+    <input placeholder="folder name" />
+    <button class="s3c-button">Create</button>
+  </div>
+
   <!-- TODO: upload files -->
 </div>

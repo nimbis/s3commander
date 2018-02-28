@@ -4,23 +4,55 @@ html, body, {
   font-family: 'Open Sans', sans-serif;
 }
 
+/**
+ * Layout.
+ */
+
 div.s3c-bucket {
   border: 1px dashed #ccc;
   padding: 4px;
 }
 
-div.s3c-section {
-  padding: 4px;
+div.s3c-top-section, div.s3c-bottom-section {
   background-color: #eee;
+  padding: 4px;
+}
+
+div.s3c-top-section {
   border-bottom: 1px dashed black;
   margin-bottom: 8px;
 }
 
-div.s3c-bucket-details {
-  background-color: #eee;
-  font-weight: bold;
+div.s3c-bottom-section {
+  border-top: 1px dashed black;
+  margin-top: 8px;
 }
 
-div.s3c-bucket-details button {
-  margin-left: 6px;
+div.s3c-file, div.s3c-folder {
+  padding: 2px;
+  margin: 4px 0;
+}
+
+div.s3c-bucket button {
+  margin-left: 8px;
+}
+
+/**
+ * Style.
+ */
+
+div.s3c-bucket button {
+  border-style: solid;
+  border-radius: 5%;
+  border-width: 1px;
+
+  background-color: #fff;
+  border-color: #ccc;
+  color: black;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+div.s3c-bucket-details {
+  font-weight: bold;
 }
