@@ -8,6 +8,37 @@ html, body {
  * Layout.
  */
 
+div.s3c-session {
+  margin: 12px;
+}
+
+div.s3c-session-controls {
+  margin-bottom: 12px;
+}
+
+div.s3c-session-controls form {
+  width: 100%;
+}
+
+div.s3c-session-controls form label {
+  width: 48%;
+  float: left;
+  text-align: left;
+}
+
+div.s3c-session-controls form input {
+  width: 48%;
+  float: right;
+}
+
+div.s3c-form-group {
+  overflow: auto;
+  clear: both;
+  text-align: center;
+
+  padding: 8px 4px;
+}
+
 div.s3c-bucket {
   padding: 4px;
 }
@@ -59,6 +90,15 @@ div.s3c-controls label {
 /**
  * Style.
  */
+
+ div.s3c-session-controls {
+   border: 1px dashed #ccc;
+ }
+
+ div.s3c-form-group {
+   background-color: #eee;
+   border-bottom: 1px dashed #ccc;
+ }
 
 div.s3c-bucket {
   border: 1px dashed #ccc;

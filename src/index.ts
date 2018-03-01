@@ -8,6 +8,8 @@ import {FolderComponent} from './folder/FolderComponent';
 import {UploadFormComponent} from './uploadForm/UploadFormComponent';
 import {BucketComponent} from './bucket/BucketComponent';
 
+import {S3SessionComponent} from './s3session/S3SessionComponent';
+
 import './index.css';
 
 // register components and configure the module.
@@ -26,4 +28,5 @@ angular
   .component('file', FileComponent)
   .component('folder', FolderComponent)
   .component('uploadform', UploadFormComponent)
-  .component('bucket', BucketComponent);
+  .component('bucket', BucketComponent)
+  .component('s3session', S3SessionComponent);
