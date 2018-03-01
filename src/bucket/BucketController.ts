@@ -195,22 +195,6 @@ export class BucketController {
   }
 
   /**
-   * Download a file.
-   */
-  public downloadFile(file: File) {
-    var anchor = document.createElement('a');
-    anchor.href = this.backend.getFileLink(this.bucket, file);
-    anchor.target = '_blank';
-    anchor.download = file.getPath().name();
-
-    // the anchor element must be part of the document when it's clicked
-    // otherwise some browsers (firefox) will ignore the click event
-    document.body.appendChild(anchor);
-    anchor.click();
-    document.body.removeChild(anchor);
-  }
-
-  /**
    * Load file versions.
    */
   public loadFileVersions(file: File): Promise<any> {

@@ -8,10 +8,17 @@ export class File implements IBucketObject {
   private path: Path;
 
   /**
+   * Link to download the file.
+   */
+  private downloadLink: string;
+
+  /**
    * Create a file instance.
    */
-  constructor (path: Path) {
+  constructor (path: Path, downloadLink: string) {
     this.path = path;
+    this.downloadLink = downloadLink;
+
     if (this.path.isFolder()) {
       throw new Error(`File instance given a folder path: ${path}`);
     }
@@ -22,5 +29,12 @@ export class File implements IBucketObject {
    */
   public getPath(): Path {
     return this.path;
+  }
+
+  /**
+   * Get the download link.
+   */
+  public getDownloadLink(): string {
+    return this.downloadLink;
   }
 }

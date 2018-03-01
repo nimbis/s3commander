@@ -21,4 +21,10 @@ export interface IFileVersion {
    * Whether this version represents a deletion marker.
    */
   deleteMarker: boolean;
+
+  /**
+   * Link to download this specific verison of a file. Not applicable for
+   * delete markers.
+   */
+  downloadLink: string;
 }

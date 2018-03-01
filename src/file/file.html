@@ -1,6 +1,8 @@
 <div class="s3c-file">
-  <!-- TODO: icon -->
-  <a ng-click="$ctrl.onDownload()">{{ $ctrl.file.path.name() }}</a>
+  <!-- file link -->
+  <a href="{{ $ctrl.file.getDownloadLink() }}"
+    download="{{ $ctrl.file.getPath().name() }}"
+    target="_blank">{{ $ctrl.file.getPath().name() }}</a>
 
   <!-- controls -->
   <div class="s3c-spinner" ng-if="$ctrl.working"></div>
@@ -10,7 +12,13 @@
   <!-- file versions -->
   <ul class="s3c-file-versions" ng-if="$ctrl.showVersions">
     <li ng-repeat="version in $ctrl.versions">
-      <a ng-if="!version.deleteMarker">{{ version.lastModified }}</a>
+      <!-- file version link -->
+      <a href="{{ version.downloadLink }}"
+        download="{{ $ctrl.file.getPath().name() }}"
+        target="_blank"
+        ng-if="!version.deleteMarker">{{ version.lastModified }}</a>
+
+      <!-- delete marker -->
       <span ng-if="version.deleteMarker">{{ version.lastModified }}</span>
     </li>
   </ul>

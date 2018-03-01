@@ -27,11 +27,6 @@ export interface IBackend {
   deleteFolder(bucket: Bucket, folder: Folder): Promise<any>;
 
   /**
-   * Get a download link for a file.
-   */
-  getFileLink(bucket: Bucket, file: File): string;
-
-  /**
    * Get versions of the given file.
    */
   getFileVersions(bucket: Bucket, file: File): Promise<IFileVersion[]>;

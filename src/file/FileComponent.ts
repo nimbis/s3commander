@@ -3,7 +3,6 @@ import {FileController} from './FileController';
 export const FileComponent: angular.IComponentOptions = {
   bindings: {
     file: '=',
-    onDownload: '&',
     onLoadVersions: '&',
     onDelete: '&'
   },

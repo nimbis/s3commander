@@ -60,18 +60,24 @@ export class AmazonS3Backend implements IBackend {
 
     return this.s3.listObjectsV2(params)
       .promise()
-      .then(function (data: any) {
+      .then((data: any) => {
         // extract folder objects
         let folders = data.CommonPrefixes.map(function (folderData: any) {
           return new Folder(new Path(folderData.Prefix));
         });
 
         // extract file objects
-        let files = data.Contents.filter(function (fileData: any) {
+        let files = data.Contents.filter((fileData: any) => {
           // ignore the folder object by comparing it's path
           return folder.getPath().toString() !== fileData.Key;
-        }).map(function (fileData: any) {
-          return new File(new Path(fileData.Key));
+        }).map((fileData: any) => {
+          let downloadLink = this.s3.getSignedUrl('getObject', {
+            Bucket: bucket.name,
+            Key: fileData.Key,
+            Expires: 900
+          });
+
+          return new File(new Path(fileData.Key), downloadLink);
         });
 
         // return the contents
@@ -124,18 +130,6 @@ export class AmazonS3Backend implements IBackend {
   }
 
   /**
-   * Get a download link for a file.
-   */
-  public getFileLink(bucket: Bucket, file: File): string {
-    var params = {
-      Bucket: bucket.name,
-      Key: file.getPath().toString()
-    };
-
-    return this.s3.getSignedUrl('getObject', params);
-  }
-
-  /**
    * Get versions of the given file.
    */
   public getFileVersions(bucket: Bucket, file: File): Promise<IFileVersion[]> {
@@ -149,11 +143,19 @@ export class AmazonS3Backend implements IBackend {
       .then((data: any) => {
         // extract file versions
         let versions = data.Versions.map((versionData: any) => {
+          let downloadLink = this.s3.getSignedUrl('getObject', {
+            Bucket: bucket.name,
+            Key: file.getPath().toString(),
+            VersionId: versionData.VersionId,
+            Expires: 900
+          });
+
           return {
             latest: versionData.IsLatest,
             versionId: versionData.VersionId,
             lastModified: versionData.LastModified,
-            deleteMarker: false
+            deleteMarker: false,
+            downloadLink: downloadLink
           };
         });
 
@@ -163,7 +165,8 @@ export class AmazonS3Backend implements IBackend {
             latest: markerData.IsLatest,
             versionId: markerData.VersionId,
             lastModified: markerData.LastModified,
-            deleteMarker: true
+            deleteMarker: true,
+            downloadLink: null
           };
         });
 
