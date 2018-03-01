@@ -27,6 +27,7 @@
   <!-- files -->
   <file ng-repeat="file in $ctrl.files"
     file="file"
+    versioned="$ctrl.bucket.versioned"
     on-load-versions="$ctrl.loadFileVersions(file)"
     on-delete="$ctrl.deleteFile(file)"></file>
 

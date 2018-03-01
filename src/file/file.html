@@ -6,7 +6,9 @@
 
   <!-- controls -->
   <div class="s3c-spinner" ng-if="$ctrl.working"></div>
-  <button class="s3c-button" ng-click="$ctrl.toggleVersions()">Versions</button>
+  <button class="s3c-button"
+    ng-if="$ctrl.versioned"
+    ng-click="$ctrl.toggleVersions()">Versions</button>
   <button class="s3c-button" ng-click="$ctrl.onDelete()">Delete</button>
 
   <!-- file versions -->

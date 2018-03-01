@@ -16,6 +16,11 @@ export class FileController {
   public file: File;
 
   /**
+   * Whether the parent bucket is versioned. Passed in as component binding.
+   */
+  public versioned: boolean;
+
+  /**
    * File versions.
    */
   public versions: IFileVersion[];
@@ -43,6 +48,7 @@ export class FileController {
    * Toggle showing file versions.
    */
   public toggleVersions() {
+    // hide displayed file versions
     if (this.showVersions) {
       this.showVersions = false;
       return;
