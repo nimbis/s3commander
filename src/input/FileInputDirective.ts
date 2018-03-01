@@ -40,7 +40,7 @@ export class FileInputDirective implements ng.IDirective {
     });
 
     // trigger the file input dialog when the user presses the button
-    button.bind('click', () => {
+    button.on('click', () => {
       (input[0] as any).click();
     });
 

@@ -17,7 +17,7 @@ export class SubmitFormDirective implements ng.IDirective {
   ) {
     // add a submit method on the form object
     form.submit = function() {
-      (element[0] as any).submit();
+      (element[0] as HTMLFormElement).submit();
     };
   }
 }
