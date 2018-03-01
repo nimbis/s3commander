@@ -39,6 +39,7 @@ gulp build
   * [TypeScript](https://www.typescriptlang.org)
   * [AngularJS](https://angularjs.org/)
   * https://github.com/toddmotto/angularjs-styleguide
+  * https://ivision.com/wp-content/uploads/AngularJS_v2.pdf
   * https://codepen.io/martinmcwhorter/post/angularjs-1-x-with-typescript-or-es6-best-practices
 * Amazon S3
   * [REST API](https://docs.aws.amazon.com/AmazonS3/latest/API/Welcome.html)
