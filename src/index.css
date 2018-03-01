@@ -43,7 +43,7 @@ div.s3c-bucket button.s3c-button {
   margin-left: 8px;
 }
 
-div.s3c-file-upload input[type="file"] {
+div.s3c-controls input[type="file"] {
   width: 0.1px;
   height: 0.1px;
   opacity: 0;
@@ -52,7 +52,7 @@ div.s3c-file-upload input[type="file"] {
   z-index: -1;
 }
 
-div.s3c-file-upload label {
+div.s3c-controls label {
   cursor: pointer;
 }
 
@@ -138,11 +138,12 @@ div.s3c-spinner {
   }
 }
 
-div.s3c-file-upload form {
+div.s3c-controls form {
+  display: inline;
   margin: 4px 0;
 }
 
-div.s3c-file-upload label {
+div.s3c-controls label {
   /* why is this necessary??? */
-  padding: 4px 8px;
+  padding: 3px 6px;
 }

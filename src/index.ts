@@ -1,7 +1,9 @@
 import * as angular from 'angular';
 
+import {FileInputDirective} from './input/FileInputDirective';
 import {FileComponent} from './file/FileComponent';
 import {FolderComponent} from './folder/FolderComponent';
+import {UploadFormComponent} from './uploadForm/UploadFormComponent';
 import {BucketComponent} from './bucket/BucketComponent';
 
 import './index.css';
@@ -17,6 +19,8 @@ angular
       'https://*.s3.amazonaws.com/'
     ]);
   })
+  .directive('fileInput', [() => new FileInputDirective()])
   .component('file', FileComponent)
   .component('folder', FolderComponent)
+  .component('uploadform', UploadFormComponent)
   .component('bucket', BucketComponent);

@@ -1,0 +1,14 @@
+<form method="post"
+  enctype="multipart/form-data"
+  action="{{ $ctrl.config.url }}">
+
+  <!-- settings -->
+  <input type="hidden" name="key" ng-model="$ctrl.key" />
+  <input ng-repeat="(key, value) in $ctrl.config.fields"
+    type="hidden"
+    name="{{ key }}"
+    value="{{ value }}" />
+
+  <!-- file input (must be the last form input for the request to work) -->
+  <file-input ng-model="$ctrl.file" ng-change="$ctrl.onSelectFile()" />
+</form>

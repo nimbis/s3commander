@@ -1,10 +1,11 @@
-import {Path} from './../common/Path';
 import {Bucket} from './../common/Bucket';
+import {Path} from './../common/Path';
 import {IBucketObject} from './../common/IBucketObject';
 import {File} from './../common/File';
 import {Folder} from './../common/Folder';
-import {IBackend} from './../common/IBackend';
 import {IFolderContents} from './../common/IFolderContents';
+import {IUploadConfig} from './../common/IUploadConfig';
+import {IBackend} from './../common/IBackend';
 import {AmazonS3Backend} from './../common/AmazonS3Backend';
 
 export class BucketController {
@@ -72,6 +73,11 @@ export class BucketController {
   public files: File[];
 
   /**
+   * Settings for uploading files.
+   */
+  public uploadConfig: IUploadConfig;
+
+  /**
    * Used to specify the name of new folders.
    */
   public folderName: string;
@@ -115,7 +121,18 @@ export class BucketController {
     this.working = true;
     return this.backend.getBucket(this.bucketName)
       .then((bucket: Bucket) => {
+        // store bucket
         this.bucket = bucket;
+
+        // retrieve upload settings
+        this.uploadConfig = this.backend.getUploadConfig(
+          this.bucket,
+          this.currentFolder);
+
+        // XXX: override upload url
+        this.uploadConfig.url = `https://${bucket.name}.s3.amazonaws.com/`;
+
+        // load current folder contents
         return this.backend.getContents(bucket, this.currentFolder);
       })
       .then((contents: IFolderContents) => {
@@ -134,10 +151,11 @@ export class BucketController {
           return 0;
         }
 
-        // retrieve folders and files in alphabetical order
+        // store folders and files in alphabetical order
         this.folders = contents.folders.sort(compareObjectNames);
         this.files = contents.files.sort(compareObjectNames);
       })
+      .then()
       .catch((error: Error) => {
         // display the error
         this.error = error;
