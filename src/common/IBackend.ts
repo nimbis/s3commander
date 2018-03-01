@@ -1,6 +1,7 @@
 import {Path} from './Path';
 import {Bucket} from './Bucket';
 import {File} from './File';
+import {IFileVersion} from './IFileVersion';
 import {Folder} from './Folder';
 
 export interface IFolderContents {
@@ -33,6 +34,11 @@ export interface IBackend {
    * Get a download link for a file.
    */
   getFileLink(bucket: Bucket, file: File): string;
+
+  /**
+   * Get versions of the given file.
+   */
+  getFileVersions(bucket: Bucket, file: File): Promise<IFileVersion[]>;
 
   /**
    * Delete a file.

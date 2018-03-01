@@ -5,6 +5,7 @@ import AWS = require('aws-sdk');
 import {Path} from './Path';
 import {Bucket} from './Bucket';
 import {File} from './File';
+import {IFileVersion} from './IFileVersion';
 import {Folder} from './Folder';
 import {IBackend, IFolderContents} from './IBackend';
 
@@ -131,6 +132,43 @@ export class AmazonS3Backend implements IBackend {
     };
 
     return this.s3.getSignedUrl('getObject', params);
+  }
+
+  /**
+   * Get versions of the given file.
+   */
+  public getFileVersions(bucket: Bucket, file: File): Promise<IFileVersion[]> {
+    var params = {
+      Bucket: bucket.name,
+      Prefix: file.getPath().toString()
+    };
+
+    return this.s3.listObjectVersions(params)
+      .promise()
+      .then((data: any) => {
+        // extract file versions
+        let versions = data.Versions.map((versionData: any) => {
+          return {
+            latest: versionData.IsLatest,
+            versionId: versionData.VersionId,
+            lastModified: versionData.LastModified,
+            deleteMarker: false
+          };
+        });
+
+        // extract deletion markers
+        let markers = data.DeleteMarkers.map((markerData: any) => {
+          return {
+            latest: markerData.IsLatest,
+            versionId: markerData.VersionId,
+            lastModified: markerData.LastModified,
+            deleteMarker: true
+          };
+        });
+
+        // return versions and markers
+        return versions.concat(markers);
+      });
   }
 
   /**
