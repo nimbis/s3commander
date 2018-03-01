@@ -1,9 +1,10 @@
-import {Path} from './Path';
 import {Bucket} from './Bucket';
-import {File} from './File';
-import {IFileVersion} from './IFileVersion';
+import {Path} from './Path';
 import {Folder} from './Folder';
 import {IFolderContents} from './IFolderContents';
+import {IUploadConfig} from './IUploadConfig';
+import {File} from './File';
+import {IFileVersion} from './IFileVersion';
 
 export interface IBackend {
   /**
@@ -25,6 +26,11 @@ export interface IBackend {
    * Delete a folder and its contents.
    */
   deleteFolder(bucket: Bucket, folder: Folder): Promise<any>;
+
+  /**
+   * Get settings necessary to upload files to the given folder.
+   */
+  getUploadConfig(bucket: Bucket, folder: Folder): IUploadConfig;
 
   /**
    * Get versions of the given file.

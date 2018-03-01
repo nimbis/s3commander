@@ -2,12 +2,13 @@
 
 import AWS = require('aws-sdk');
 
-import {Path} from './Path';
 import {Bucket} from './Bucket';
-import {File} from './File';
-import {IFileVersion} from './IFileVersion';
+import {Path} from './Path';
 import {Folder} from './Folder';
 import {IFolderContents} from './IFolderContents';
+import {IUploadConfig} from './IUploadConfig';
+import {File} from './File';
+import {IFileVersion} from './IFileVersion';
 import {IBackend} from './IBackend';
 
 export class AmazonS3Backend implements IBackend {
@@ -127,6 +128,23 @@ export class AmazonS3Backend implements IBackend {
 
         return this.s3.deleteObjects(deleteParams).promise();
       });
+  }
+
+  /**
+   * Get settings necessary to upload files to the given folder.
+   *
+   * @see https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#createPresignedPost-property
+   */
+  public getUploadConfig(bucket: Bucket, folder: Folder): IUploadConfig {
+    var params = {
+      Bucket: bucket.name,
+      Conditions: [
+        ['starts-with', '$key', folder.getPath().toString()]
+      ],
+      Expires: 900
+    };
+
+    return this.s3.createPresignedPost(params);
   }
 
   /**
