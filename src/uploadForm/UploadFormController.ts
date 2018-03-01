@@ -3,6 +3,14 @@ import {IUploadConfig} from './../common/IUploadConfig';
 
 export class UploadFormController {
   /**
+   * Dependencies we want passed to the constructor.
+   * @see http://docs.angularjs.org/guide/di
+   */
+  public static $inject = [
+    '$timeout'
+  ];
+
+  /**
    * Upload configuration. Passed in as component binding.
    */
   public config: IUploadConfig;
@@ -25,7 +33,7 @@ export class UploadFormController {
   /**
    * Create an instance of the upload form.
    */
-  constructor() {
+  constructor(private $timeout: ng.ITimeoutService) {
     this.file = null;
     this.key = '';
   }
@@ -33,12 +41,20 @@ export class UploadFormController {
   /**
    * Called when the user selects a file.
    */
-  public onSelectFile() {
+  public onSelectFile(form: any) {
     // update the file key
     this.key = this.folder
       .getPath()
       .clone()
       .push(this.file.name)
       .toString();
+
+    // submit the form after the current $digest() cycle has finished so the
+    // key hidden input has been updated to the value set above
+    this.$timeout(() => {
+      if (form.$valid) {
+        form.submit();
+      }
+    });
   }
 }

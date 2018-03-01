@@ -1,6 +1,8 @@
 import * as angular from 'angular';
 
 import {FileInputDirective} from './input/FileInputDirective';
+import {SubmitFormDirective} from './input/SubmitFormDirective';
+
 import {FileComponent} from './file/FileComponent';
 import {FolderComponent} from './folder/FolderComponent';
 import {UploadFormComponent} from './uploadForm/UploadFormComponent';
@@ -20,6 +22,7 @@ angular
     ]);
   })
   .directive('fileInput', [() => new FileInputDirective()])
+  .directive('submitForm', [() => new SubmitFormDirective()])
   .component('file', FileComponent)
   .component('folder', FolderComponent)
   .component('uploadform', UploadFormComponent)
