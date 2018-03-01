@@ -4,6 +4,7 @@ export const FileComponent: angular.IComponentOptions = {
   bindings: {
     file: '=',
     onDownload: '&',
+    onLoadVersions: '&',
     onDelete: '&'
   },
   template: require('./file.html'),

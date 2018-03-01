@@ -24,9 +24,19 @@ div.s3c-bottom-section {
   margin-top: 8px;
 }
 
-div.s3c-file, div.s3c-folder {
+div.s3c-folder, div.s3c-file {
   padding: 4px;
   margin: 2px 0;
+}
+
+ul.s3c-file-versions {
+  margin: 2px 0;
+  padding-left: 16px;
+}
+
+ul.s3c-file-versions li {
+  margin: 2px 0;
+  padding: 4px 0;
 }
 
 div.s3c-bucket button.s3c-button {
@@ -68,6 +78,14 @@ div.s3c-bottom-section {
 
 div.s3c-folder, div.s3c-file {
   background-color: #eee;
+}
+
+ul.s3c-file-versions {
+  list-style: none;
+}
+
+ul.s3c-file-versions li {
+  border-top: 1px dashed #ccc;
 }
 
 button.s3c-button, label.s3c-button {

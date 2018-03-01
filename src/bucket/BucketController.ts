@@ -185,7 +185,7 @@ export class BucketController {
   /**
    * Delete a folder and it's contents.
    */
-  public deleteFolder(folder: Folder) {
+  public deleteFolder(folder: Folder): Promise<any> {
     this.working = true;
     return this.backend.deleteFolder(this.bucket, folder)
       .then(() => {
@@ -207,6 +207,13 @@ export class BucketController {
     document.body.appendChild(anchor);
     anchor.click();
     document.body.removeChild(anchor);
+  }
+
+  /**
+   * Load file versions.
+   */
+  public loadFileVersions(file: File): Promise<any> {
+    return this.backend.getFileVersions(this.bucket, file);
   }
 
   /**
