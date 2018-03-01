@@ -69,9 +69,12 @@ export class FileController {
    * Load file versions. This is overriden by the component binding.
    */
   public onLoadVersions(): Promise<IFileVersion[]> {
-    // overriden by binding
-    return new Promise(function (resolve, fail) {
-      fail('not implemented');
+    // overriden by binding but TypeScript requires we return something
+    return new Promise(function (
+      resolve: (data: any) => void,
+      reject: (error: Error) => void
+    ) {
+      reject(new Error('not implemented'));
     });
   }
 
