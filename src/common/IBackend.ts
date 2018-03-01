@@ -3,11 +3,7 @@ import {Bucket} from './Bucket';
 import {File} from './File';
 import {IFileVersion} from './IFileVersion';
 import {Folder} from './Folder';
-
-export interface IFolderContents {
-  folders: Folder[];
-  files: File[];
-}
+import {IFolderContents} from './IFolderContents';
 
 export interface IBackend {
   /**

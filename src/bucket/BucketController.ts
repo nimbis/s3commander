@@ -3,7 +3,8 @@ import {Bucket} from './../common/Bucket';
 import {IBucketObject} from './../common/IBucketObject';
 import {File} from './../common/File';
 import {Folder} from './../common/Folder';
-import {IBackend, IFolderContents} from './../common/IBackend';
+import {IBackend} from './../common/IBackend';
+import {IFolderContents} from './../common/IFolderContents';
 import {AmazonS3Backend} from './../common/AmazonS3Backend';
 
 export class BucketController {

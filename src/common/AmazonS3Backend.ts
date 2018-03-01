@@ -7,7 +7,8 @@ import {Bucket} from './Bucket';
 import {File} from './File';
 import {IFileVersion} from './IFileVersion';
 import {Folder} from './Folder';
-import {IBackend, IFolderContents} from './IBackend';
+import {IFolderContents} from './IFolderContents';
+import {IBackend} from './IBackend';
 
 export class AmazonS3Backend implements IBackend {
   /**
