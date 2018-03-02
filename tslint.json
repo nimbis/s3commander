@@ -8,7 +8,10 @@
     "class-name": true,
     "comment-format": [true,
       "check-space",
-      "check-lowercase"
+      "check-lowercase",
+      {
+        "ignore-words": ["TODO", "XXX"]
+      }
     ],
     "curly": true,
     "eofline": true,
