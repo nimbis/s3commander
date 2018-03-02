@@ -91,9 +91,14 @@ export class BucketController {
    * Create an instance of the controller.
    */
   constructor(private $rootScope: ng.IScope) {
+    this.working = false;
+    this.error = null;
+    this.bucket = null;
     this.currentFolder = new Folder(new Path('/'));
     this.folders = [];
     this.files = [];
+    this.uploadConfig = null;
+    this.folderName = '';
   }
 
   /**
@@ -119,6 +124,7 @@ export class BucketController {
    */
   public loadContents(): Promise<any> {
     this.working = true;
+    this.error = null;
     return this.backend.getBucket(this.bucketName)
       .then((bucket: Bucket) => {
         // store bucket
@@ -157,7 +163,6 @@ export class BucketController {
         this.folders = contents.folders.sort(compareObjectNames);
         this.files = contents.files.sort(compareObjectNames);
       })
-      .then()
       .catch((error: Error) => {
         // display the error
         this.error = error;
@@ -191,15 +196,27 @@ export class BucketController {
    * Create a folder.
    */
   public createFolder(): Promise<any> {
+    // corner case: invalid folder name
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions
+    let folderRegex = new RegExp('^[\\w\\.\\-]+$');
+    if (!folderRegex.test(this.folderName)) {
+      this.error = new Error('Invalid folder name!');
+      return;
+    }
+
     let folderPath = this.currentFolder.getPath()
       .clone()
       .push(`${this.folderName}/`);
 
     this.working = true;
+    this.error = null;
     return this.backend.createFolder(this.bucket, new Folder(folderPath))
       .then(() => {
         this.folderName = '';
         return this.loadContents();
+      })
+      .catch(() => {
+        this.error = new Error('Failed to create folder');
       });
   }
 
@@ -208,9 +225,13 @@ export class BucketController {
    */
   public deleteFolder(folder: Folder): Promise<any> {
     this.working = true;
+    this.error = null;
     return this.backend.deleteFolder(this.bucket, folder)
       .then(() => {
         return this.loadContents();
+      })
+      .catch(() => {
+        this.error = new Error('Failed to delete folder');
       });
   }
 
@@ -226,9 +247,13 @@ export class BucketController {
    */
   public deleteFile(file: File) {
     this.working = true;
+    this.error = null;
     return this.backend.deleteFile(this.bucket, file)
       .then(() => {
         return this.loadContents();
+      })
+      .catch(() => {
+        this.error = new Error('Failed to delete file');
       });
   }
 }
