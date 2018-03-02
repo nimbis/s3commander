@@ -11,5 +11,5 @@ export interface IUploadConfig {
   /**
    * Fields to include in the POST request for it to succeed.
    */
-  fields: { [key:string]: string };
+  fields: { [key: string]: string };
 }
