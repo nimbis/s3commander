@@ -30,6 +30,14 @@ Create a release build.
 gulp build
 ```
 
+## Testing
+
+Run the TypeScript linter.
+
+```
+gulp tslint
+```
+
 ## Quirks
 
 * The HTML file upload functionality uses an HTTPS API endpoint based on the bucket name (i.e. `https://<bucket>s3.amazonaws.com`). If the bucket name has dots (`.`) in the name this will fail because you can't use HTTPS with subdomains.
