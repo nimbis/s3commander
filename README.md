@@ -46,7 +46,7 @@ gulp tslint
 
 * Tools
   * [Yeoman](http://yeoman.io/)
-  * [Yeaman FountainJS Generator](http://fountainjs.io/)
+  * [Yeoman FountainJS Generator](http://fountainjs.io/)
 * Frameworks and Libraries
   * [TypeScript](https://www.typescriptlang.org)
   * [AngularJS](https://angularjs.org/)
