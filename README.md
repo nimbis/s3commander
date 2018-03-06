@@ -2,7 +2,7 @@
 
 Web-based S3 file browser.
 
-## Quick Start
+## Local Development
 
 Install required tools.
 
@@ -16,7 +16,29 @@ Install project packages.
 npm install
 ```
 
-Serve the development version of the application and reload as necessary.
+Run the development server.
+
+```
+gulp serve
+```
+
+## Vagrant Development
+
+Spin up the Vagrant development box and SSH into it.
+
+```
+vagrant up
+vagrant ssh
+```
+
+Navigate to the shared project folder and install project packages.
+
+```
+cd /vagrant
+npm install
+```
+
+Run the development server.
 
 ```
 gulp serve
