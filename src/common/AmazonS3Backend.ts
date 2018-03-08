@@ -136,6 +136,7 @@ export class AmazonS3Backend implements IBackend {
    * @see https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#createPresignedPost-property
    */
   public getUploadConfig(bucket: Bucket, folder: Folder): IUploadConfig {
+    // retrieve post url and fields including pre-signed authorization field
     var params = {
       Bucket: bucket.name,
       Conditions: [
@@ -144,7 +145,17 @@ export class AmazonS3Backend implements IBackend {
       Expires: 900
     };
 
-    return this.s3.createPresignedPost(params);
+    let config = this.s3.createPresignedPost(params);
+
+    // return the fields and a bucket url instead of the inline url.
+    // this avoids a URL redirect issue that can happen when a POST request is
+    // sent to a bucket in a different region than the current one
+    let genericUrl = new URL(config.url);
+
+    return {
+      url: `https://${bucket.name}.${genericUrl.hostname}/`,
+      fields: config.fields
+    };
   }
 
   /**

@@ -135,11 +135,6 @@ export class BucketController {
           this.bucket,
           this.currentFolder);
 
-        // override upload url to work around a redirection issue caused
-        // by the API attempting to redirect the POST request which fails
-        // when the browser doesn't automatically resubmit it
-        this.uploadConfig.url = `https://${bucket.name}.s3.amazonaws.com/`;
-
         // load current folder contents
         return this.backend.getContents(bucket, this.currentFolder);
       })

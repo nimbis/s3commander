@@ -19,8 +19,11 @@ angular
     // https://docs.angularjs.org/api/ng/provider/$sceDelegateProvider
     $sceDelegateProvider.resourceUrlWhitelist([
       'self',
+
+      // amazon s3 (generic url, bucket url, bucket url in govcloud regions)
       'https://s3.amazonaws.com/*',
-      'https://*.s3.amazonaws.com/'
+      'https://*.s3.amazonaws.com/',
+      'https://*.s3.*.amazonaws.com/'
     ]);
   })
   .directive('fileInput', [() => new FileInputDirective()])
