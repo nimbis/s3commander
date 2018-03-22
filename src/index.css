@@ -1,0 +1,189 @@
+html, body {
+  margin: 0;
+  height: 100%;
+  font-family: 'Open Sans', sans-serif;
+}
+
+/**
+ * Layout.
+ */
+
+div.s3c-session {
+  margin: 12px;
+}
+
+div.s3c-session-controls {
+  margin-bottom: 12px;
+}
+
+div.s3c-session-controls form {
+  width: 100%;
+}
+
+div.s3c-session-controls form label {
+  width: 48%;
+  float: left;
+  text-align: left;
+}
+
+div.s3c-session-controls form input {
+  width: 48%;
+  float: right;
+}
+
+div.s3c-form-group {
+  overflow: auto;
+  clear: both;
+  text-align: center;
+
+  padding: 8px 4px;
+}
+
+div.s3c-bucket {
+  padding: 4px;
+}
+
+div.s3c-top-section, div.s3c-bottom-section {
+  padding: 4px;
+}
+
+div.s3c-top-section {
+  margin-bottom: 8px;
+}
+
+div.s3c-bottom-section {
+  margin-top: 8px;
+}
+
+div.s3c-folder, div.s3c-file {
+  padding: 4px;
+  margin: 2px 0;
+}
+
+ul.s3c-file-versions {
+  margin: 2px 0;
+  padding-left: 16px;
+}
+
+ul.s3c-file-versions li {
+  margin: 2px 0;
+  padding: 4px 0;
+}
+
+div.s3c-bucket button.s3c-button {
+  margin-left: 8px;
+}
+
+div.s3c-controls input[type="file"] {
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  position: absolute;
+  z-index: -1;
+}
+
+div.s3c-controls label {
+  cursor: pointer;
+}
+
+/**
+ * Style.
+ */
+
+ div.s3c-session-controls {
+   border: 1px dashed #ccc;
+ }
+
+ div.s3c-form-group {
+   background-color: #eee;
+   border-bottom: 1px dashed #ccc;
+ }
+
+div.s3c-bucket {
+  border: 1px dashed #ccc;
+}
+
+div.s3c-top-section, div.s3c-bottom-section {
+ background-color: #eee;
+}
+
+div.s3c-top-section {
+ border-bottom: 1px dashed black;
+}
+
+div.s3c-bottom-section {
+ border-top: 1px dashed black;
+}
+
+div.s3c-folder, div.s3c-file {
+  background-color: #eee;
+}
+
+ul.s3c-file-versions {
+  list-style: none;
+}
+
+ul.s3c-file-versions li {
+  border-top: 1px dashed #ccc;
+}
+
+button.s3c-button, label.s3c-button {
+  border-style: solid;
+  border-radius: 5%;
+  border-width: 1px;
+
+  background-color: #fff;
+  border-color: #ccc;
+  color: black;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+div.s3c-bucket-details {
+  font-weight: bold;
+}
+
+div.s3c-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+
+  border-radius: 50%;
+  border: 1px dashed black;
+  background: linear-gradient(#ccc, white);
+  -webkit-animation: s3c-spinner-spin 2s linear infinite;
+  -moz-animation: s3c-spinner-spin 2s linear infinite;
+  animation: s3c-spinner-spin 2s linear infinite;
+}
+
+@-webkit-keyframes s3c-spinner-spin {
+  100% {
+    -webkit-transform: rotate(360deg);
+  }
+}
+
+@-moz-keyframes s3c-spinner-spin {
+  100% {
+    -moz-transform: rotate(360deg);
+  }
+}
+
+@keyframes s3c-spinner-spin {
+  100% {
+    -webkit-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+
+div.s3c-controls form {
+  display: inline;
+  margin: 4px 0;
+}
+
+div.s3c-controls label {
+  /* why is this necessary??? */
+  padding: 3px 6px;
+}

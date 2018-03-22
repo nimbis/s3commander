@@ -1,76 +1,79 @@
-s3commander
-===========
+# s3commander
 
 Web-based S3 file browser.
 
-Requirements
-------------
+## Local Development
 
-* Bootstrap 3.0.0+
-* jQuery 1.11.2+
+Install required tools.
 
-Quick Setup
------------
-
-Include the necessary scripts and stylesheets.
-
-```html
-<link rel="stylesheet" href="s3commander.css" />
-<script src="sha1.js"></script>
-<script src="s3commander.js"></script>
+```
+npm install -g gulp-cli
 ```
 
-Create a ```<div />``` element to display the browser.
+Install project packages.
 
-```html
-<div id="s3commander"></div>
+```
+npm install
 ```
 
-Initialize the browser.
+Run the development server.
 
-```javascript
-$(document).ready(function(){
-    $("#s3commander").s3commander({
-        sAccessKey: "...",
-        sSecretKey: "...",
-        sBucket: "bucketname",
-        sPrefix: "/super/secure/stuff",
-    });
-})
+```
+gulp serve
 ```
 
-Take a look at the included ```index.html``` file for a more complete example.
+## Vagrant Development
 
-Quirks
-------
+Spin up the Vagrant development box and SSH into it.
 
-* Folders are just S3 objects where the key ends in a trailing slash.
-* Deleting a folder does not delete its contents. It will still appear in the
-  browser as a folder until its contents are deleted.
-* When not using Dropzone for drag-and-drop uploads, the directory contents will
-  not automatically refresh after a file is uploaded. The user needs to click
-  the refresh button manually.
+```
+vagrant up
+vagrant ssh
+```
 
-Contributing
-------------
+Navigate to the shared project folder and install project packages.
 
-See the [Contributing Guidelines](CONTRIBUTING.md).
+```
+cd /vagrant
+npm install
+```
 
-Version History:
-----------------
+Run the development server.
 
-v0.3.10 - July 1, 2015
+```
+gulp serve
+```
 
-    * Adding cursor style to s3links.  Updated bootstrap from CDN in example index.html.
+## Build
 
-v0.3.9 - June 30, 2015
+Create a release build.
 
-    * Added button for file uploads.  Made icons clickable.  Made files have 'click' pointer.
+```
+gulp build
+```
 
-v0.3.8 - June 18, 2015
+## Testing
 
-    * Fixed issue with losing versions.  Changed signing method to (properly) allow for spaces (and likely other escape-needing characters).
+Run the TypeScript linter.
 
-v0.3.7 - June 14, 2015
+```
+gulp tslint
+```
 
-    * Implemented iMaxFilesize.  Set default to 1GB (10GB in example HTML).
+## Quirks
+
+* The HTML file upload functionality uses an HTTPS API endpoint based on the bucket name (i.e. `https://<bucket>s3.amazonaws.com`). If the bucket name has dots (`.`) in the name this will fail because you can't use HTTPS with subdomains.
+
+## References
+
+* Tools
+  * [Yeoman](http://yeoman.io/)
+  * [Yeoman FountainJS Generator](http://fountainjs.io/)
+* Frameworks and Libraries
+  * [TypeScript](https://www.typescriptlang.org)
+  * [AngularJS](https://angularjs.org/)
+  * https://github.com/toddmotto/angularjs-styleguide
+  * https://ivision.com/wp-content/uploads/AngularJS_v2.pdf
+  * https://codepen.io/martinmcwhorter/post/angularjs-1-x-with-typescript-or-es6-best-practices
+* Amazon S3
+  * [REST API](https://docs.aws.amazon.com/AmazonS3/latest/API/Welcome.html)

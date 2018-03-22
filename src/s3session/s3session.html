@@ -1,0 +1,54 @@
+<div class="s3c-session">
+  <div class="s3c-session-controls">
+    <form>
+      <div class="s3c-form-group">
+        <label for="region">Region</label>
+        <input type="text"
+          id="region"
+          ng-model="$ctrl.region"
+          ng-disabled="$ctrl.connected" />
+      </div>
+
+      <div class="s3c-form-group">
+        <label for="bucket">Bucket</label>
+        <input type="text"
+          id="bucket"
+          ng-model="$ctrl.bucket"
+          ng-disabled="$ctrl.connected" />
+      </div>
+
+      <div class="s3c-form-group">
+        <label for="accessKeyId">AWS Access Key ID</label>
+        <input type="text"
+          id="accessKeyId"
+          ng-model="$ctrl.accessKeyId"
+          ng-disabled="$ctrl.connected" />
+      </div>
+
+      <div class="s3c-form-group">
+        <label for="secretAccessKey">AWS Secret Access Key</label>
+        <input type="password"
+          id="secretAccessKey"
+          ng-model="$ctrl.secretAccessKey"
+          ng-disabled="$ctrl.connected" />
+      </div>
+
+      <div class="s3c-form-group">
+        <button class="s3c-button"
+          ng-if="!$ctrl.connected"
+          ng-click="$ctrl.connect()">Connect</button>
+
+        <button class="s3c-button"
+          ng-if="$ctrl.connected"
+          ng-click="$ctrl.disconnect()">Disconnect</button>
+      </div>
+    </form>
+  </div>
+
+  <bucket backend="'s3'"
+    name="$ctrl.bucket"
+    aws-region="$ctrl.region"
+    aws-access-key-id="$ctrl.accessKeyId"
+    aws-secret-access-key="$ctrl.secretAccessKey"
+    ng-if="$ctrl.connected"></bucket>
+</div>
