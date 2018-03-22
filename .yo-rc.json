@@ -10,8 +10,7 @@
       "resolved": "/usr/lib/node_modules/generator-fountain-webapp/node_modules/generator-fountain-angular1/generators/app/index.js",
       "namespace": "fountain-angular1:app",
       "_": [],
-      "sample": "techs",
-      "router": "uirouter"
+      "sample": "techs"
     }
   }
 }
