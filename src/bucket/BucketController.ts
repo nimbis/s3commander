@@ -112,7 +112,7 @@ export class BucketController {
         this.awsAccessKeyId,
         this.awsSecretAccessKey);
     } else {
-      throw `Unknown backend: ${this.backendName}`;
+      throw new Error(`Unknown backend: ${this.backendName}`);
     }
 
     // initial load
