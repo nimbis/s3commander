@@ -44,7 +44,7 @@ export class AmazonS3Backend implements IBackend {
   public getBucket(name: string): Promise<Bucket> {
     return this.s3.getBucketVersioning({Bucket: name})
       .promise()
-      .then(function (data: any) {
+      .then((data: any) => {
         return new Bucket(name, data.Status === 'Enabled');
       });
   }
@@ -63,7 +63,7 @@ export class AmazonS3Backend implements IBackend {
       .promise()
       .then((data: any) => {
         // extract folder objects
-        let folders = data.CommonPrefixes.map(function (folderData: any) {
+        let folders = data.CommonPrefixes.map((folderData: any) => {
           return new Folder(new Path(folderData.Prefix));
         });
 
@@ -114,7 +114,7 @@ export class AmazonS3Backend implements IBackend {
     return this.s3.listObjectsV2(getParams)
       .promise()
       .then((data: any) => {
-        return data.Contents.map(function (objectData: any) {
+        return data.Contents.map((objectData: any) => {
           return {Key: objectData.Key};
         });
       })

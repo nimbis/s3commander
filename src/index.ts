@@ -15,7 +15,7 @@ import './index.css';
 // register components and configure the module.
 angular
   .module('s3commander', [])
-  .config(function ($sceDelegateProvider: any) {
+  .config(($sceDelegateProvider: any) => {
     // https://docs.angularjs.org/api/ng/provider/$sceDelegateProvider
     $sceDelegateProvider.resourceUrlWhitelist([
       'self',

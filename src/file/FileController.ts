@@ -76,10 +76,10 @@ export class FileController {
    */
   public onLoadVersions(): Promise<IFileVersion[]> {
     // overriden by binding but TypeScript requires we return something
-    return new Promise(function (
+    return new Promise((
       resolve: (data: IFileVersion[]) => void,
       reject: (error: Error) => void
-    ) {
+    ) => {
       reject(new Error('not implemented'));
     });
   }
