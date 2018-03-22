@@ -35,7 +35,13 @@ export class FileInputDirective implements ng.IDirective {
 
     // update the model when the user selects one or more files
     input.on('change', () => {
-      ngModel.$setViewValue((input[0] as any).files[0]);
+      let inputField = (input[0] as any);
+      if (inputField.files.length > 0) {
+        ngModel.$setViewValue(inputField.files[0]);
+      } else {
+        ngModel.$setViewValue(null);
+      }
+
       this.ngChange();
     });
 

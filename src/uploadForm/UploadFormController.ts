@@ -42,6 +42,12 @@ export class UploadFormController {
    * Called when the user selects a file.
    */
   public onSelectFile(form: any) {
+    // corner case: no file selected
+    if (this.file === null) {
+      this.key = '';
+      return;
+    }
+
     // update the file key
     this.key = this.folder
       .getPath()
@@ -52,9 +58,7 @@ export class UploadFormController {
     // submit the form after the current $digest() cycle has finished so the
     // key hidden input has been updated to the value set above
     this.$timeout(() => {
-      if (form.$valid) {
-        form.submit();
-      }
+      form.submit();
     });
   }
 }
