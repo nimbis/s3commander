@@ -45,4 +45,13 @@
     <uploadform config="$ctrl.uploadConfig" folder="$ctrl.currentFolder">
     </uploadform>
   </div>
+
+  <!-- dropzone -->
+  <div class="s3c-bottom-section"
+    ng-if='$ctrl.uploadConfig'>
+    <dropzone
+      config="$ctrl.uploadConfig"
+      folder="$ctrl.currentFolder">
+    </dropzone>
+  </div>
 </div>
