@@ -41,4 +41,9 @@ export interface IBackend {
    * Delete a file.
    */
   deleteFile(bucket: Bucket, file: File): Promise<any>;
+
+  /**
+   * Update formData to allow valid POST
+   */
+  updateFormData(folder: Folder, file: any, formData: any): Promise<any>;
 }

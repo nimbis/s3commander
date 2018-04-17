@@ -24,15 +24,20 @@ export class DropzoneDirective implements ng.IDirective {
     element: ng.IAugmentedJQuery,
     attrs: ng.IAttributes
   ) {
+    // dropzone configuration
     let dropzoneConfig = {
       url: scope.$ctrl.config.url
     };
 
+    // in order to allow access to 'scope' inside the dropzone
+    // handler functions, the functions need to be wrapped in
+    // scope.$apply.
     let eventHandlers = {
       'sending': (file, xhr, formData) => {
-        // append AWS upload key to the form data
-        // needed in order to have a valid POST
-        formData.append('key', file.name);
+        scope.$apply(() => {
+          // set form data prior to submitting the dz form
+          scope.$ctrl.backend.updateFormData(scope.$ctrl.folder, file, formData);
+        });
       }
     };
 
