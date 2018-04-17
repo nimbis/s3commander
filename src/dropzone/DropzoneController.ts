@@ -1,5 +1,6 @@
 import {Folder} from './../common/Folder';
 import {IUploadConfig} from './../common/IUploadConfig';
+import {IBackend} from './../common/IBackend';
 
 export class DropzoneController {
   /**
@@ -11,4 +12,9 @@ export class DropzoneController {
    * Folder to upload files to. Passed in as a component binding.
    */
   public folder: Folder;
+
+  /**
+   * Backend.
+   */
+  public backend: IBackend;
 }
