@@ -4,7 +4,8 @@ export const DropzoneComponent: angular.IComponentOptions = {
   bindings: {
     config: '=',
     folder: '=',
-    backend: '='
+    backend: '=',
+    onRefresh: '&'
   },
   template: require('./dropzone.html'),
   controller: DropzoneController

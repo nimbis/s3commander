@@ -17,4 +17,10 @@ export class DropzoneController {
    * Backend.
    */
   public backend: IBackend;
+
+  /**
+   * Function to refresh bucket contents. This should be binded
+   * to the 'loadContents' function in the parent scope.
+   */
+  public onRefresh;
 }

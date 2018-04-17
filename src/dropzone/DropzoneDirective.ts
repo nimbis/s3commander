@@ -1,5 +1,7 @@
 import * as angular from 'angular';
 
+import {DropzoneController} from './DropzoneController';
+
 import Dropzone = require('dropzone');
 
 /**
@@ -7,9 +9,13 @@ import Dropzone = require('dropzone');
  * https://github.com/DefinitelyTyped/DefinitelyTyped/issues/18196
  */
 interface IDropzoneDirectiveScope extends ng.IScope {
-  $ctrl: any;
+  $ctrl: DropzoneController;
 }
 
+/**
+ * The DropzoneDirective class has access to the parent
+ * controller scope.
+ */
 export class DropzoneDirective implements ng.IDirective {
   /**
    * Match class name.
@@ -42,11 +48,17 @@ export class DropzoneDirective implements ng.IDirective {
           // set form data prior to submitting the dz form
           scope.$ctrl.backend.updateFormData(scope.$ctrl.folder, file, formData);
         });
+      },
+      'success': function(file: any) {
+        this.removeFile(file);
+      },
+      'queuecomplete': function() {
+        // refresh folder contents
+        scope.$ctrl.onRefresh({});
       }
     };
 
     let dropzone = new Dropzone(element[0], dropzoneConfig);
-
     angular.forEach(eventHandlers, (handler, event) => {
       dropzone.on(event, handler);
     });
