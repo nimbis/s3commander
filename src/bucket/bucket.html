@@ -24,6 +24,13 @@
     on-navigate="$ctrl.navigateFolder(folder)"
     on-delete="$ctrl.deleteFolder(folder)"></folder>
 
+  <!-- deleted folders -->
+  <folder ng-repeat="folder in $ctrl.deletedFolders"
+    folder="folder"
+    on-navigate="$ctrl.navigateFolder(folder)"
+    on-delete=""
+    ng-if="$ctrl.showDeleted"></folder>
+
   <!-- files -->
   <file ng-repeat="file in $ctrl.files"
     file="file"
@@ -31,8 +38,21 @@
     on-load-versions="$ctrl.loadFileVersions(file)"
     on-delete="$ctrl.deleteFile(file)"></file>
 
+  <!-- deletedFiles -->
+  <file ng-repeat="file in $ctrl.deletedFiles"
+    file="file"
+    versioned="$ctrl.bucket.versioned"
+    on-load-versions="$ctrl.loadFileVersions(file)"
+    on-delete=""
+    ng-if="$ctrl.showDeleted"></file>
+
   <!-- controls -->
   <div class="s3c-bottom-section s3c-controls">
+    <!-- show deleted files -->
+    <div>
+      Show deleted files <input type="checkbox" ng-model="$ctrl.showDeleted"/>
+    </div>
+
     <!-- create folder -->
     <form>
       <input placeholder="folder name" ng-model="$ctrl.folderName"/>
