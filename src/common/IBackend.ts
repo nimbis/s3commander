@@ -18,6 +18,11 @@ export interface IBackend {
   getContents(bucket: Bucket, folder: Folder): Promise<IFolderContents>;
 
   /**
+   * Get the contents of a folder.
+   */
+  getDeletedContents(bucket: Bucket, folder: Folder): Promise<IFolderContents>;
+
+  /**
    * Create a folder.
    */
   createFolder(bucket: Bucket, folder: Folder): Promise<any>;
