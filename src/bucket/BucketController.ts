@@ -192,8 +192,31 @@ export class BucketController {
           }
 
           // store folders and files in alphabetical order
-          this.deletedFolders = contents.folders.sort(compareObjectNames);
+          // this.deletedFolders = contents.folders.sort(compareObjectNames);
+          let allFolders = contents.folders.sort(compareObjectNames);
+          this.deletedFolders = [];
           this.deletedFiles = contents.files.sort(compareObjectNames);
+          // for (deletedFolder in this.deletedFolders) {
+          //   for (folder in this.folders){
+          //     console.log(deletedFolder);
+          //     console.log(folder);
+          //     if (!deletedFolder.path.equals(folder.path)) {
+          //       deletedFolders.append(deletedFolder);
+          //     }
+          //   }
+          // }
+          // allFolders.forEach(function (deletedFolder) {
+          //   this.folders.forEach(function (folder) {
+          //     if (deletedFolder != folder) {
+          //       this.deletedFolders.append(deletedFolder);
+          //     }
+          //   });
+          // });
+          for (let fol of allFolders) {
+            console.log(fol);
+          }
+          console.log(this.deletedFiles);
+          console.log(this.deletedFolders);
         })
         .catch((error: Error) => {
           // display the error

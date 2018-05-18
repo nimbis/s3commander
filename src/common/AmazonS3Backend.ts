@@ -53,11 +53,15 @@ export class AmazonS3Backend implements IBackend {
    * Get the contents of a folder.
    */
   getContents(bucket: Bucket, folder: Folder): Promise<IFolderContents> {
+    console.log("getting contents...");
     var params = {
       Bucket: bucket.name,
       Prefix: folder.getPath().toString(),
       Delimiter: '/'
     };
+
+    console.log(this.s3.listObjectsV2(params).promise());
+    console.log(this.s3.listObjectVersions(params).promise());
 
     return this.s3.listObjectsV2(params)
       .promise()
@@ -93,11 +97,15 @@ export class AmazonS3Backend implements IBackend {
    * Get the deleted contents of a folder.
    */
   getDeletedContents(bucket: Bucket, folder: Folder): Promise<IFolderContents> {
+    console.log("getting contents...");
     var params = {
       Bucket: bucket.name,
       Prefix: folder.getPath().toString(),
       Delimiter: '/'
     };
+
+    console.log(this.s3.listObjectsV2(params).promise());
+    console.log(this.s3.listObjectVersions(params).promise());
 
     return this.s3.listObjectVersions(params)
       .promise()
