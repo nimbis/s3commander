@@ -1,0 +1,11 @@
+<form
+  action="{{ $ctrl.url }}"
+  class="dropzone"
+  dropzone>
+
+  <!-- settings -->
+  <input ng-repeat="(key, value) in $ctrl.config.fields"
+    type="hidden"
+    name="{{ key }}"
+    value="{{ value }}" />
+</form>

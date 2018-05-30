@@ -40,9 +40,16 @@
         Create Folder
       </button>
     </form>
+  </div>
 
-    <!-- upload files -->
-    <uploadform config="$ctrl.uploadConfig" folder="$ctrl.currentFolder">
-    </uploadform>
+  <!-- dropzone -->
+  <div class="s3c-bottom-section"
+    ng-if='$ctrl.uploadConfig'>
+    <dropzone
+      config="$ctrl.uploadConfig"
+      folder="$ctrl.currentFolder"
+      backend="$ctrl.backend"
+      on-refresh="$ctrl.loadContents()">
+    </dropzone>
   </div>
 </div>

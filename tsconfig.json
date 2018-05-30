@@ -12,7 +12,8 @@
       "jquery",
       "node",
       "jasmine",
-      "es6-shim"
+      "es6-shim",
+      "dropzone"
     ]
   },
   "compileOnSave": false,
