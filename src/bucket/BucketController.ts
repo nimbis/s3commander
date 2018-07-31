@@ -43,6 +43,11 @@ export class BucketController {
   public awsSecretAccessKey: string;
 
   /**
+   * AWS bucket prefix for a folder. Passed in as a component binding.
+   */
+  public awsBucketPrefix: string;
+
+  /**
    * Flag used to indicate a background operation is running.
    */
   public working: boolean;
@@ -91,10 +96,13 @@ export class BucketController {
    * Create an instance of the controller.
    */
   constructor(private $rootScope: ng.IScope) {
+    if(this.awsBucketPrefix === undefined){
+      this.awsBucketPrefix = '/';
+    }
     this.working = false;
     this.error = null;
     this.bucket = null;
-    this.currentFolder = new Folder(new Path('/'));
+    this.currentFolder = new Folder(new Path(this.awsBucketPrefix));
     this.folders = [];
     this.files = [];
     this.uploadConfig = null;

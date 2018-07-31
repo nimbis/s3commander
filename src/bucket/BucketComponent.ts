@@ -6,7 +6,8 @@ export const BucketComponent: angular.IComponentOptions = {
     bucketName: '=name',
     awsRegion: '=',
     awsAccessKeyId: '=',
-    awsSecretAccessKey: '='
+    awsSecretAccessKey: '=',
+    awsBucketPrefix: '=?'
   },
   template: require('./bucket.html'),
   controller: BucketController
