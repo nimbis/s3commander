@@ -144,6 +144,10 @@ button.s3c-button, label.s3c-button {
   line-height: 1.5;
 }
 
+button.s3c-button:disabled, label.s3c-button:disabled {
+    background-color: #ccc;
+}
+
 div.s3c-bucket-details {
   font-weight: bold;
 }
