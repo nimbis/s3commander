@@ -104,7 +104,7 @@ export class AmazonS3Backend implements IBackend {
       .then((data: any) => {
         // extract folder objects
         let folders = data.CommonPrefixes.map((folderData: any) => {
-          return new Folder(new Path(folderData.Prefix));
+          return new Folder(new Path(folderData.Prefix), true);
         });
 
         // extract file objects

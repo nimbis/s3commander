@@ -8,10 +8,16 @@ export class Folder implements IBucketObject {
   private path: Path;
 
   /**
+   * True if folder is deleted.
+   */
+  private deleted: boolean;
+
+  /**
    * Create a folder instance.
    */
-  constructor (path: Path) {
+  constructor (path: Path, deleted: boolean = false) {
     this.path = path;
+    this.deleted = deleted;
     if (!this.path.isFolder()) {
       throw new Error(`Folder instance given a file path: ${path}`);
     }
