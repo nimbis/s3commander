@@ -1,4 +1,4 @@
-<div class="s3c-folder">
+<div class="s3c-folder" ng-class="{'deleted': $ctrl.folder.deleted}">
   <i class="s3c-folder-icon"></i>
   <a ng-click="$ctrl.onNavigate()">{{ $ctrl.folder.path.name() }}</a>
   <button class="s3c-button" ng-if="!$ctrl.folder.deleted" ng-click="$ctrl.onDelete()">Delete</button>

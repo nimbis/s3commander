@@ -1,4 +1,4 @@
-<div class="s3c-file">
+<div class="s3c-file" ng-class="{'deleted': $ctrl.file.deleted}">
   <!-- file link -->
   <a href="{{ $ctrl.file.getDownloadLink() }}"
     download="{{ $ctrl.file.getPath().name() }}"
