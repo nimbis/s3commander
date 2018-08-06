@@ -261,4 +261,11 @@ export class BucketController {
         this.error = new Error('Failed to delete file');
       });
   }
+
+  /**
+   * Returns true if the current folder is at the bucket prefix
+   */
+   public isAtBucketPrefix(): boolean {
+     return this.currentFolder.getPath().toString() === this.awsBucketPrefix;
+   }
 }
