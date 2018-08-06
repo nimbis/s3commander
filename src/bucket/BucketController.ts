@@ -96,13 +96,9 @@ export class BucketController {
    * Create an instance of the controller.
    */
   constructor(private $rootScope: ng.IScope) {
-    if (this.awsBucketPrefix === undefined) {
-      this.awsBucketPrefix = '/';
-    }
     this.working = false;
     this.error = null;
     this.bucket = null;
-    this.currentFolder = new Folder(new Path(this.awsBucketPrefix));
     this.folders = [];
     this.files = [];
     this.uploadConfig = null;
@@ -113,6 +109,12 @@ export class BucketController {
    * Initialize the controller.
    */
   $onInit() {
+    // set the currentFolder based on bucket prefix
+    if (this.awsBucketPrefix === undefined) {
+      this.awsBucketPrefix = '/';
+    }
+    this.currentFolder = new Folder(new Path(this.awsBucketPrefix));
+
     // create the backend
     if (this.backendName === 's3') {
       this.backend = new AmazonS3Backend(
