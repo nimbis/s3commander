@@ -195,3 +195,7 @@ div.s3c-controls label {
   /* why is this necessary??? */
   padding: 3px 6px;
 }
+
+div.deleted {
+  background-color: #ffcccc;
+}
