@@ -114,7 +114,7 @@ export class AmazonS3Backend implements IBackend {
         }).map((fileData: any) => {
           let downloadLink = undefined;
 
-          return new File(new Path(fileData.Key), downloadLink);
+          return new File(new Path(fileData.Key), downloadLink, true);
         });
 
         // return the contents

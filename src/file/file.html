@@ -9,7 +9,7 @@
   <button class="s3c-button"
     ng-if="$ctrl.versioned"
     ng-click="$ctrl.toggleVersions()">Versions</button>
-  <button class="s3c-button" ng-click="$ctrl.onDelete()">Delete</button>
+  <button class="s3c-button" ng-if="!$ctrl.file.deleted" ng-click="$ctrl.onDelete()">Delete</button>
 
   <!-- file versions -->
   <ul class="s3c-file-versions" ng-if="$ctrl.showVersions">

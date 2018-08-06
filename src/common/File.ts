@@ -13,11 +13,17 @@ export class File implements IBucketObject {
   private downloadLink: string;
 
   /**
+   * True if the file is deleted.
+   */
+  private deleted: boolean;
+
+  /**
    * Create a file instance.
    */
-  constructor (path: Path, downloadLink: string) {
+  constructor (path: Path, downloadLink: string, deleted: boolean = false) {
     this.path = path;
     this.downloadLink = downloadLink;
+    this.deleted = deleted
 
     if (this.path.isFolder()) {
       throw new Error(`File instance given a folder path: ${path}`);
