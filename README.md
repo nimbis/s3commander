@@ -86,6 +86,16 @@ When you're working with AWS S3 buckets you need to configure an appropriate COR
 
 The HTML file upload functionality uses an HTTPS API endpoint based on the bucket name (i.e. `https://<bucket>s3.amazonaws.com`). If the bucket name has dots (`.`) in the name this will fail because you can't use HTTPS with subdomains.
 
+## Styling
+
+The following HTML classes are made available alongside file types if you wish
+to style them in your own application with a library like
+[FontAwesome](https://fontawesome.com/):
+
+* Folders: `s3c-folder-icon`
+* Delete markers: `s3c-delete-icon`
+* Version markers: `s3c-version-icon`
+
 ## References
 
 * Tools
