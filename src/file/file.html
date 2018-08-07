@@ -19,12 +19,13 @@
         download="{{ $ctrl.file.getPath().name() }}"
         target="_blank"
         ng-if="!version.deleteMarker">
-
+        <i class="s3c-version-icon"></i>
         {{ version.lastModified.toLocaleString() }}
       </a>
 
       <!-- delete marker -->
       <span ng-if="version.deleteMarker">
+        <i class="s3c-delete-icon"></i>
         {{ version.lastModified.toLocaleString() }} (Deleted)
       </span>
     </li>
