@@ -60,6 +60,10 @@ div.s3c-folder, div.s3c-file {
   margin: 2px 0;
 }
 
+div.s3c-folder > a {
+  cursor: pointer;
+}
+
 ul.s3c-file-versions {
   margin: 2px 0;
   padding-left: 16px;

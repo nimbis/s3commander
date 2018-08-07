@@ -1,6 +1,6 @@
 <div class="s3c-bucket">
   <!-- errors -->
-  <span ng-if="$ctrl.error">{{ $ctrl.error }}</span>
+  <span ng-if="$ctrl.error">{{ $ctrl.error.message }}</span>
 
   <!-- navigation header and controls -->
   <div class="s3c-top-section s3c-bucket-details">
@@ -35,7 +35,7 @@
   <div class="s3c-bottom-section s3c-controls">
     <!-- create folder -->
     <form>
-      <input placeholder="folder name" ng-model="$ctrl.folderName"/>
+      <input placeholder="Folder name" ng-model="$ctrl.folderName"/>
       <button class="s3c-button" ng-click="$ctrl.createFolder()">
         Create Folder
       </button>

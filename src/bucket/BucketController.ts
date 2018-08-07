@@ -96,7 +96,7 @@ export class BucketController {
    * Create an instance of the controller.
    */
   constructor(private $rootScope: ng.IScope) {
-    if(this.awsBucketPrefix === undefined){
+    if (this.awsBucketPrefix === undefined) {
       this.awsBucketPrefix = '/';
     }
     this.working = false;
