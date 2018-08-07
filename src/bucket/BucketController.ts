@@ -116,7 +116,9 @@ export class BucketController {
     this.bucket = null;
     this.showDeleted = false;
     this.folders = [];
+    this.deletedFolders = [];
     this.files = [];
+    this.deletedFiles = [];
     this.uploadConfig = null;
     this.folderName = '';
   }
