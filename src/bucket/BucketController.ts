@@ -185,30 +185,45 @@ export class BucketController {
         this.files = contents.files.sort(compareObjectNames);
 
         this.backend.getDeletedContents(this.bucket, this.currentFolder)
-        .then((contents: IFolderContents) => {
-          function compareObjectNames (a: IBucketObject, b: IBucketObject) {
-            var nameA = a.getPath().name().toLowerCase();
-            var nameB = b.getPath().name().toLowerCase();
+          .then((contents: IFolderContents) => {
+            // deleted folders don't get deleted markers so we have to
+            // cross reference the folders that come back from getDeletedContents
+            // with the folders that come back from getContents. We only want the
+            // folders that don't get returned by getContents.
+            contents.folders = contents.folders.filter((folder: Folder) => {
+              for(var i = 0; i < this.folders.length; i++)
+                if(this.folders[i].getPath().equals(folder.getPath()))
+                  return false;
 
-            if (nameA < nameB) {
-              return -1;
+              return true;
+            });
+
+            return contents;
+          })
+          .then((contents: IFolderContents) => {
+            function compareObjectNames (a: IBucketObject, b: IBucketObject) {
+              var nameA = a.getPath().name().toLowerCase();
+              var nameB = b.getPath().name().toLowerCase();
+
+              if (nameA < nameB) {
+                return -1;
+              }
+
+              if (nameA > nameB) {
+                return 1;
+              }
+
+              return 0;
             }
 
-            if (nameA > nameB) {
-              return 1;
-            }
-
-            return 0;
-          }
-
-          // store folders and files in alphabetical order
-          this.deletedFolders = contents.folders.sort(compareObjectNames);
-          this.deletedFiles = contents.files.sort(compareObjectNames);
-        })
-        .catch((error: Error) => {
-          // display the error
-          this.error = error;
-        })
+            // store folders and files in alphabetical order
+            this.deletedFolders = contents.folders.sort(compareObjectNames);
+            this.deletedFiles = contents.files.sort(compareObjectNames);
+          })
+          .catch((error: Error) => {
+            // display the error
+            this.error = error;
+          })
       })
       .catch((error: Error) => {
         // display the error
