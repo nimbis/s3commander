@@ -91,6 +91,12 @@ export class AmazonS3Backend implements IBackend {
 
   /**
    * Get the deleted contents of a folder.
+   *
+   * Returns all folders even if they aren't currently deleted. This is because
+   * there isn't a way to determine if a folder is deleted without comparing
+   * the output of s3.listObjectVersions() and s3.listObjectsV2() and only
+   * selecting the folders that are returned by s3.listObjectVersions, but not
+   * by s3.listObjectsV2().
    */
   getDeletedContents(bucket: Bucket, folder: Folder): Promise<IFolderContents> {
     var params = {
