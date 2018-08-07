@@ -15,7 +15,7 @@
 
     <!-- navigation controls -->
     <button class="s3c-button" ng-click="$ctrl.loadContents()">Refresh</button>
-    <button class="s3c-button" ng-click="$ctrl.navigateParent()">Up</button>
+    <button class="s3c-button" ng-click="$ctrl.navigateParent()" ng-disabled="$ctrl.isAtBucketPrefix()">Up</button>
   </div>
 
   <!-- folders -->
