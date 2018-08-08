@@ -48,6 +48,12 @@ export class DropzoneDirective implements ng.IDirective {
           // set form data prior to submitting the dz form
           scope.$ctrl.backend.updateFormData(scope.$ctrl.folder, file, formData);
         });
+
+        // enable prompt when user attempts to navigate away from this page
+        // while uploading a file
+        window.onbeforeunload = function() {
+          return true;
+        };
       },
       'success': function(file: any) {
         this.removeFile(file);
@@ -55,6 +61,9 @@ export class DropzoneDirective implements ng.IDirective {
       'queuecomplete': function() {
         // refresh folder contents
         scope.$ctrl.onRefresh({});
+
+        // disable prompt when user attempts to navigate away from this page
+        window.onbeforeunload = null;
       }
     };
 
