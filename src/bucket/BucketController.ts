@@ -186,7 +186,7 @@ export class BucketController {
         this.folders = contents.folders.sort(compareObjectNames);
         this.files = contents.files.sort(compareObjectNames);
 
-        this.backend.getDeletedContents(this.bucket, this.currentFolder)
+        return this.backend.getDeletedContents(this.bucket, this.currentFolder)
           .then((contents: IFolderContents) => {
             // deleted folders don't get deleted markers so we have to
             // cross reference the folders that come back from getDeletedContents
