@@ -117,7 +117,7 @@ export class AmazonS3Backend implements IBackend {
         let files = data.DeleteMarkers.filter((fileData: any) => {
           // ignore the folder object by comparing it's path
           // and ignore delete versions that are not the current version.
-          // Without the IsLatest check, if any past versions of the file have
+          // without the IsLatest check, if any past versions of the file have
           // the delete marker, then the file will show up, even if it does not
           // currently have the delete marker.
 

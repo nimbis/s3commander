@@ -23,7 +23,7 @@ export class File implements IBucketObject {
   constructor (path: Path, downloadLink: string, deleted: boolean = false) {
     this.path = path;
     this.downloadLink = downloadLink;
-    this.deleted = deleted
+    this.deleted = deleted;
 
     if (this.path.isFolder()) {
       throw new Error(`File instance given a folder path: ${path}`);
