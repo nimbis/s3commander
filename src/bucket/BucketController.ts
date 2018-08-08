@@ -193,10 +193,11 @@ export class BucketController {
             // with the folders that come back from getContents. We only want the
             // folders that don't get returned by getContents.
             contents.folders = contents.folders.filter((folder: Folder) => {
-              for(var i = 0; i < this.folders.length; i++)
-                if(this.folders[i].getPath().equals(folder.getPath()))
+              for (var i = 0; i < this.folders.length; i++) {
+                if (this.folders[i].getPath().equals(folder.getPath())) {
                   return false;
-
+                }
+              }
               return true;
             });
 
@@ -225,7 +226,7 @@ export class BucketController {
           .catch((error: Error) => {
             // display the error
             this.error = error;
-          })
+          });
       })
       .catch((error: Error) => {
         // display the error
