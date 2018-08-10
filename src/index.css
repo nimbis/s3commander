@@ -199,3 +199,7 @@ div.s3c-controls label {
 div.deleted {
   background-color: #ffcccc;
 }
+
+div.deleted span {
+  color: darkred;
+}
