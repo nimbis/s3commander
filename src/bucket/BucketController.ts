@@ -63,6 +63,11 @@ export class BucketController {
   public bucket: Bucket;
 
   /**
+   * Display deleted files in the folder.
+   */
+  public showDeleted: boolean;
+
+  /**
    * Current working folder.
    */
   public currentFolder: Folder;
@@ -76,6 +81,16 @@ export class BucketController {
    * File objects in the current working path.
    */
   public files: File[];
+
+  /**
+   * Deleted folder objects in the current working path.
+   */
+  public deletedFolders: Folder[];
+
+  /**
+   * deleted file objects in the current working path.
+   */
+  public deletedFiles: File[];
 
   /**
    * Settings for uploading files.
@@ -99,8 +114,11 @@ export class BucketController {
     this.working = false;
     this.error = null;
     this.bucket = null;
+    this.showDeleted = false;
     this.folders = [];
+    this.deletedFolders = [];
     this.files = [];
+    this.deletedFiles = [];
     this.uploadConfig = null;
     this.folderName = '';
   }
@@ -167,6 +185,48 @@ export class BucketController {
         // store folders and files in alphabetical order
         this.folders = contents.folders.sort(compareObjectNames);
         this.files = contents.files.sort(compareObjectNames);
+
+        return this.backend.getDeletedContents(this.bucket, this.currentFolder)
+          .then((contents: IFolderContents) => {
+            // deleted folders don't get deleted markers so we have to
+            // cross reference the folders that come back from getDeletedContents
+            // with the folders that come back from getContents. We only want the
+            // folders that don't get returned by getContents.
+            contents.folders = contents.folders.filter((folder: Folder) => {
+              for (var i = 0; i < this.folders.length; i++) {
+                if (this.folders[i].getPath().equals(folder.getPath())) {
+                  return false;
+                }
+              }
+              return true;
+            });
+
+            return contents;
+          })
+          .then((contents: IFolderContents) => {
+            function compareObjectNames (a: IBucketObject, b: IBucketObject) {
+              var nameA = a.getPath().name().toLowerCase();
+              var nameB = b.getPath().name().toLowerCase();
+
+              if (nameA < nameB) {
+                return -1;
+              }
+
+              if (nameA > nameB) {
+                return 1;
+              }
+
+              return 0;
+            }
+
+            // store folders and files in alphabetical order
+            this.deletedFolders = contents.folders.sort(compareObjectNames);
+            this.deletedFiles = contents.files.sort(compareObjectNames);
+          })
+          .catch((error: Error) => {
+            // display the error
+            this.error = error;
+          });
       })
       .catch((error: Error) => {
         // display the error

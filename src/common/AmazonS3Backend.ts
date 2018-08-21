@@ -90,6 +90,53 @@ export class AmazonS3Backend implements IBackend {
   }
 
   /**
+   * Get the deleted contents of a folder.
+   *
+   * Returns all folders even if they aren't currently deleted. This is because
+   * there isn't a way to determine if a folder is deleted without comparing
+   * the output of s3.listObjectVersions() and s3.listObjectsV2() and only
+   * selecting the folders that are returned by s3.listObjectVersions, but not
+   * by s3.listObjectsV2().
+   */
+  getDeletedContents(bucket: Bucket, folder: Folder): Promise<IFolderContents> {
+    var params = {
+      Bucket: bucket.name,
+      Prefix: folder.getPath().toString(),
+      Delimiter: '/'
+    };
+
+    return this.s3.listObjectVersions(params)
+      .promise()
+      .then((data: any) => {
+        // extract folder objects
+        let folders = data.CommonPrefixes.map((folderData: any) => {
+          return new Folder(new Path(folderData.Prefix), true);
+        });
+
+        // extract file objects
+        let files = data.DeleteMarkers.filter((fileData: any) => {
+          // ignore the folder object by comparing it's path
+          // and ignore delete versions that are not the current version.
+          // without the IsLatest check, if any past versions of the file have
+          // the delete marker, then the file will show up, even if it does not
+          // currently have the delete marker.
+
+          return fileData.IsLatest && folder.getPath().toString() !== fileData.Key;
+        }).map((fileData: any) => {
+          let downloadLink = undefined;
+
+          return new File(new Path(fileData.Key), downloadLink, true);
+        });
+
+        // return the contents
+        return {
+          folders: folders,
+          files: files
+        };
+      });
+  }
+
+  /**
    * Create a folder.
    */
   createFolder(bucket: Bucket, folder: Folder): Promise<any> {
