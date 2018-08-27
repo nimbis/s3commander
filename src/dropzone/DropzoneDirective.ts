@@ -33,7 +33,7 @@ export class DropzoneDirective implements ng.IDirective {
     // dropzone configuration
     let dropzoneConfig = {
       url: scope.$ctrl.config.url,
-      maxFilesize: 1024,
+      maxFilesize: 102400,
       addRemoveLinks: true,
       dictCancelUpload: 'Cancel',
       dictDefaultMessage: 'Click here or Drop files here to upload'
