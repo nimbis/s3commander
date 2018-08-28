@@ -36,7 +36,8 @@ export class DropzoneDirective implements ng.IDirective {
       maxFilesize: 102400,
       addRemoveLinks: true,
       dictCancelUpload: 'Cancel',
-      dictDefaultMessage: 'Click here or Drop files here to upload'
+      dictDefaultMessage: 'Click here or Drop files here to upload',
+      timeout: 0
     };
 
     // in order to allow access to 'scope' inside the dropzone
