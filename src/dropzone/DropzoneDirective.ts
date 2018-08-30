@@ -56,10 +56,29 @@ export class DropzoneDirective implements ng.IDirective {
           return true;
         };
       },
+      'uploadprogress': function(file: any) {
+        // notify the bucket that we're working
+        if (scope.$ctrl.working != true) {
+          scope.$ctrl.working = true;
+        }
+      },
       'success': function(file: any) {
         this.removeFile(file);
       },
+      'error': function(file: any, errorMessage: string, xhr?: any) {
+        console.log('An error has occurred: ' + errorMessage);
+
+        if (xhr) {
+          console.log(xhr);
+        }
+      },
+      'reset': function() {
+        // notify the bucket that we're done working
+        scope.$ctrl.working = false;
+      },
       'queuecomplete': function() {
+        // notify the bucket that we're done working
+        scope.$ctrl.working = false;
         // refresh folder contents
         scope.$ctrl.onRefresh({});
 
