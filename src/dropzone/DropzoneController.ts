@@ -19,6 +19,11 @@ export class DropzoneController {
   public backend: IBackend;
 
   /**
+   * Indicates S3Commander is working.
+   */
+  public working: boolean;
+
+  /**
    * Function to refresh bucket contents. This should be binded
    * to the 'loadContents' function in the parent scope.
    */
