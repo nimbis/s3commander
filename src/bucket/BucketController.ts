@@ -325,7 +325,7 @@ export class BucketController {
   /**
    * Returns true if the current folder is at the bucket prefix
    */
-   public isAtBucketPrefix(): boolean {
-     return this.currentFolder.getPath().toString() === this.awsBucketPrefix;
-   }
+  public isAtBucketPrefix(): boolean {
+    return this.currentFolder.getPath().toString() === this.awsBucketPrefix;
+  }
 }
