@@ -242,6 +242,15 @@ export class BucketController {
   }
 
   /**
+   * Toggle the working status of this bucket. Useful for toggling callbacks.
+   */
+  public toggleWorking(state: boolean) {
+    this.working = state;
+    // apply scope changes
+    this.$rootScope.$digest();
+  }
+
+  /**
    * Navigate to a folder.
    */
   public navigateFolder(folder: Folder): Promise<any> {
