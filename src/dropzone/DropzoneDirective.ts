@@ -58,9 +58,7 @@ export class DropzoneDirective implements ng.IDirective {
       },
       'uploadprogress': function(file: any) {
         // notify the bucket that we're working
-        if (scope.$ctrl.working !== true) {
-          scope.$ctrl.working = true;
-        }
+        scope.$ctrl.toggleWorking({state: true});
       },
       'success': function(file: any) {
         this.removeFile(file);
@@ -74,11 +72,11 @@ export class DropzoneDirective implements ng.IDirective {
       },
       'reset': function() {
         // notify the bucket that we're done working
-        scope.$ctrl.working = false;
+        scope.$ctrl.toggleWorking({state: false});
       },
       'queuecomplete': function() {
         // notify the bucket that we're done working
-        scope.$ctrl.working = false;
+        scope.$ctrl.toggleWorking({state: false});
         // refresh folder contents
         scope.$ctrl.onRefresh({});
 

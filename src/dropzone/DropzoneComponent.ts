@@ -5,7 +5,7 @@ export const DropzoneComponent: angular.IComponentOptions = {
     config: '=',
     folder: '=',
     backend: '=',
-    working: '=',
+    toggleWorking: '&',
     onRefresh: '&'
   },
   template: require('./dropzone.html'),
