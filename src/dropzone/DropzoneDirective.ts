@@ -58,7 +58,7 @@ export class DropzoneDirective implements ng.IDirective {
       },
       'uploadprogress': function(file: any) {
         // notify the bucket that we're working
-        if (scope.$ctrl.working != true) {
+        if (scope.$ctrl.working !== true) {
           scope.$ctrl.working = true;
         }
       },
