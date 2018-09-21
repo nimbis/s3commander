@@ -284,4 +284,25 @@ export class AmazonS3Backend implements IBackend {
     return formData.append('key', key).promise();
   }
 
+  /**
+   * Initiate S3 multi-part upload
+   */
+  public initMultipartUpload(params: any): Promise<any> {
+    return this.s3.createMultipartUpload(params)
+      .promise()
+      .then((data: any) => {
+        return data;
+      });
+  }
+
+  /**
+   * Complete S3 multi-part upload
+   */
+  public completeMultipartUpload(params: any): Promise<any> {
+    return this.s3.completeMultipartUpload(params)
+      .promise()
+      .then((data: any) => {
+        return data;
+      });
+  }
 }
