@@ -252,6 +252,23 @@ export class AmazonS3Backend implements IBackend {
   }
 
   /**
+   * Get full file path given a folder and file.
+   */
+  public getFilePath(folder: Folder, file: any): string {
+    let filePath = file.name;
+
+    if (file.hasOwnProperty('fullPath')) {
+      filePath = file.fullPath;
+    }
+
+    return folder
+        .getPath()
+        .clone()
+        .push(filePath)
+        .toString();
+  }
+
+  /**
    * Delete a file.
    */
   deleteFile(bucket: Bucket, file: File): Promise<any> {
