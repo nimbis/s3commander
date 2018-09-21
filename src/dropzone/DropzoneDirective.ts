@@ -49,7 +49,10 @@ export class DropzoneDirective implements ng.IDirective {
       'sending': (file, xhr, formData) => {
         scope.$apply(() => {
           // set form data prior to submitting the dz form
-          scope.$ctrl.backend.updateFormData(scope.$ctrl.folder, file, formData);
+          scope.$ctrl.backend.updateFormData(scope.$ctrl.folder, file, formData)
+            .then((data: any) => {
+              console.log(data);
+            });
         });
 
         // enable prompt when user attempts to navigate away from this page
