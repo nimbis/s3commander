@@ -19,6 +19,11 @@ export class DropzoneController {
   public backend: IBackend;
 
   /**
+   * Bucket name used to initiate multi-part uploads
+   */
+  public bucketName: string;
+
+  /**
    * Toggle working status.
    */
   public toggleWorking;
