@@ -43,6 +43,11 @@ export interface IBackend {
   getFileVersions(bucket: Bucket, file: File): Promise<IFileVersion[]>;
 
   /**
+   * Get full file path given a folder and file.
+   */
+  getFilePath(folder: Folder, file: File): string;
+
+  /**
    * Delete a file.
    */
   deleteFile(bucket: Bucket, file: File): Promise<any>;
