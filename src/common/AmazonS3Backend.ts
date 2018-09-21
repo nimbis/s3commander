@@ -286,19 +286,11 @@ export class AmazonS3Backend implements IBackend {
   public updateFormData(folder: Folder, file: any, formData: any): Promise<any> {
     // append AWS upload key to the form data
     // needed in order to have a valid POST
-    let filePath = file.name;
-
-    if (file.hasOwnProperty('fullPath')) {
-      filePath = file.fullPath;
-    }
-
-    let key = folder
-        .getPath()
-        .clone()
-        .push(filePath)
-        .toString();
-
-    return formData.append('key', key).promise();
+    return new Promise((resolve: any, reject: any) => {
+      let key = this.getFilePath(folder, file);
+      formData.append('key', key);
+      resolve(formData);
+    });
   }
 
 }
