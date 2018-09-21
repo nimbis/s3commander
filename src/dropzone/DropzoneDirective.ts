@@ -39,7 +39,17 @@ export class DropzoneDirective implements ng.IDirective {
       addRemoveLinks: true,
       dictCancelUpload: 'Cancel',
       dictDefaultMessage: 'Click here or Drop files here to upload',
-      timeout: 0
+      timeout: 0,
+      chunksUploaded: function(file: any, done: any) {
+        let key = scope.$ctrl.backend.getFilePath(scope.$ctrl.folder, file);
+        scope.$ctrl.backend.completeMultipartUpload({
+          Bucket: scope.$ctrl.bucketName,
+          Key: key,
+          UploadId: file.uploadId,
+          MultipartUpload: {}
+        });
+        done();
+      }
     };
 
     // in order to allow access to 'scope' inside the dropzone
