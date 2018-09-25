@@ -303,6 +303,7 @@ export class AmazonS3Backend implements IBackend {
         formData.delete('dzchunkbyteoffset');
         formData.delete('dzchunkindex');
       }
+
       formData.append('key', key);
       resolve(formData);
     });
