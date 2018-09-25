@@ -288,6 +288,21 @@ export class AmazonS3Backend implements IBackend {
     // needed in order to have a valid POST
     return new Promise((resolve: any, reject: any) => {
       let key = this.getFilePath(folder, file);
+
+      // chunked
+      if (file.upload.chunked) {
+        let index = parseInt(formData.get('dzchunkindex'), 10) + 1;
+        let length = formData.get('dzchunksize');
+        key = key + '-' + index;
+
+        // clean up form data
+        formData.delete('dzuuid');
+        formData.delete('dztotalfilesize');
+        formData.delete('dzchunksize');
+        formData.delete('dztotalchunkcount');
+        formData.delete('dzchunkbyteoffset');
+        formData.delete('dzchunkindex');
+      }
       formData.append('key', key);
       resolve(formData);
     });
