@@ -65,12 +65,6 @@ export class DropzoneDirective implements ng.IDirective {
               console.log(data);
             });
         });
-
-        // enable prompt when user attempts to navigate away from this page
-        // while uploading a file
-        window.onbeforeunload = function() {
-          return true;
-        };
       },
       'uploadprogress': function(file: any) {
         // notify the bucket that we're working
@@ -107,6 +101,12 @@ export class DropzoneDirective implements ng.IDirective {
     });
 
     Dropzone.prototype.uploadFiles = function(files: any) {
+      // enable prompt when user attempts to navigate away from this page
+      // while uploading a file
+      window.onbeforeunload = function() {
+        return true;
+      };
+
       for (let i = 0; i < files.length; i++) {
         let file = files[i];
         let lastfile = i === files.length - 1;
