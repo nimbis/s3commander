@@ -38,7 +38,8 @@ export class DropzoneDirective implements ng.IDirective {
       dictCancelUpload: 'Cancel',
       dictDefaultMessage: 'Click here or Drop files here to upload',
       timeout: 0,
-      accept: acceptCallback
+      accept: acceptCallback,
+      canceled: canceledCallback
     };
 
     // dropzone accept
@@ -51,6 +52,17 @@ export class DropzoneDirective implements ng.IDirective {
       }).then((data: any) => {
         done();
       });
+    }
+
+    // dropzone cancel
+    function canceledCallback(file: any) {
+      if (!file.uploadCompleted) {
+        scope.$ctrl.backend.cancelUpload({
+          file: file
+        }).then((data: any) => {
+          console.log('File upload canceled: ' + file.name);
+        });
+      }
     }
 
     // in order to allow access to 'scope' inside the dropzone
@@ -118,6 +130,7 @@ export class DropzoneDirective implements ng.IDirective {
           if (res.err) {
             dropzone.emit('error', file, res.err.message);
           } else {
+            file.uploadCompleted = true;
             dropzone.emit('success', file);
             if (lastfile) { dropzone.emit('queuecomplete'); }
           }

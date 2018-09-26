@@ -325,4 +325,14 @@ export class AmazonS3Backend implements IBackend {
     });
   }
 
+  /**
+   * Cancel upload
+   */
+  public cancelUpload(params: any): Promise<any> {
+    return new Promise((resolve: any, reject: any) => {
+      params.file.s3upload.abort();
+      resolve(true);
+    });
+  }
+
 }

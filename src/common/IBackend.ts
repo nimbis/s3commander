@@ -66,4 +66,9 @@ export interface IBackend {
    * Upload file chunk using multi-part uploading
    */
   uploadPart(params: any): Promise<any>;
+
+  /**
+   * Cancel file upload
+   */
+  cancelUpload(params: any): Promise<any>;
 }
