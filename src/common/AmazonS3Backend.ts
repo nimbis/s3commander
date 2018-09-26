@@ -307,4 +307,22 @@ export class AmazonS3Backend implements IBackend {
     });
   }
 
+  /**
+   * Upload file using ManagedUpload
+   */
+  public uploadPart(params: any): Promise<any> {
+    params.file.s3upload.on('httpUploadProgress', function(progress: any) {
+      if (progress.total) {
+        let percent = (progress.loaded * 100) / progress.total;
+        params.dropzone.emit('uploadprogress', params.file, percent, progress.loaded);
+      }
+    });
+
+    return new Promise((resolve: any, reject: any) => {
+      params.file.s3upload.send(function(err: any, data: any) {
+        resolve({err: err, data: data});
+      });
+    });
+  }
+
 }

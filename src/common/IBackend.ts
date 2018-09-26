@@ -61,4 +61,9 @@ export interface IBackend {
    * Initiate multi-part uploading
    */
   initMultipartUpload(params: any): Promise<any>;
+
+  /**
+   * Upload file chunk using multi-part uploading
+   */
+  uploadPart(params: any): Promise<any>;
 }
