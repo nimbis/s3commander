@@ -37,8 +37,21 @@ export class DropzoneDirective implements ng.IDirective {
       addRemoveLinks: true,
       dictCancelUpload: 'Cancel',
       dictDefaultMessage: 'Click here or Drop files here to upload',
-      timeout: 0
+      timeout: 0,
+      accept: acceptCallback
     };
+
+    // dropzone accept
+    function acceptCallback(file: any, done: any) {
+      let key = scope.$ctrl.backend.getFilePath(scope.$ctrl.folder, file);
+      scope.$ctrl.backend.initMultipartUpload({
+        Bucket: scope.$ctrl.bucketName,
+        Key: key,
+        Body: file
+      }).then((data: any) => {
+        done();
+      });
+    }
 
     // in order to allow access to 'scope' inside the dropzone
     // handler functions, the functions need to be wrapped in
@@ -92,5 +105,24 @@ export class DropzoneDirective implements ng.IDirective {
     angular.forEach(eventHandlers, (handler, event) => {
       dropzone.on(event, handler);
     });
+
+    Dropzone.prototype.uploadFiles = function(files: any) {
+      for (let i = 0; i < files.length; i++) {
+        let file = files[i];
+        let lastfile = i === files.length - 1;
+
+        scope.$ctrl.backend.uploadPart({
+          file: file,
+          dropzone: this
+        }).then((res: any) => {
+          if (res.err) {
+            dropzone.emit('error', file, res.err.message);
+          } else {
+            dropzone.emit('success', file);
+            if (lastfile) { dropzone.emit('queuecomplete'); }
+          }
+        });
+      }
+    };
   }
 }
