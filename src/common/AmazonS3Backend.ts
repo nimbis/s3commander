@@ -303,6 +303,7 @@ export class AmazonS3Backend implements IBackend {
         params: params,
         service: this.s3
       });
+      params.Body.s3upload.computeChecksums = true;
       resolve(params);
     });
   }
