@@ -56,4 +56,9 @@ export interface IBackend {
    * Update formData to allow valid POST
    */
   updateFormData(folder: Folder, file: any, formData: any): Promise<any>;
+
+  /**
+   * Initiate multi-part uploading
+   */
+  initMultipartUpload(params: any): Promise<any>;
 }

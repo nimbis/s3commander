@@ -293,4 +293,18 @@ export class AmazonS3Backend implements IBackend {
     });
   }
 
+  /**
+   * Initiate S3 multi-part upload using ManagedUpload
+   */
+  public initMultipartUpload(params: any): Promise<any> {
+    return new Promise((resolve: any, reject: any) => {
+      // add ManagedUpload object to the file
+      params.Body.s3upload = new AWS.S3.ManagedUpload({
+        params: params,
+        service: this.s3
+      });
+      resolve(params);
+    });
+  }
+
 }
