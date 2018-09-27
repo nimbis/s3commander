@@ -65,19 +65,7 @@ export class DropzoneDirective implements ng.IDirective {
       }
     }
 
-    // in order to allow access to 'scope' inside the dropzone
-    // handler functions, the functions need to be wrapped in
-    // scope.$apply.
     let eventHandlers = {
-      'sending': (file, xhr, formData) => {
-        scope.$apply(() => {
-          // set form data prior to submitting the dz form
-          scope.$ctrl.backend.updateFormData(scope.$ctrl.folder, file, formData)
-            .then((data: any) => {
-              console.log(data);
-            });
-        });
-      },
       'uploadprogress': function(file: any) {
         // notify the bucket that we're working
         scope.$ctrl.toggleWorking({state: true});
