@@ -42,7 +42,8 @@ export class DropzoneDirective implements ng.IDirective {
       canceled: canceledCallback
     };
 
-    // dropzone accept
+    // override dropzone accept so the multipart upload is
+    // initiated for each file uploaded.
     function acceptCallback(file: any, done: any) {
       let key = scope.$ctrl.backend.getFilePath(scope.$ctrl.folder, file);
       scope.$ctrl.backend.initMultipartUpload({
@@ -54,8 +55,11 @@ export class DropzoneDirective implements ng.IDirective {
       });
     }
 
-    // dropzone cancel
+    // override dropzone cancel to call the backend cancelUpload.
     function canceledCallback(file: any) {
+      // check if file was canceled prior to completing upload since
+      // this callback is also triggered when removeFile() is called
+      // after successfully uploading files.
       if (!file.uploadCompleted) {
         scope.$ctrl.backend.cancelUpload({
           file: file
@@ -100,6 +104,10 @@ export class DropzoneDirective implements ng.IDirective {
       dropzone.on(event, handler);
     });
 
+    // override dropone uploadFiles function to use the backend
+    // uploading function instead of dropzone. Since all accepted
+    // files initiate multipart uploading, the backend uploadPart
+    // function is called for each file.
     Dropzone.prototype.uploadFiles = function(files: any) {
       // enable prompt when user attempts to navigate away from this page
       // while uploading a file

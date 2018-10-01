@@ -282,6 +282,15 @@ export class AmazonS3Backend implements IBackend {
 
   /**
    * Initiate S3 multi-part upload using ManagedUpload
+   *
+   * Initiates multipart upload using S3 ManagedUpload
+   * and expects the following parameters:
+   *
+   * params = {
+   *   Bucket: name of the bucket: string
+   *   Key: filepath: string
+   *   Body: file object: File
+   * }
    */
   public initMultipartUpload(params: any): Promise<any> {
     return new Promise((resolve: any, reject: any) => {
