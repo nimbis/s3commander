@@ -79,6 +79,7 @@ When you're working with AWS S3 buckets you need to configure an appropriate COR
     <AllowedMethod>POST</AllowedMethod>
     <AllowedMethod>DELETE</AllowedMethod>
     <MaxAgeSeconds>3000</MaxAgeSeconds>
+    <ExposeHeader>ETag</ExposeHeader>
     <AllowedHeader>*</AllowedHeader>
 </CORSRule>
 </CORSConfiguration>

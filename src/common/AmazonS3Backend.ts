@@ -252,6 +252,23 @@ export class AmazonS3Backend implements IBackend {
   }
 
   /**
+   * Get full file path given a folder and file.
+   */
+  public getFilePath(folder: Folder, file: any): string {
+    let filePath = file.name;
+
+    if (file.hasOwnProperty('fullPath')) {
+      filePath = file.fullPath;
+    }
+
+    return folder
+        .getPath()
+        .clone()
+        .push(filePath)
+        .toString();
+  }
+
+  /**
    * Delete a file.
    */
   deleteFile(bucket: Bucket, file: File): Promise<any> {
@@ -264,24 +281,55 @@ export class AmazonS3Backend implements IBackend {
   }
 
   /**
-   * Update formData to allow valid POST
+   * Initiate S3 multi-part upload using ManagedUpload
+   *
+   * Initiates multipart upload using S3 ManagedUpload
+   * and expects the following parameters:
+   *
+   * params = {
+   *   Bucket: name of the bucket: string
+   *   Key: filepath: string
+   *   Body: file object: File
+   * }
    */
-  public updateFormData(folder: Folder, file: any, formData: any): Promise<any> {
-    // append AWS upload key to the form data
-    // needed in order to have a valid POST
-    let filePath = file.name;
+  public initMultipartUpload(params: any): Promise<any> {
+    return new Promise((resolve: any, reject: any) => {
+      // add ManagedUpload object to the file
+      params.Body.s3upload = new AWS.S3.ManagedUpload({
+        params: params,
+        service: this.s3
+      });
+      params.Body.s3upload.computeChecksums = true;
+      resolve(params);
+    });
+  }
 
-    if (file.hasOwnProperty('fullPath')) {
-      filePath = file.fullPath;
-    }
+  /**
+   * Upload file using ManagedUpload
+   */
+  public uploadPart(params: any): Promise<any> {
+    params.file.s3upload.on('httpUploadProgress', function(progress: any) {
+      if (progress.total) {
+        let percent = (progress.loaded * 100) / progress.total;
+        params.dropzone.emit('uploadprogress', params.file, percent, progress.loaded);
+      }
+    });
 
-    let key = folder
-        .getPath()
-        .clone()
-        .push(filePath)
-        .toString();
+    return new Promise((resolve: any, reject: any) => {
+      params.file.s3upload.send(function(err: any, data: any) {
+        resolve({err: err, data: data});
+      });
+    });
+  }
 
-    return formData.append('key', key).promise();
+  /**
+   * Cancel upload
+   */
+  public cancelUpload(params: any): Promise<any> {
+    return new Promise((resolve: any, reject: any) => {
+      params.file.s3upload.abort();
+      resolve(true);
+    });
   }
 
 }
