@@ -279,7 +279,9 @@ export class AmazonS3Backend implements IBackend {
     // add ManagedUpload object to the file
     params.Body.s3upload = new AWS.S3.ManagedUpload({
       params: params,
-      service: this.s3
+      service: this.s3,
+      partSize: 1024 * 1024 * 10,
+      queueSize: 1
     });
     params.Body.s3upload.computeChecksums = true;
 
