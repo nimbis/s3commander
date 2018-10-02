@@ -301,4 +301,38 @@ export class AmazonS3Backend implements IBackend {
     return formData.append('key', key).promise();
   }
 
+  /**
+   * Upload file to S3 using ManagedUpload.
+   * Expects the following parameters:
+   *
+   * params = {
+   *   Bucket: name of the bucket
+   *   Key: filepath
+   *   Body: file object
+   *   Dropzone: dropzone object
+   * }
+   */
+  public uploadFile(params: any): Promise<any> {
+    // add ManagedUpload object to the file
+    params.Body.s3upload = new AWS.S3.ManagedUpload({
+      params: params,
+      service: this.s3
+    });
+    params.Body.s3upload.computeChecksums = true;
+
+    // add event listener to update upload progress
+    params.Body.s3upload.on('httpUploadProgress', function(progress: any) {
+      if (progress.total) {
+        let percent = (progress.loaded * 100) / progress.total;
+        params.Dropzone.emit('uploadprogress', params.Body, percent, progress.loaded);
+      }
+    });
+
+    return new Promise((resolve: any, reject: any) => {
+      params.Body.s3upload.send(function(err: any, data: any) {
+        resolve({err: err, data: data});
+      });
+    });
+  }
+
 }
