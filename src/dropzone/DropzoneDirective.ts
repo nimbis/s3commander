@@ -89,5 +89,30 @@ export class DropzoneDirective implements ng.IDirective {
     angular.forEach(eventHandlers, (handler, event) => {
       dropzone.on(event, handler);
     });
+
+    // override dropzone uploadFiles function to use the backend
+    // multi-part upload instead.
+    Dropzone.prototype.uploadFiles = function(files: any) {
+      for (let i = 0; i < files.length; i++) {
+        let file = files[i];
+        let lastfile = i === files.length - 1;
+
+        // upload file using backend
+        let key = scope.$ctrl.backend.getFilePath(scope.$ctrl.folder, file);
+        scope.$ctrl.backend.uploadFile({
+          Bucket: scope.$ctrl.config.fields.bucket,
+          Key: key,
+          Body: file,
+          Dropzone: this
+        }).then((res: any) => {
+          if (res.err) {
+            dropzone.emit('error', file, res.err.message);
+          } else {
+            dropzone.emit('success', file);
+            if (lastfile) { dropzone.emit('queuecomplete'); }
+          }
+        });
+      }
+    };
   }
 }
