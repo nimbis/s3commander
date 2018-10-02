@@ -61,4 +61,9 @@ export interface IBackend {
    * Upload a file.
    */
   uploadFile(params: any): Promise<any>;
+
+  /**
+   * Cancel file upload
+   */
+  cancelUpload(params: any): Promise<any>;
 }

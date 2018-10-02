@@ -37,8 +37,23 @@ export class DropzoneDirective implements ng.IDirective {
       addRemoveLinks: true,
       dictCancelUpload: 'Cancel',
       dictDefaultMessage: 'Click here or Drop files here to upload',
-      timeout: 0
+      timeout: 0,
+      canceled: canceledCallback
     };
+
+    // override dropzone cancel to call the backend cancelUpload
+    function canceledCallback(file: any) {
+      // check if file was canceled prior to completing upload since
+      // this callback is also triggered when removeFile() is called
+      // after successfully uploading files.
+      if (!file.uploadCompleted) {
+        scope.$ctrl.backend.cancelUpload({
+          file: file
+        }).then((data: any) => {
+          console.log('Filed upload canceled: ' + file.name);
+        });
+      }
+    }
 
     // in order to allow access to 'scope' inside the dropzone
     // handler functions, the functions need to be wrapped in
@@ -108,6 +123,7 @@ export class DropzoneDirective implements ng.IDirective {
           if (res.err) {
             dropzone.emit('error', file, res.err.message);
           } else {
+            file.uploadCompleted = true;
             dropzone.emit('success', file);
             if (lastfile) { dropzone.emit('queuecomplete'); }
           }
