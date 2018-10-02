@@ -59,18 +59,6 @@ export class DropzoneDirective implements ng.IDirective {
     // handler functions, the functions need to be wrapped in
     // scope.$apply.
     let eventHandlers = {
-      'sending': (file, xhr, formData) => {
-        scope.$apply(() => {
-          // set form data prior to submitting the dz form
-          scope.$ctrl.backend.updateFormData(scope.$ctrl.folder, file, formData);
-        });
-
-        // enable prompt when user attempts to navigate away from this page
-        // while uploading a file
-        window.onbeforeunload = function() {
-          return true;
-        };
-      },
       'uploadprogress': function(file: any) {
         // notify the bucket that we're working
         scope.$ctrl.toggleWorking({state: true});
@@ -108,6 +96,12 @@ export class DropzoneDirective implements ng.IDirective {
     // override dropzone uploadFiles function to use the backend
     // multi-part upload instead.
     Dropzone.prototype.uploadFiles = function(files: any) {
+      // enable prompt when user attempts to navigate away from this page
+      // while uploading a file
+      window.onbeforeunload = function() {
+        return true;
+      };
+
       for (let i = 0; i < files.length; i++) {
         let file = files[i];
         let lastfile = i === files.length - 1;
