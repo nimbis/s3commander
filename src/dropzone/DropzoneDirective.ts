@@ -38,6 +38,7 @@ export class DropzoneDirective implements ng.IDirective {
       dictCancelUpload: 'Cancel',
       dictDefaultMessage: 'Click here or Drop files here to upload',
       timeout: 0,
+      filesizeBase: 1024,
       canceled: canceledCallback
     };
 
