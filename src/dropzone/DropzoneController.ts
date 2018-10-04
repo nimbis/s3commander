@@ -19,9 +19,9 @@ export class DropzoneController {
   public backend: IBackend;
 
   /**
-   * Indicates S3Commander is working.
+   * Toggle working status.
    */
-  public working: boolean;
+  public toggleWorking;
 
   /**
    * Function to refresh bucket contents. This should be binded

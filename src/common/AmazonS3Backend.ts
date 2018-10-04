@@ -179,29 +179,13 @@ export class AmazonS3Backend implements IBackend {
 
   /**
    * Get settings necessary to upload files to the given folder.
-   *
-   * @see https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#createPresignedPost-property
    */
   public getUploadConfig(bucket: Bucket, folder: Folder): IUploadConfig {
-    // retrieve post url and fields including pre-signed authorization field
-    var params = {
-      Bucket: bucket.name,
-      Conditions: [
-        ['starts-with', '$key', folder.getPath().toString()]
-      ],
-      Expires: 900
-    };
-
-    let config = this.s3.createPresignedPost(params);
-
-    // return the fields and a bucket url instead of the inline url.
-    // this avoids a URL redirect issue that can happen when a POST request is
-    // sent to a bucket in a different region than the current one
-    let genericUrl = new URL(config.url);
-
     return {
-      url: `https://${bucket.name}.${genericUrl.hostname}/`,
-      fields: config.fields
+      url: `https://${bucket.name}.s3.amazonaws.com/`,
+      fields: {
+        bucket: bucket.name
+      }
     };
   }
 
@@ -252,6 +236,23 @@ export class AmazonS3Backend implements IBackend {
   }
 
   /**
+   * Get full file path given a folder and file.
+   */
+  public getFilePath(folder: Folder, file: any): string {
+    let filePath = file.name;
+
+    if (file.hasOwnProperty('fullPath')) {
+      filePath = file.fullPath;
+    }
+
+    return folder
+        .getPath()
+        .clone()
+        .push(filePath)
+        .toString();
+  }
+
+  /**
    * Delete a file.
    */
   deleteFile(bucket: Bucket, file: File): Promise<any> {
@@ -264,24 +265,54 @@ export class AmazonS3Backend implements IBackend {
   }
 
   /**
-   * Update formData to allow valid POST
+   * Upload file to S3 using ManagedUpload.
+   * Expects the following parameters:
+   *
+   * params = {
+   *   Bucket: name of the bucket
+   *   Key: filepath
+   *   Body: file object
+   *   Dropzone: dropzone object
+   * }
    */
-  public updateFormData(folder: Folder, file: any, formData: any): Promise<any> {
-    // append AWS upload key to the form data
-    // needed in order to have a valid POST
-    let filePath = file.name;
+  public uploadFile(params: any): Promise<any> {
+    // add ManagedUpload object to the file
+    params.Body.s3upload = new AWS.S3.ManagedUpload({
+      params: params,
+      service: this.s3,
+      partSize: 1024 * 1024 * 10,
+      queueSize: 1
+    });
+    params.Body.s3upload.computeChecksums = true;
 
-    if (file.hasOwnProperty('fullPath')) {
-      filePath = file.fullPath;
-    }
+    // add event listener to update upload progress
+    params.Body.s3upload.on('httpUploadProgress', function(progress: any) {
+      if (progress.total) {
+        let percent = (progress.loaded * 100) / progress.total;
+        params.Dropzone.emit('uploadprogress', params.Body, percent, progress.loaded);
+      }
+    });
 
-    let key = folder
-        .getPath()
-        .clone()
-        .push(filePath)
-        .toString();
+    return new Promise((resolve: any, reject: any) => {
+      params.Body.s3upload.send(function(err: any, data: any) {
+        resolve({err: err, data: data});
+      });
+    });
+  }
 
-    return formData.append('key', key).promise();
+  /**
+   * Cancel file upload.
+   * Expects the following parameters:
+   *
+   * params = {
+   *   file: file object
+   * }
+   */
+  public cancelUpload(params: any): Promise<any> {
+    return new Promise((resolve: any, reject: any) => {
+      params.file.s3upload.abort();
+      resolve(true);
+    });
   }
 
 }
