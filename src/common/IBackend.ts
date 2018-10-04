@@ -43,12 +43,22 @@ export interface IBackend {
   getFileVersions(bucket: Bucket, file: File): Promise<IFileVersion[]>;
 
   /**
+   * Get full file path given a folder and file.
+   */
+  getFilePath(folder: Folder, file: File): string;
+
+  /**
    * Delete a file.
    */
   deleteFile(bucket: Bucket, file: File): Promise<any>;
 
   /**
-   * Update formData to allow valid POST
+   * Upload a file.
    */
-  updateFormData(folder: Folder, file: any, formData: any): Promise<any>;
+  uploadFile(params: any): Promise<any>;
+
+  /**
+   * Cancel file upload
+   */
+  cancelUpload(params: any): Promise<any>;
 }
