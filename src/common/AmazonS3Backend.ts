@@ -276,27 +276,105 @@ export class AmazonS3Backend implements IBackend {
    * }
    */
   public uploadFile(params: any): Promise<any> {
-    // add ManagedUpload object to the file
-    params.Body.s3upload = new AWS.S3.ManagedUpload({
+
+    let completedParts = [];
+    let uploadParams = {
       params: params,
       service: this.s3,
       partSize: 1024 * 1024 * 10,
       queueSize: 1
-    });
-    params.Body.s3upload.computeChecksums = true;
-
-    // add event listener to update upload progress
-    params.Body.s3upload.on('httpUploadProgress', function(progress: any) {
-      if (progress.total) {
-        let percent = (progress.loaded * 100) / progress.total;
-        params.Dropzone.emit('uploadprogress', params.Body, percent, progress.loaded);
-      }
-    });
+    };
 
     return new Promise((resolve: any, reject: any) => {
-      params.Body.s3upload.send(function(err: any, data: any) {
-        resolve({err: err, data: data});
-      });
+      // callback function to be used with s3.listParts()
+      // creates a ManagedUpload from an existing multipart upload.
+      let resumeUploadCallback = function(err: any, data: any) {
+        if (err) {
+          console.log(err);
+          resolve({err: err, data: data});
+          return;
+        }
+
+        // collect data for parts that are already uploaded to aws.
+        let byteCount = 0;
+        for (let i of Object.keys(data.Parts)) {
+          let partNumber = data.Parts[i].PartNumber;
+          completedParts[partNumber] = {ETag: data.Parts[i].ETag, PartNumber: partNumber};
+          byteCount = byteCount + data.Parts[i].Size;
+        }
+
+        let upload = new AWS.S3.ManagedUpload(uploadParams);
+
+        // populate info for already complete parts
+        upload['completeInfo'] = completedParts;
+
+        // populate uploaded bytes for tracking upload progress
+        upload['totalUploadedBytes'] = byteCount;
+
+        // populate uploaded parts for tracking upload completion
+        upload['doneParts'] = data.Parts.length;
+        params.Body.s3upload = upload;
+        params.Body.s3upload.computeChecksums = true;
+
+        // add event listener to update upload progress
+        params.Body.s3upload.on('httpUploadProgress', function(progress: any) {
+          if (progress.total) {
+            let percent = (progress.loaded * 100) / progress.total;
+            params.Dropzone.emit('uploadprogress', params.Body, percent, progress.loaded);
+          }
+        });
+
+        // start the managed upload
+        params.Body.s3upload.send(function(err: any, data: any) {
+          resolve({err: err, data: data});
+        });
+      };
+
+      // callback function to be used with s3.listMultipartUploads
+      // looks for an existing multipart upload with the given upload key.
+      // uses the existing upload if one exists.  Creates a new upload otherwise.
+      let findMultipartUploadCallback = function(err: any, data: any) {
+        if (err) {
+          console.log(err);
+          resolve({err: err, data: data});
+          return;
+        }
+
+        // check existing uploads for matching upload key.
+        for (let upload of data.Uploads) {
+          // must copy the UploadId to reuse an existing multipart upload.
+          if (upload.Key === params.Key) {
+            params.UploadId = upload.UploadId;
+            this.s3.listParts({
+              Bucket: params.Bucket,
+              Key: upload.Key,
+              UploadId: upload.UploadId
+            },
+            resumeUploadCallback);
+            return;
+          }
+        }
+
+        // no existing upload with matching key.  Create new upload.
+        let upload = new AWS.S3.ManagedUpload(uploadParams);
+        params.Body.s3upload = upload;
+        params.Body.s3upload.computeChecksums = true;
+
+        // add event listener to update upload progress
+        params.Body.s3upload.on('httpUploadProgress', function(progress: any) {
+          if (progress.total) {
+            let percent = (progress.loaded * 100) / progress.total;
+            params.Dropzone.emit('uploadprogress', params.Body, percent, progress.loaded);
+          }
+        });
+
+        // start the managed upload
+        params.Body.s3upload.send(function(err: any, data: any) {
+          resolve({err: err, data: data});
+        });
+      };
+
+      this.s3.listMultipartUploads({Bucket: params.Bucket}, findMultipartUploadCallback);
     });
   }
 
