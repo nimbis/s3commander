@@ -309,24 +309,34 @@ export class AmazonS3Backend implements IBackend {
 
             // aws stores the part md5 in the ETag for multipart uploads
             if (partMD5 === data.Parts[i].ETag) {
-              // TODO add part to completed parts in upload
+
+              // modify current upload object if it exists
+              if (params.Body.s3upload) {
+
+                // ignore part if it has been or is being uploaded
+                if (params.Body.s3upload.completeInfo[partNumber]) {
+                  return;
+                }
+
+                // update info for complete parts
+                params.Body.s3upload.completeInfo[partNumber] = {
+                  ETag: data.Parts[i].ETag,
+                  PartNumber: partNumber
+                };
+                params.Body.s3upload.totalUploadedBytes = params.Body.s3upload.totalUploadedBytes + data.Parts[i].Size;
+                params.Body.s3upload.doneParts = params.Body.s3upload.doneParts + 1;
+              }
             }
           };
 
-          completedParts[partNumber] = {ETag: data.Parts[i].ETag, PartNumber: partNumber};
+          // get data for part from current file
+          let blob = params.Body.slice(byteCount, byteCount + data.Parts[i].Size);
+          fr.readAsBinaryString(blob);
           byteCount = byteCount + data.Parts[i].Size;
         }
 
         let upload = new AWS.S3.ManagedUpload(uploadParams);
 
-        // populate info for already complete parts
-        upload['completeInfo'] = completedParts;
-
-        // populate uploaded bytes for tracking upload progress
-        upload['totalUploadedBytes'] = byteCount;
-
-        // populate uploaded parts for tracking upload completion
-        upload['doneParts'] = data.Parts.length;
         params.Body.s3upload = upload;
         params.Body.s3upload.computeChecksums = true;
 
