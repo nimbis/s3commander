@@ -1,6 +1,7 @@
 /// <reference types="aws-sdk" />
 
 import AWS = require('aws-sdk');
+import crypto = require('crypto-js');
 
 import {Bucket} from './Bucket';
 import {Path} from './Path';
@@ -298,7 +299,20 @@ export class AmazonS3Backend implements IBackend {
         // collect data for parts that are already uploaded to aws.
         let byteCount = 0;
         for (let i of Object.keys(data.Parts)) {
+          let fr = new FileReader();
           let partNumber = data.Parts[i].PartNumber;
+
+          // compare the MD5 of uploaded part with part from current file
+          // add parts with a matching MD5 to the completed parts
+          fr.onload = function(event: any) {
+            let partMD5 = '"' + crypto.MD5(event.target.result).toString(crypto.enc.Hex) + '"';
+
+            // aws stores the part md5 in the ETag for multipart uploads
+            if (partMD5 === data.Parts[i].ETag) {
+              // TODO add part to completed parts in upload
+            }
+          };
+
           completedParts[partNumber] = {ETag: data.Parts[i].ETag, PartNumber: partNumber};
           byteCount = byteCount + data.Parts[i].Size;
         }
