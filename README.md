@@ -85,6 +85,8 @@ When you're working with AWS S3 buckets you need to configure an appropriate COR
 </CORSConfiguration>
 ```
 
+AWS recommends configuring the bucket with a lifecycle rule to abort incomplete multipart uploads.  This will minimize your storage costs by removing the data for incomplete multipart uploads that may have been interrupted.
+
 The HTML file upload functionality uses an HTTPS API endpoint based on the bucket name (i.e. `https://<bucket>s3.amazonaws.com`). If the bucket name has dots (`.`) in the name this will fail because you can't use HTTPS with subdomains.
 
 ## Styling

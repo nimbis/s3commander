@@ -1,6 +1,7 @@
 /// <reference types="aws-sdk" />
 
 import AWS = require('aws-sdk');
+import crypto = require('crypto-js');
 
 import {Bucket} from './Bucket';
 import {Path} from './Path';
@@ -298,21 +299,44 @@ export class AmazonS3Backend implements IBackend {
         // collect data for parts that are already uploaded to aws.
         let byteCount = 0;
         for (let i of Object.keys(data.Parts)) {
+          let fr = new FileReader();
           let partNumber = data.Parts[i].PartNumber;
-          completedParts[partNumber] = {ETag: data.Parts[i].ETag, PartNumber: partNumber};
+
+          // compare the MD5 of uploaded part with part from current file
+          // add parts with a matching MD5 to the completed parts
+          fr.onload = function(event: any) {
+            let partMD5 = '"' + crypto.MD5(event.target.result).toString(crypto.enc.Hex) + '"';
+
+            // aws stores the part md5 in the ETag for multipart uploads
+            if (partMD5 === data.Parts[i].ETag) {
+
+              // modify current upload object if it exists
+              if (params.Body.s3upload) {
+
+                // ignore part if it has been or is being uploaded
+                if (params.Body.s3upload.completeInfo[partNumber]) {
+                  return;
+                }
+
+                // update info for complete parts
+                params.Body.s3upload.completeInfo[partNumber] = {
+                  ETag: data.Parts[i].ETag,
+                  PartNumber: partNumber
+                };
+                params.Body.s3upload.totalUploadedBytes = params.Body.s3upload.totalUploadedBytes + data.Parts[i].Size;
+                params.Body.s3upload.doneParts = params.Body.s3upload.doneParts + 1;
+              }
+            }
+          };
+
+          // get data for part from current file
+          let blob = params.Body.slice(byteCount, byteCount + data.Parts[i].Size);
+          fr.readAsBinaryString(blob);
           byteCount = byteCount + data.Parts[i].Size;
         }
 
         let upload = new AWS.S3.ManagedUpload(uploadParams);
 
-        // populate info for already complete parts
-        upload['completeInfo'] = completedParts;
-
-        // populate uploaded bytes for tracking upload progress
-        upload['totalUploadedBytes'] = byteCount;
-
-        // populate uploaded parts for tracking upload completion
-        upload['doneParts'] = data.Parts.length;
         params.Body.s3upload = upload;
         params.Body.s3upload.computeChecksums = true;
 
