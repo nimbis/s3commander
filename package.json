@@ -1,6 +1,6 @@
 {
   "name": "s3commander",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "web based object storage file browser",
   "homepage": "https://github.com/nimbis/s3commander",
   "license": "SEE LICENSE IN LICENSE.txt",
