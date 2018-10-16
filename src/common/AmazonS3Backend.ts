@@ -279,9 +279,10 @@ export class AmazonS3Backend implements IBackend {
   public uploadFile(params: any): Promise<any> {
 
     let completedParts = [];
+    let s3client = this.s3;
     let uploadParams = {
       params: params,
-      service: this.s3,
+      service: s3client,
       partSize: 1024 * 1024 * 10,
       queueSize: 1
     };
@@ -369,7 +370,7 @@ export class AmazonS3Backend implements IBackend {
           // must copy the UploadId to reuse an existing multipart upload.
           if (upload.Key === params.Key) {
             params.UploadId = upload.UploadId;
-            this.s3.listParts({
+            s3client.listParts({
               Bucket: params.Bucket,
               Key: upload.Key,
               UploadId: upload.UploadId
@@ -398,7 +399,7 @@ export class AmazonS3Backend implements IBackend {
         });
       };
 
-      this.s3.listMultipartUploads({Bucket: params.Bucket}, findMultipartUploadCallback);
+      s3client.listMultipartUploads({Bucket: params.Bucket}, findMultipartUploadCallback);
     });
   }
 
