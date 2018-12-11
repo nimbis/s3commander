@@ -67,6 +67,16 @@ export class DropzoneDirective implements ng.IDirective {
       'success': function(file: any) {
         this.removeFile(file);
       },
+      'complete': function(file: any) {
+        // check if we finished adding and uploading all
+        // files and the queue is empty. If we did,
+        // emit the queuecomplete event.
+        if (this.getAddedFiles().length === 0 &&
+            this.getUploadingFiles().length === 0 &&
+            this.getQueuedFiles().length === 0) {
+          this.emit('queuecomplete');
+        }
+      },
       'error': function(file: any, errorMessage: string, xhr?: any) {
         console.log('An error has occurred: ' + errorMessage);
 
@@ -105,7 +115,6 @@ export class DropzoneDirective implements ng.IDirective {
 
       for (let i = 0; i < files.length; i++) {
         let file = files[i];
-        let lastfile = i === files.length - 1;
 
         // upload file using backend
         let key = scope.$ctrl.backend.getFilePath(scope.$ctrl.folder, file);
@@ -116,11 +125,17 @@ export class DropzoneDirective implements ng.IDirective {
           Dropzone: this
         }).then((res: any) => {
           if (res.err) {
+            file.status = Dropzone.ERROR;
             dropzone.emit('error', file, res.err.message);
+            dropzone.emit('complete', file);
           } else {
             file.uploadCompleted = true;
+            file.status = Dropzone.SUCCESS;
             dropzone.emit('success', file);
-            if (lastfile) { dropzone.emit('queuecomplete'); }
+            dropzone.emit('complete', file);
+          }
+          if (this.options.autoProcessQueue) {
+            dropzone.processQueue();
           }
         });
       }
