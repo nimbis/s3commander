@@ -47,7 +47,7 @@ export class DropzoneDirective implements ng.IDirective {
       // check if file was canceled prior to completing upload since
       // this callback is also triggered when removeFile() is called
       // after successfully uploading files.
-      if (!file.uploadCompleted) {
+      if (file.uploadCompleted === false) {
         scope.$ctrl.backend.cancelUpload({
           file: file
         }).then((data: any) => {
