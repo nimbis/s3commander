@@ -65,6 +65,7 @@ export class DropzoneDirective implements ng.IDirective {
         scope.$ctrl.toggleWorking({state: true});
       },
       'success': function(file: any) {
+        scope.$ctrl.onRefresh({});
         this.removeFile(file);
       },
       'complete': function(file: any) {
