@@ -62,11 +62,9 @@ gulp tslint
 
 ## Releases
 
-Increment all versions within S3Commander to new version (Ex. 0.12.1). Currently
-these are stored under the name s3commander in:
+Increment the s3commander npm package. Currently the version is stored under the name s3commander in:
 
 ```
-s3commander/packagelock.json
 s3commander/package.json
 ```
 
@@ -82,7 +80,7 @@ Launch a browser and navigate to:
 github.com/nimbis/s3commander
 ```
 
-Click the tag labeled (number) releases
+Click the tag labeled (number) releases.
 
 Click "Draft New Release".
 
