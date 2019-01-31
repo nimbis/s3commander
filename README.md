@@ -60,6 +60,36 @@ Run the TypeScript linter.
 gulp tslint
 ```
 
+## Releases
+
+Increment the s3commander npm package. Currently the version is stored under the name s3commander in:
+
+```
+s3commander/package.json
+```
+
+Commit version update using git commit with description:
+```
+Update s3commander to version <new version>
+```
+
+Push the changes and merge with master.
+
+Launch a browser and navigate to:
+```
+github.com/nimbis/s3commander
+```
+
+Click the tag labeled (number) releases.
+
+Click "Draft New Release".
+
+Title and tag the release with the new version (Ex. v0.12.1).
+
+Add a description about what is new.
+
+Publish the release.
+
 ## Backends
 
 * AWS S3
