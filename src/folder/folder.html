@@ -1,5 +1,6 @@
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <div class="s3c-folder" ng-class="{'deleted': $ctrl.folder.deleted}">
-  <i class="s3c-folder-icon"></i>
+  <i class="fa fa-folder-open-o"></i>
   <a ng-click="$ctrl.onNavigate()">{{ $ctrl.folder.path.name() }}</a>
   <button class="s3c-button" ng-if="!$ctrl.folder.deleted" ng-click="$ctrl.onDelete()">Delete</button>
 </div>
