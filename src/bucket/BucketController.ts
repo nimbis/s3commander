@@ -124,7 +124,6 @@ export class BucketController {
     this.deletedFolders = [];
     this.files = [];
     this.deletedFiles = [];
-    this.allowDownload = true;
     this.uploadConfig = null;
     this.folderName = '';
   }
@@ -138,6 +137,11 @@ export class BucketController {
       this.awsBucketPrefix = '/';
     }
     this.currentFolder = new Folder(new Path(this.awsBucketPrefix));
+
+    // default allow download to true
+    if (this.allowDownload === undefined) {
+      this.allowDownload = true;
+    }
 
     // create the backend
     if (this.backendName === 's3') {
