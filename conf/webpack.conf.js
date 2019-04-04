@@ -68,8 +68,8 @@ module.exports = {
   ],
   devtool: 'source-map',
   output: {
-    path: path.join(process.cwd(), conf.paths.tmp),
-    filename: 'index.js'
+    path: path.join(process.cwd(), conf.paths.dev),
+    filename: '[name]-s3commander.js'
   },
   resolve: {
     extensions: [
