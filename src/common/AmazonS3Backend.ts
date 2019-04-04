@@ -19,6 +19,11 @@ export class AmazonS3Backend implements IBackend {
   private s3: AWS.S3;
 
   /**
+   * Whether to generate a download link.
+   */
+  private allowDownload: boolean;
+
+  /**
    * Create an instance of the backend.
    * @see https://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region
    */
@@ -26,7 +31,8 @@ export class AmazonS3Backend implements IBackend {
     region: string,
     accessKeyId: string,
     secretAccessKey: string,
-    sessionToken: string = null
+    sessionToken: string = null,
+    allowDownload: boolean = true
   ) {
     this.s3 = new AWS.S3({
       apiVersion: 'latest',
@@ -37,6 +43,8 @@ export class AmazonS3Backend implements IBackend {
       sslEnabled: true,
       signatureVersion: 'v4'
     });
+
+    this.allowDownload = allowDownload;
   }
 
   /**
@@ -73,11 +81,11 @@ export class AmazonS3Backend implements IBackend {
           // ignore the folder object by comparing it's path
           return folder.getPath().toString() !== fileData.Key;
         }).map((fileData: any) => {
-          let downloadLink = this.s3.getSignedUrl('getObject', {
+          let downloadLink = this.allowDownload ? this.s3.getSignedUrl('getObject', {
             Bucket: bucket.name,
             Key: fileData.Key,
             Expires: 900
-          });
+          }) : undefined;
 
           return new File(new Path(fileData.Key), downloadLink);
         });
@@ -204,12 +212,12 @@ export class AmazonS3Backend implements IBackend {
       .then((data: any) => {
         // extract file versions
         let versions = data.Versions.map((versionData: any) => {
-          let downloadLink = this.s3.getSignedUrl('getObject', {
+          let downloadLink = this.allowDownload ? this.s3.getSignedUrl('getObject', {
             Bucket: bucket.name,
             Key: file.getPath().toString(),
             VersionId: versionData.VersionId,
             Expires: 900
-          });
+          }) : undefined;
 
           return {
             latest: versionData.IsLatest,

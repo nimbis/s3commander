@@ -1,13 +1,13 @@
 <div class="s3c-file" ng-class="{'deleted': $ctrl.file.deleted}">
   <!-- file link -->
-  <a ng-if="!$ctrl.file.deleted"
+  <a ng-if="!$ctrl.file.deleted && $ctrl.file.getDownloadLink()"
     href="{{ $ctrl.file.getDownloadLink() }}"
     download="{{ $ctrl.file.getPath().name() }}"
     target="_blank">{{ $ctrl.file.getPath().name() }}</a>
 
-  <!-- if the file is deleted,
+  <!-- if the file is deleted or there is no download link,
     it is not downloadable so don't make it a link -->
-  <span ng-if="$ctrl.file.deleted">
+  <span ng-if="$ctrl.file.deleted || !$ctrl.file.getDownloadLink()">
     {{ $ctrl.file.getPath().name() }}
   </span>
 

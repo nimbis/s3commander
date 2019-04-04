@@ -144,7 +144,9 @@ export class BucketController {
       this.backend = new AmazonS3Backend(
         this.awsRegion,
         this.awsAccessKeyId,
-        this.awsSecretAccessKey);
+        this.awsSecretAccessKey,
+        null,
+        this.allowDownload);
     } else {
       throw new Error(`Unknown backend: ${this.backendName}`);
     }
