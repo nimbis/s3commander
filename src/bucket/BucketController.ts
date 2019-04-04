@@ -28,6 +28,11 @@ export class BucketController {
   public bucketName: string;
 
   /**
+   * Allow Download. Flag indicating whether to allow file download.
+   */
+  public allowDownload: boolean;
+
+  /**
    * AWS region. Passed in as a component binding.
    */
   public awsRegion: string;
@@ -119,6 +124,7 @@ export class BucketController {
     this.deletedFolders = [];
     this.files = [];
     this.deletedFiles = [];
+    this.allowDownload = true;
     this.uploadConfig = null;
     this.folderName = '';
   }

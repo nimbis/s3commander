@@ -4,6 +4,7 @@ export const BucketComponent: angular.IComponentOptions = {
   bindings: {
     backendName: '=backend',
     bucketName: '=name',
+    allowDownload: '<',
     awsRegion: '=',
     awsAccessKeyId: '=',
     awsSecretAccessKey: '=',
