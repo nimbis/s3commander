@@ -34,6 +34,15 @@
       </div>
 
       <div class="s3c-form-group">
+        <label for="allowDownload">Allow Download</label>
+        <input type="checkbox"
+          id="allowDownload"
+          ng-model="$ctrl.allowDownload"
+          ng-checked="$ctrl.allowDownload"
+          ng-disabled="$ctrl.connected" />
+      </div>
+
+      <div class="s3c-form-group">
         <button class="s3c-button"
           ng-if="!$ctrl.connected"
           ng-click="$ctrl.connect()">Connect</button>
@@ -47,7 +56,7 @@
 
   <bucket backend="'s3'"
     name="$ctrl.bucket"
-    allow-download="true"
+    allow-download="$ctrl.allowDownload"
     aws-region="$ctrl.region"
     aws-access-key-id="$ctrl.accessKeyId"
     aws-secret-access-key="$ctrl.secretAccessKey"

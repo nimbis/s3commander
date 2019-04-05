@@ -31,6 +31,12 @@ div.s3c-session-controls form input {
   float: right;
 }
 
+div.s3c-session-controls form input[type='checkbox'] {
+  width: 2em;
+  height: 2em;
+  float: right;
+}
+
 div.s3c-form-group {
   overflow: auto;
   clear: both;
