@@ -4,11 +4,12 @@ const gutil = require('gulp-util');
 const webpack = require('webpack');
 const webpackConf = require('../conf/webpack.conf');
 const webpackDistConf = require('../conf/webpack-dist.conf');
+const webpackDevConf = require('../conf/webpack-dev.conf');
 const gulpConf = require('../conf/gulp.conf');
 const browsersync = require('browser-sync');
 
 gulp.task('webpack:dev', done => {
-  webpackWrapper(false, webpackConf, done);
+  webpackWrapper(false, webpackDevConf, done);
 });
 
 gulp.task('webpack:watch', done => {

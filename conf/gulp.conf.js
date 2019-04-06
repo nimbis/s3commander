@@ -20,6 +20,7 @@ exports.paths = {
   src: 'src',
   dist: 'dist',
   tmp: '.tmp',
+  dev: 'dev',
   e2e: 'e2e',
   tasks: 'gulp_tasks'
 };

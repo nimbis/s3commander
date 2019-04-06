@@ -28,6 +28,11 @@ export class BucketController {
   public bucketName: string;
 
   /**
+   * Allow Download. Flag indicating whether to allow file download.
+   */
+  public allowDownload: boolean;
+
+  /**
    * AWS region. Passed in as a component binding.
    */
   public awsRegion: string;
@@ -133,12 +138,19 @@ export class BucketController {
     }
     this.currentFolder = new Folder(new Path(this.awsBucketPrefix));
 
+    // default allow download to true
+    if (this.allowDownload === undefined) {
+      this.allowDownload = true;
+    }
+
     // create the backend
     if (this.backendName === 's3') {
       this.backend = new AmazonS3Backend(
         this.awsRegion,
         this.awsAccessKeyId,
-        this.awsSecretAccessKey);
+        this.awsSecretAccessKey,
+        null,
+        this.allowDownload);
     } else {
       throw new Error(`Unknown backend: ${this.backendName}`);
     }

@@ -52,6 +52,14 @@ Create a release build.
 gulp build
 ```
 
+## Dev
+
+Create a development build.
+
+```
+gulp dev
+```
+
 ## Testing
 
 Run the TypeScript linter.

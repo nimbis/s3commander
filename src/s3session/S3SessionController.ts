@@ -25,10 +25,18 @@ export class S3SessionController {
   public secretAccessKey: string;
 
   /**
+   * Allows downloading files.
+   */
+  public allowDownload: boolean;
+
+  /**
    * Called when the component initializes.
    */
   $onInit() {
     // TODO: load region, bucket, and access key id from local storage
+    if (this.allowDownload === undefined) {
+      this.allowDownload = true;
+    }
   }
 
   /**

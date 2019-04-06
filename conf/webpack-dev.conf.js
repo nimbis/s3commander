@@ -4,8 +4,6 @@ const path = require('path');
 
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const FailPlugin = require('webpack-fail-plugin');
-const ExtractTextPlugin = require('extract-text-webpack-plugin');
-const pkg = require('../package.json');
 const autoprefixer = require('autoprefixer');
 
 module.exports = {
@@ -25,10 +23,11 @@ module.exports = {
       },
       {
         test: /\.css$/,
-        loaders: ExtractTextPlugin.extract({
-          fallback: 'style-loader',
-          use: 'css-loader!postcss-loader'
-        })
+        loaders: [
+          'style-loader',
+          'css-loader',
+          'postcss-loader'
+        ]
       },
       {
         test: /\.ts$/,
@@ -53,12 +52,6 @@ module.exports = {
     new HtmlWebpackPlugin({
       template: conf.path.src('index.html')
     }),
-    new webpack.optimize.UglifyJsPlugin({
-      output: {comments: false},
-      compress: {unused: true, dead_code: true, warnings: false} // eslint-disable-line camelcase
-    }),
-    new ExtractTextPlugin('index-s3commander.css'),
-    new webpack.optimize.CommonsChunkPlugin({name: 'vendor'}),
     new webpack.LoaderOptionsPlugin({
       options: {
         postcss: () => [autoprefixer],
@@ -69,11 +62,13 @@ module.exports = {
         tslint: {
           configuration: require('../tslint.json')
         }
-      }
+      },
+      debug: true
     })
   ],
+  devtool: 'source-map',
   output: {
-    path: path.join(process.cwd(), conf.paths.dist),
+    path: path.join(process.cwd(), conf.paths.dev),
     filename: '[name]-s3commander.js'
   },
   resolve: {
@@ -84,8 +79,5 @@ module.exports = {
       '.ts'
     ]
   },
-  entry: {
-    app: `./${conf.path.src('index')}`,
-    vendor: Object.keys(pkg.dependencies)
-  }
+  entry: `./${conf.path.src('index')}`
 };
