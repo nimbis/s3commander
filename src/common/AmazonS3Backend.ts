@@ -34,12 +34,12 @@ export class AmazonS3Backend implements IBackend {
     sessionToken: string = null,
     allowDownload: boolean = true
   ) {
+    var creds = new AWS.Credentials(accessKeyId, secretAccessKey, sessionToken);
+
     this.s3 = new AWS.S3({
       apiVersion: 'latest',
       region: region,
-      accessKeyId: accessKeyId,
-      secretAccessKey: secretAccessKey,
-      sessionToken: sessionToken,
+      credentials: creds,
       sslEnabled: true,
       signatureVersion: 'v4'
     });

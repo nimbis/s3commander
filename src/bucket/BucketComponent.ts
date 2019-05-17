@@ -8,6 +8,7 @@ export const BucketComponent: angular.IComponentOptions = {
     awsRegion: '=',
     awsAccessKeyId: '=',
     awsSecretAccessKey: '=',
+    awsSessionToken: '=?',
     awsBucketPrefix: '=?'
   },
   template: require('./bucket.html'),
