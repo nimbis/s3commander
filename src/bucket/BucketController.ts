@@ -48,6 +48,11 @@ export class BucketController {
   public awsSecretAccessKey: string;
 
   /**
+   * AWS Session Token. Passed in as a component binding.
+   */
+  public awsSessionToken: string;
+
+  /**
    * AWS bucket prefix for a folder. Passed in as a component binding.
    */
   public awsBucketPrefix: string;
@@ -138,6 +143,11 @@ export class BucketController {
     }
     this.currentFolder = new Folder(new Path(this.awsBucketPrefix));
 
+    // default session token to None
+    if (this.awsSessionToken === undefined) {
+      this.awsSessionToken = null;
+    }
+
     // default allow download to true
     if (this.allowDownload === undefined) {
       this.allowDownload = true;
@@ -149,7 +159,7 @@ export class BucketController {
         this.awsRegion,
         this.awsAccessKeyId,
         this.awsSecretAccessKey,
-        null,
+        this.awsSessionToken,
         this.allowDownload);
     } else {
       throw new Error(`Unknown backend: ${this.backendName}`);
