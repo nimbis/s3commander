@@ -131,6 +131,16 @@ export class BucketController {
     this.deletedFiles = [];
     this.uploadConfig = null;
     this.folderName = '';
+
+    // regenerate the backend on access key change.
+    $rootScope.$watch(
+      (): string => {
+        return this.awsAccessKeyId;
+      },
+      (newVal: string, oldVal: string): void => {
+        this.regenerateBackend();
+      }
+    );
   }
 
   /**
@@ -153,7 +163,14 @@ export class BucketController {
       this.allowDownload = true;
     }
 
-    // create the backend
+    // initial load
+    this.regenerateBackend();
+  }
+
+  /**
+   * Create the backend and load the contents.
+   */
+  public regenerateBackend(): void {
     if (this.backendName === 's3') {
       this.backend = new AmazonS3Backend(
         this.awsRegion,
@@ -164,8 +181,6 @@ export class BucketController {
     } else {
       throw new Error(`Unknown backend: ${this.backendName}`);
     }
-
-    // initial load
     this.loadContents();
   }
 
