@@ -9,7 +9,10 @@ export const BucketComponent: angular.IComponentOptions = {
     awsAccessKeyId: '=',
     awsSecretAccessKey: '=',
     awsSessionToken: '=?',
-    awsBucketPrefix: '=?'
+    awsBucketPrefix: '=?',
+    stsApiUrl: '=?',
+    stsHeaderName: '=?',
+    stsHeaderValue: '=?'
   },
   template: require('./bucket.html'),
   controller: BucketController

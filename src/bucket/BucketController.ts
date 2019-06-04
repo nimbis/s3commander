@@ -14,7 +14,8 @@ export class BucketController {
    * @see http://docs.angularjs.org/guide/di
    */
   public static $inject = [
-    '$rootScope'
+    '$rootScope',
+    '$http'
   ];
 
   /**
@@ -56,6 +57,26 @@ export class BucketController {
    * AWS bucket prefix for a folder. Passed in as a component binding.
    */
   public awsBucketPrefix: string;
+
+  /**
+   * API url to be used to gather sts credentials.
+   */
+  public stsApiUrl: string;
+
+  /**
+   * Header name to be passed in with sts enabled.
+   */
+  public stsHeaderName: string;
+
+  /**
+   * Header value to be passed in with sts enabled.
+   */
+  public stsHeaderValue: string;
+
+  /**
+   * Flag used to indicate a background operation is running.
+   */
+  public stsEnabled: boolean;
 
   /**
    * Flag used to indicate a background operation is running.
@@ -113,6 +134,11 @@ export class BucketController {
   public folderName: string;
 
   /**
+   * http service.
+   */
+  public httpService: ng.IHttpService;
+
+  /**
    * Backend.
    */
   private backend: IBackend;
@@ -120,7 +146,7 @@ export class BucketController {
   /**
    * Create an instance of the controller.
    */
-  constructor(private $rootScope: ng.IScope) {
+  constructor(private $rootScope: ng.IScope, $http: ng.IHttpService) {
     this.working = false;
     this.error = null;
     this.bucket = null;
@@ -131,12 +157,14 @@ export class BucketController {
     this.deletedFiles = [];
     this.uploadConfig = null;
     this.folderName = '';
+    this.httpService = $http;
   }
 
   /**
    * Initialize the controller.
    */
   $onInit() {
+
     // set the currentFolder based on bucket prefix
     if (this.awsBucketPrefix === undefined) {
       this.awsBucketPrefix = '/';
@@ -153,6 +181,60 @@ export class BucketController {
       this.allowDownload = true;
     }
 
+    // default sts usage to false
+    if (this.stsApiUrl === undefined) {
+      this.stsEnabled = false;
+    } else {
+      this.stsEnabled = true;
+    }
+
+    // collect sts credentials if needed
+    if (this.stsEnabled) {
+      var httpHeaders;
+      if (this.stsHeaderName === undefined || this.stsHeaderValue === undefined) {
+        httpHeaders = {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        };
+      } else {
+        var name = this.stsHeaderName;
+        httpHeaders = {
+          headers: {
+            'Content-Type': 'application/json',
+            name: this.stsHeaderValue
+          }
+        };
+      }
+
+      var result: ng.IPromise<any> = this.httpService.post(
+        this.stsApiUrl,
+        {},
+        httpHeaders)
+      .then((response: any): ng.IPromise<any> => this.refreshSTSCredentials(response));
+    } else {
+      // create the backend
+      if (this.backendName === 's3') {
+        this.backend = new AmazonS3Backend(
+          this.awsRegion,
+          this.awsAccessKeyId,
+          this.awsSecretAccessKey,
+          this.awsSessionToken,
+          this.allowDownload);
+      } else {
+        throw new Error(`Unknown backend: ${this.backendName}`);
+      }
+
+      // initial load
+      this.loadContents();
+    }
+  }
+
+  public refreshSTSCredentials(response: any): any {
+    this.awsAccessKeyId = response.data.AccessKeyId;
+    this.awsSecretAccessKey = response.data.SecretAccessKey;
+    this.awsSessionToken = response.data.SessionToken;
+
     // create the backend
     if (this.backendName === 's3') {
       this.backend = new AmazonS3Backend(
@@ -165,8 +247,9 @@ export class BucketController {
       throw new Error(`Unknown backend: ${this.backendName}`);
     }
 
-    // initial load
+    // reload contents
     this.loadContents();
+    return response.data;
   }
 
   /**
