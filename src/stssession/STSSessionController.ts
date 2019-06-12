@@ -79,6 +79,16 @@ export class STSSessionController {
   public httpService: ng.IHttpService;
 
   /**
+   * Error encountered running background operation.
+   */
+  public error: Error;
+
+  /**
+   * Headers to send to the sts api.
+   */
+  private httpHeaders: any;
+
+  /**
    * Create an instance of the controller.
    */
   constructor(private $rootScope: ng.IScope, $http: ng.IHttpService) {
@@ -86,6 +96,16 @@ export class STSSessionController {
     this.awsAccessKeyId = '';
     this.awsSecretAccessKey = '';
     this.awsSessionToken = '';
+
+    // default api headers
+    this.httpHeaders = {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    };
+
+    // collect credentials from api every 60 minutes
+    setInterval(() => this.credentialsFromAPI(), 1000 * 60 * 60);
   }
 
   /**
@@ -103,39 +123,26 @@ export class STSSessionController {
       this.allowDownload = true;
     }
 
-    // Set http headers
-    var httpHeaders;
-    if (this.stsHeaderName === undefined || this.stsHeaderValue === undefined) {
-      httpHeaders = {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      };
-    } else {
-      var name = this.stsHeaderName;
-      httpHeaders = {
-        headers: {
-          'Content-Type': 'application/json',
-          name: this.stsHeaderValue
-        }
-      };
+    // set extra http headers
+    if (!this.stsHeaderName === undefined && !this.stsHeaderValue === undefined) {
+      this.httpHeaders.headers[this.stsHeaderName] = this.stsHeaderValue;
     }
 
-    var result: ng.IPromise<any> = this.httpService.post(
-      this.stsApiUrl,
-      {},
-      httpHeaders)
-    .then((response: any): ng.IPromise<any> => this.refreshSTSCredentials(response));
+    this.credentialsFromAPI();
   }
 
   /**
-   * Set the aws credentials from a credential json.
+   * Calls the sts api, and sets the aws credentials from the result.
    */
-  public refreshSTSCredentials(response: any): any {
-    this.awsAccessKeyId = response.data.AccessKeyId;
-    this.awsSecretAccessKey = response.data.SecretAccessKey;
-    this.awsSessionToken = response.data.SessionToken;
-
-    return response.data;
+  public credentialsFromAPI(): void {
+    this.httpService.post(
+      this.stsApiUrl,
+      {},
+      this.httpHeaders)
+    .then((response: ng.IHttpResponse<any>): void => {
+      this.awsAccessKeyId = response.data.AccessKeyId;
+      this.awsSecretAccessKey = response.data.SecretAccessKey;
+      this.awsSessionToken = response.data.SessionToken;
+    });
   }
 }
