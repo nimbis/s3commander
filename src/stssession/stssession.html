@@ -1,3 +1,6 @@
+<!-- errors -->
+<span ng-if="$ctrl.error">{{ $ctrl.error.message }}</span>
+
 <bucket backend="$ctrl.backendName"
   name="$ctrl.bucketName"
   allow-download="$ctrl.allowDownload"
@@ -6,4 +9,4 @@
   aws-secret-access-key="$ctrl.awsSecretAccessKey"
   aws-session-token="$ctrl.awsSessionToken"
   aws-bucket-prefix="$ctrl.awsBucketPrefix"
-  ng-if="true"></bucket>
+  ng-if="!$ctrl.error"></bucket>

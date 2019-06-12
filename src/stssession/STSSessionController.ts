@@ -143,6 +143,10 @@ export class STSSessionController {
       this.awsAccessKeyId = response.data.AccessKeyId;
       this.awsSecretAccessKey = response.data.SecretAccessKey;
       this.awsSessionToken = response.data.SessionToken;
+    })
+    .catch((response: ng.IHttpResponse<any>) => {
+      // display the error
+      this.error = new Error(response.data);
     });
   }
 }
