@@ -104,8 +104,8 @@ export class STSSessionController {
       }
     };
 
-    // collect credentials from api every 60 minutes
-    setInterval(() => this.credentialsFromAPI(), 1000 * 60 * 60);
+    // collect credentials from api every 55 minutes
+    setInterval(() => this.credentialsFromAPI(), 1000 * 60 * 55);
   }
 
   /**
