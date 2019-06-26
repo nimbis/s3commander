@@ -97,6 +97,9 @@ export class STSSessionController {
     this.awsSecretAccessKey = '';
     this.awsSessionToken = '';
 
+    // this error prevents s3commander from prematurely rendering
+    this.error = new Error('Gathering STS credentials.');
+
     // default api headers
     this.httpHeaders = {
       headers: {
@@ -143,6 +146,7 @@ export class STSSessionController {
       this.awsAccessKeyId = response.data.AccessKeyId;
       this.awsSecretAccessKey = response.data.SecretAccessKey;
       this.awsSessionToken = response.data.SessionToken;
+      this.error = null;
     })
     .catch((response: ng.IHttpResponse<any>) => {
       // display the error
