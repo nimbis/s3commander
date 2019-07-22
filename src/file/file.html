@@ -21,14 +21,21 @@
   <!-- file versions -->
   <ul class="s3c-file-versions" ng-if="$ctrl.showVersions">
     <li ng-repeat="version in $ctrl.versions">
-      <!-- file version link -->
-      <a href="{{ version.downloadLink }}"
+      <!-- file version link, if download is allowed -->
+      <a ng-if="$ctrl.file.getDownloadLink()"
+        href="{{ version.downloadLink }}"
         download="{{ $ctrl.file.getPath().name() }}"
         target="_blank"
         ng-if="!version.deleteMarker">
         <i class="s3c-version-icon"></i>
         {{ version.lastModified.toLocaleString() }}
       </a>
+
+      <!-- no hyperlink if not allowedDownload -->
+      <span ng-if="!$ctrl.file.getDownloadLink()">
+        <i class="s3c-version-icon"></i>
+        {{ version.lastModified.toLocaleString() }}
+      </span>
 
       <!-- delete marker -->
       <span ng-if="version.deleteMarker">
