@@ -5,6 +5,7 @@ import {DropzoneDirective} from './dropzone/DropzoneDirective';
 import {FileComponent} from './file/FileComponent';
 import {FolderComponent} from './folder/FolderComponent';
 import {BucketComponent} from './bucket/BucketComponent';
+import {STSSessionComponent} from './stssession/STSSessionComponent';
 import {DropzoneComponent} from './dropzone/DropzoneComponent';
 
 import {S3SessionComponent} from './s3session/S3SessionComponent';
@@ -30,5 +31,6 @@ angular
   .component('file', FileComponent)
   .component('folder', FolderComponent)
   .component('bucket', BucketComponent)
+  .component('stssession', STSSessionComponent)
   .component('s3session', S3SessionComponent)
   .component('dropzone', DropzoneComponent);
