@@ -132,7 +132,11 @@ export class AmazonS3Backend implements IBackend {
 
           return fileData.IsLatest && folder.getPath().toString() !== fileData.Key;
         }).map((fileData: any) => {
-          let downloadLink = undefined;
+          let downloadLink = this.allowDownload ? this.s3.getSignedUrl('getObject', {
+            Bucket: bucket.name,
+            Key: fileData.Key,
+            Expires: 900
+          }) : undefined;
 
           return new File(new Path(fileData.Key), downloadLink, true);
         });
