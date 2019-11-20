@@ -5,7 +5,7 @@
   "homepage": "https://github.com/nimbis/s3commander",
   "license": "SEE LICENSE IN LICENSE.txt",
   "dependencies": {
-    "angular": "^1.7.8",
+    "angular": "^1.7.9",
     "aws-sdk": "^2.434.0",
     "crypto-js": "^3.1.9-1"
   },
