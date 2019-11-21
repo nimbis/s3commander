@@ -2,6 +2,7 @@ import * as angular from 'angular';
 
 import {DropzoneController} from './DropzoneController';
 
+import crypto = require('crypto-js');
 import Dropzone = require('dropzone');
 
 /**
@@ -116,29 +117,96 @@ export class DropzoneDirective implements ng.IDirective {
 
       for (let i = 0; i < files.length; i++) {
         let file = files[i];
+        let SHA1 = crypto.algo.SHA1.create();
+        let lastOffset = 0;
+        let self = this;
+
+        let t0 = performance.now();
+        let t1 = null;
 
         // upload file using backend
-        let key = scope.$ctrl.backend.getFilePath(scope.$ctrl.folder, file);
-        scope.$ctrl.backend.uploadFile({
-          Bucket: scope.$ctrl.config.fields.bucket,
-          Key: key,
-          Body: file,
-          Dropzone: this
-        }).then((res: any) => {
-          if (res.err) {
-            file.status = Dropzone.ERROR;
-            dropzone.emit('error', file, res.err.message);
-            dropzone.emit('complete', file);
-          } else {
-            file.uploadCompleted = true;
-            file.status = Dropzone.SUCCESS;
-            dropzone.emit('success', file);
-            dropzone.emit('complete', file);
+        let uploadFile = function(self: any, file: any) {
+          let key = scope.$ctrl.backend.getFilePath(scope.$ctrl.folder, file);
+          scope.$ctrl.backend.uploadFile({
+            Bucket: scope.$ctrl.config.fields.bucket,
+            Key: key,
+            Body: file,
+            Dropzone: self
+          }).then((res: any) => {
+            if (res.err) {
+              file.status = Dropzone.ERROR;
+              dropzone.emit('error', file, res.err.message);
+              dropzone.emit('complete', file);
+            } else {
+              file.uploadCompleted = true;
+              file.status = Dropzone.SUCCESS;
+              dropzone.emit('success', file);
+              dropzone.emit('complete', file);
+            }
+            if (self.options.autoProcessQueue) {
+              dropzone.processQueue();
+            }
+          });
+        }
+
+        // update the rolling SHA1 hash
+        let update = function(data: any) {
+          let wordBuffer = crypto.lib.WordArray.create(data);
+          SHA1.update(wordBuffer);
+        }
+
+        // compute final SHA1 hash after reading all chunks
+        let finalize = function(data: any) {
+          let hash = SHA1.finalize().toString();
+          t1 = performance.now();
+
+          console.log('FILE: ' + file.name);
+          console.log('HASH: ' + hash);
+          console.log('Time to compute hash: ' + (t1-t0) + ' milliseconds.');
+
+          file.sha1 = hash
+          uploadFile(self, file);
+        }
+
+        // after reading a chunk, determine if last chunk was received
+        let readCallback = function(reader: any, props: any, file: any, event: any, update: any, finalize: any) {
+          update(event.target.result);
+          if (props.offset + props.size >= file.size ){
+            finalize();
           }
-          if (this.options.autoProcessQueue) {
-            dropzone.processQueue();
+        }
+
+        // read the entire file and calculate SHA1 hash before uploading
+        let load = function(file: any, update: any, finalize: any) {
+          let chunkSize = 1024 * 1024 * 10;
+          let offset = 0;
+          let size = chunkSize;
+          let index = 0;
+          let partial = null;
+
+          if (file.size === 0) {
+            finalize();
           }
-        });
+
+          while (offset < file.size) {
+            partial = file.slice(offset, offset + size);
+            let reader = new FileReader();
+            let props = {
+              size: chunkSize,
+              offset: offset,
+              index: index
+            };
+
+            reader.onload = function(event: any) {
+              readCallback(this, props, file, event, update, finalize);
+            }
+            reader.readAsArrayBuffer(partial);
+            offset += chunkSize;
+            index += 1;
+          }
+        }
+
+        load(file, update, finalize);
       }
     };
   }
