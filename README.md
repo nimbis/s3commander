@@ -1,3 +1,7 @@
+# DEPRECATED
+
+This repository has been deprecated, and development is no longer supported.
+
 # s3commander
 
 Web-based S3 file browser.
